@@ -140,7 +140,7 @@ TaylorMms(y,i)=exp(y[i,1])*(2.0*Der(y,i,5)*Der(y,i,6)+y[i,5]*(2.0*Der(y,i,1)*Der
 
 EvansScalar(y,i)=3.0*((y[i+1,5]+y[i+1,6])*R[i+1]^2.0-(y[i-1,5]+y[i-1,6])*R[i-1]^2.0)/(R[i+1]^3.0-R[i-1]^3.0)-Der(y,i,5)-Der(y,i,6);
 
-EvansMms(y,i)=(2.0+2.0*exp(y[i,1])*y[i,6]*y[i,5])*3.0*y[i,4]*(R[i+1]-R[i-1])/(y[i+1,4]^3.0-y[i-1,4]^3.0);
+EvansMms(y,i)=(2.0+2.0*exp(y[i,1])*y[i,6]*y[i,5])*3.0*Der(y,i,4)*(R[i+1]-R[i-1])/(y[i+1,4]^3.0-y[i-1,4]^3.0);
 
 function originDN(y,i)
     dy=zeros(length(y[1,:]));
@@ -188,13 +188,12 @@ end
 # Defining the function in the RHS of the evolution equation system
 
 function DNRHS(y,T)
-    #dx=R[i+1]-R[i]
     L=length(R)
     dy=zeros((L,length(y[1,:])));
-        for i in 4:(L-3)
+        for i in 3:(L-2)
                 dy[i,:]=originDN(y,i);
         end
-    #dy[3,:]=originDN(y,L-2);
+    #dy[3,:]=originDN(y,3);
     #dy[L-2,:]=boundaryDN(y,L-2);
     return dy
 end
@@ -209,7 +208,7 @@ function fixedbulkDN(y,i)
     dy[4]=0; #exp(y[i,1])*y[i,6]+Der(y,i,4)-dissipation4(y,i)[4];   #Rc
     dy[5]=0; #sRcRHS(y,i)-dissipation4(y,i)[5];     #sRc
     dy[6]=0; #sbarRcRHS(y,i)-dissipation4(y,i)[6];  #sbarRc
-    dy[7]=ScalarRHSDN(y,i)-dissipation4(y,i)[7];  #Pi
+    dy[7]=OriScalarRHSDN(y,i)-dissipation4(y,i)[7];  #Pi
     dy[8]=Der(y,i,7)-dissipation4(y,i)[8];      #Phi
     dy[9]=y[i,7]-dissipation4(y,i)[9];          #phi
     return dy
@@ -219,7 +218,7 @@ function fixedDNRHS(y,T)
     #dx=R[i+1]-R[i]
     L=length(R)
     dy=zeros((L,length(y[1,:])));
-        for i in 3:(L-3)
+        for i in 3:(L-2)
                 dy[i,:]=fixedbulkDN(y,i);
         end
     #dy[3,:]=originDN(y,L-2);
