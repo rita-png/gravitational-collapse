@@ -126,23 +126,18 @@ function ghost(y)
     L=length(y[:,1])
     
     #inner boundary extrapolation
-    #y[2,:]=extrapolate_in(y[3,:], y[4,:])
-    #y[1,:]=extrapolate_in(y[2,:], y[3,:])
     y[2,:]=extrapolate_in_new(y[3,:], y[4,:], y[5,:], y[6,:])
     y[1,:]=extrapolate_in_new(y[2,:], y[3,:], y[4,:], y[5,:])
 
     #outer boundary extrapolation
-    #y[L-1,:]=extrapolate_out(y[L-3,:], y[L-2,:])
-    #y[L,:]=extrapolate_out(y[L-2,:], y[L-1,:])
-    y[L-1,:]=extrapolate_out(y[L-5,:], y[L-4,:], y[L-3,:], y[L-2,:])
-    y[L,:]=extrapolate_out(y[L-4,:], y[L-3,:], y[L-2,:], y[L-1,:])
+    y[L-1,:]=extrapolate_out_new(y[L-5,:], y[L-4,:], y[L-3,:], y[L-2,:])
+    y[L,:]=extrapolate_out_new(y[L-4,:], y[L-3,:], y[L-2,:], y[L-1,:])
    
 
     return y
 end
 
 #fourth order  dissipation
-
 function dissipation4(y,i)
         delta4=(y[i+2,:]-4*y[i+1,:]+6*y[i,:]-4*y[i-1,:]+y[i-2,:]);
     return (-1)^4*epsilon*1/(dx)*delta4
@@ -156,22 +151,22 @@ DDer(y,i,k)=(y[i+1,k]-2.0*y[i,k]+y[i-1,k])/(R[i+1]-R[i-1])^2.0;
 
 
 # Test Model RHSs for the bulk equations.
-#TMconstraint_f(f0,R1,time)=0;
-TMconstraint_f(f0,R1,time)=sin(R1 .+ time);#This f0 here is the value at the boundary, not time. This the A(ut,xt) function defined in mathematica. TRY: make it deppend on time ut
+TMconstraint_f(f0,R1,time)=sin(R1 .+ time); ### function A(ut,xt)
 TMconstraint_g(g0,R1)=cos(R1.-40); ### g goes to 0 at right boundary
+#TMconstraint_g(g0,R1)=0; ### g goes to 0 at right boundary
 
 function bulkTM(y,i)
     dy=zeros(length(y[1,:]));
 
-    dy[1]=0;#-sin(y[i,1]-y[i,2]); #f 
-    dy[2]=1.0/2.0*(y[i,1]+Der(y,i,2))-dissipation4(y,i)[2]; #g
-    #dy[2]=1.0/2.0*y[i,1];#g
+    #dy[1]=-sin(y[i,1]-y[i,2]); #f #here:was set to 0
+    dy[1]=0
+    dy[2]=1.0/2.0*(y[i,1]+Der(y,i,2))#-dissipation4(y,i)[2]; #g
 
 
     return dy
 end
 
-function boundaryTM(y,i) #TRY: change here the boundary conditions so its not 0
+function boundaryTM(y,i)
     dy=zeros(length(y[1,:]));
     dy[1]=1.0; #f
     return dy
@@ -183,13 +178,13 @@ function TMRHS(y,T)
     L=length(R)
     dy=zeros((L,length(y[1,:])));
 
-    y[3:L-2,1]=rk4wrapper(TMconstraint_f,f0,R1,T);
+    y[3:L-2,1]=rk4wrapper(TMconstraint_f,f0,R1,T); #here: shouldn't there be a y[3:L-2,2]=rk4wrapper(TMconstraint_g,g0,R1,T) as well? 
+    #y[3:L-2,2]=rungekutta4(TMconstraint_g,g0,R1)';
+    
     y=ghost(y)
 
     global state_array[:,1] = y[:,1]
-
-    #y[3:L-2,1]=rungekutta4(TMconstraint_f,f0,R1)';
-    #y[3:L-2,2]=rungekutta4(TMconstraint_g,g0,R1)';
+  
 
         for i in 3:(L-2)
                 dy[i,:]=bulkTM(y,i);
@@ -197,11 +192,11 @@ function TMRHS(y,T)
     #dy[3,:]=boundaryTM(y,3);
     #dy[L-2,:]=boundaryTM(y,L-2);
 
-    #inner boundary   
 
     #outer boundary
-    dy[L-2,2]=0; #extrapolate_out(dy[L-3,:],dy[L-2,:]) ###this only makes sense because g goes to 0 at the right boundary
-    #dy[L,:]=extrapolate_out(dy[L-2,:],dy[L-1,:])
+    dy[L-2,2]=0; #g goes to 0 at the right boundary
+    dy[L-1,2]=extrapolate_out_new(dy[L-5,2], dy[L-4,2], dy[L-3,2], dy[L-2,2]) #new because I was having problems with g extrapolation at right border
+    dy[L,2]=extrapolate_out_new(dy[L-4,2], dy[L-3,2], dy[L-2,2], dy[L-1,2])
 
     return dy
 end
