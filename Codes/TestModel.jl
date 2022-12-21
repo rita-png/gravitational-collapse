@@ -152,16 +152,13 @@ DDer(y,i,k)=(y[i+1,k]-2.0*y[i,k]+y[i-1,k])/(R[i+1]-R[i-1])^2.0;
 
 # Test Model RHSs for the bulk equations.
 TMconstraint_f(f0,R1,time)=sin(R1 .+ time); ### function A(ut,xt)
-TMconstraint_g(g0,R1)=cos(R1.-40); ### g goes to 0 at right boundary
-#TMconstraint_g(g0,R1)=0; ### g goes to 0 at right boundary
+#TMconstraint_g(g0,R1)=cos(R1.-40); ### g goes to 0 at right boundary
 
 function bulkTM(y,i)
     dy=zeros(length(y[1,:]));
 
-    #dy[1]=-sin(y[i,1]-y[i,2]); #f #here:was set to 0
-    dy[1]=0
-    dy[2]=1.0/2.0*(y[i,1]+Der(y,i,2))#-dissipation4(y,i)[2]; #g
-
+    dy[1]=0;#-sin(y[i,1]-y[i,2]); #f #here:was set to 0
+    dy[2]=1.0/2.0*(0.0*y[i,1]+Der(y,i,2))#-dissipation4(y,i)[2]; #g
 
     return dy
 end
@@ -174,29 +171,29 @@ end
 
 # Defining the function in the RHS of the evolution equation system
 
-function TMRHS(y,T)
+function TMRHS(y,t)
     L=length(R)
     dy=zeros((L,length(y[1,:])));
 
-    y[3:L-2,1]=rk4wrapper(TMconstraint_f,f0,R1,T); #here: shouldn't there be a y[3:L-2,2]=rk4wrapper(TMconstraint_g,g0,R1,T) as well? 
+    y[3:L-2,1]=rk4wrapper(TMconstraint_f,f0,R1,t); #here: shouldn't there be a y[3:L-2,2]=rk4wrapper(TMconstraint_g,g0,R1,T) as well? 
     #y[3:L-2,2]=rungekutta4(TMconstraint_g,g0,R1)';
     
     y=ghost(y)
 
     global state_array[:,1] = y[:,1]
-  
 
         for i in 3:(L-2)
                 dy[i,:]=bulkTM(y,i);
         end
+
     #dy[3,:]=boundaryTM(y,3);
     #dy[L-2,:]=boundaryTM(y,L-2);
 
 
     #outer boundary
-    dy[L-2,2]=0; #g goes to 0 at the right boundary
-    dy[L-1,2]=extrapolate_out_new(dy[L-5,2], dy[L-4,2], dy[L-3,2], dy[L-2,2]) #new because I was having problems with g extrapolation at right border
-    dy[L,2]=extrapolate_out_new(dy[L-4,2], dy[L-3,2], dy[L-2,2], dy[L-1,2])
+    dy[L-2,2]=2.0/10.0*pi*cos(2.0*pi/10.0*(R[L-2]*2.0+t));#y[L-2,1]; #g goes to 0 at the right boundary
+    #dy[L-1,2]=extrapolate_out_new(dy[L-5,2], dy[L-4,2], dy[L-3,2], dy[L-2,2]) #new because I was having problems with g extrapolation at right border
+    #dy[L,2]=extrapolate_out_new(dy[L-4,2], dy[L-3,2], dy[L-2,2], dy[L-1,2])
 
     return dy
 end
