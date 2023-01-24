@@ -126,10 +126,12 @@ function ghost(y)
     L=length(y[:,1])
     
     #inner boundary extrapolation
+    y[3,:]=extrapolate_in_new(y[4,:], y[5,:], y[6,:], y[7,:]) #new
     y[2,:]=extrapolate_in_new(y[3,:], y[4,:], y[5,:], y[6,:])
     y[1,:]=extrapolate_in_new(y[2,:], y[3,:], y[4,:], y[5,:])
 
     #outer boundary extrapolation
+    y[L-2,:]=extrapolate_out_new(y[L-6,:], y[L-5,:], y[L-4,:], y[L-3,:]) #new
     y[L-1,:]=extrapolate_out_new(y[L-5,:], y[L-4,:], y[L-3,:], y[L-2,:])
     y[L,:]=extrapolate_out_new(y[L-4,:], y[L-3,:], y[L-2,:], y[L-1,:])
    
@@ -138,17 +140,17 @@ function ghost(y)
 end
 
 
-
-#fourth order  dissipation
-function dissipation4(y,i)
-        delta4=(y[i+2,:]-4*y[i+1,:]+6*y[i,:]-4*y[i-1,:]+y[i-2,:]);
-    return (-1)^4*epsilon*1/(dx)*delta4
+#6th order dissipation, added to 4th order original scheme #new
+function dissipation6(y,i)
+        delta6=(y[i+3,:]-6*y[i+2,:]+15*y[i+1,:]-20*y[i,:]+15*y[i-1,:]-6*y[i-2,:]+y[i-3,:]);
+    return (-1)^3*epsilon*1/(dx)*delta6
 end
 
-#second order  dissipation #new
-function dissipation2(y,i)
-    delta2=(y[i+1,:]-2*y[i,:]+y[i-1,:]);
-return (-1)^2*epsilon*1/(dx)*delta2
+
+#4th order  dissipation, added to 2nd order original scheme
+function dissipation4(y,i)
+        delta4=(y[i+2,:]-4*y[i+1,:]+6*y[i,:]-4*y[i-1,:]+y[i-2,:]);
+    return (-1)^2*epsilon*1/(dx)*delta4
 end
 
 
@@ -167,7 +169,16 @@ function bulkTM(y,i)
     dy=zeros(length(y[1,:]));
 
     dy[1]=0;
-    dy[2]=1.0/2.0*(0.0*y[i,1]+Der(y,i,2))-dissipation4(y,i)[2];#-dissipation4(y,i)[2]; #g
+    dy[2]=1.0/2.0*(0.0*y[i,1]+Der(y,i,2)) #g
+
+    return dy
+end
+
+function bulkTMdiss(y,i)
+    dy=zeros(length(y[1,:]));
+
+    dy[1]=0;
+    dy[2]=1.0/2.0*(0.0*y[i,1]+Der(y,i,2))-dissipation6(y,i)[2]; #g
 
     return dy
 end
@@ -185,28 +196,36 @@ function TMRHS(y,t)
     dy=zeros((L,length(y[1,:])));
 
 
-    y[3:L-2,1]=rk4wrapper(TMconstraint_f,f0,R1,t); #here: shouldn't there be a y[3:L-2,2]=rk4wrapper(TMconstraint_g,g0,R1,T) as well? 
-    #y[3:L-2,2]=rungekutta4(TMconstraint_g,g0,R1)';
+    y[4:L-3,1]=rk4wrapper(TMconstraint_f,f0,R1,t);
     
     
     y=ghost(y)
 
     global state_array[:,1] = y[:,1]
 
-        for i in 3:(L-2)
+        """for i in 4:(L-3)
+            if (i == 4 || i == (L-3))
                 dy[i,:]=bulkTM(y,i);
+            else
+                dy[i,:]=bulkTMdiss(y,i);
+            end
+        end"""
+        
+        for i in 4:(L-3)
+                dy[i,:]=bulkTMdiss(y,i);
         end
 
-    #dy[3,:]=boundaryTM(y,3);
-    #dy[L-2,:]=boundaryTM(y,L-2);
+
+    #dy[4,:]=boundaryTM(y,4);
+    #dy[L-3,:]=boundaryTM(y,L-3);
 
 
     #outer boundary
-    #dy[L-2,2]=2.0/10.0*pi*cos(2.0*pi/10.0*(R[L-2]*2.0+t));#y[L-2,1]; #g goes to 0 at the right boundary
-    dy[L-2,2]=2.0/10.0*pi*cos(2.0*pi/10.0*(R[L-2]*2.0+t))#+1/2*y[L-2,1]; # +1/2f, ie +1/2*y[l-2,1]
-    #dy[L-1,2]=extrapolate_out_new(dy[L-5,2], dy[L-4,2], dy[L-3,2], dy[L-2,2]) #new because I was having problems with g extrapolation at right border
-    #dy[L,2]=extrapolate_out_new(dy[L-4,2], dy[L-3,2], dy[L-2,2], dy[L-1,2])
-
+    #dy[L-3,2]=2.0/10.0*pi*cos(2.0*pi/10.0*(R[L-2]*2.0+t));#y[L-2,1]; #g goes to 0 at the right boundary
+    dy[L-3,2]=2.0/10.0*pi*cos(2.0*pi/10.0*(R[L-3]*2.0+t))#+1/2*y[L-2,1]; # +1/2f, ie +1/2*y[l-2,1]
+    #dy[L-2,2]=extrapolate_out_new(dy[L-5,2], dy[L-4,2], dy[L-3,2], dy[L-2,2]) #new because I was having problems with g extrapolation at right border
+    #dy[L-1,2]=extrapolate_out_new(dy[L-4,2], dy[L-3,2], dy[L-2,2], dy[L-1,2])
+    #dy[L,2]=...
     return dy
 end
 
