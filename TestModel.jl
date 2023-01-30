@@ -163,7 +163,6 @@ DDer(y,i,k)=(-y[i+2,k]+16*y[i+1,k]-30*y[i,k]+16*y[i-1,k]-y[i-2,k])/(12*(R[i+1]-R
 
 # Test Model RHSs for the bulk equations.
 TMconstraint_f(f0,R1,time)=sin(R1 .+ time); ### function A(ut,xt)
-#TMconstraint_g(g0,R1)=cos(R1.-40); ### g goes to 0 at right boundary
 
 function bulkTM(y,i)
     dy=zeros(length(y[1,:]));
@@ -202,14 +201,6 @@ function TMRHS(y,t)
     y=ghost(y)
 
     global state_array[:,1] = y[:,1]
-
-        """for i in 4:(L-3)
-            if (i == 4 || i == (L-3))
-                dy[i,:]=bulkTM(y,i);
-            else
-                dy[i,:]=bulkTMdiss(y,i);
-            end
-        end"""
         
         for i in 4:(L-3)
                 dy[i,:]=bulkTMdiss(y,i);
@@ -221,11 +212,11 @@ function TMRHS(y,t)
 
 
     #outer boundary
-    #dy[L-3,2]=2.0/10.0*pi*cos(2.0*pi/10.0*(R[L-2]*2.0+t));#y[L-2,1]; #g goes to 0 at the right boundary
+    #dy[L-3,2]=2.0/10.0*pi*cos(2.0*pi/10.0*(R[L-2]*2.0+t));#y[L-2,1];
     dy[L-3,2]=2.0/10.0*pi*cos(2.0*pi/10.0*(R[L-3]*2.0+t))#+1/2*y[L-2,1]; # +1/2f, ie +1/2*y[l-2,1]
-    #dy[L-2,2]=extrapolate_out_new(dy[L-5,2], dy[L-4,2], dy[L-3,2], dy[L-2,2]) #new because I was having problems with g extrapolation at right border
-    #dy[L-1,2]=extrapolate_out_new(dy[L-4,2], dy[L-3,2], dy[L-2,2], dy[L-1,2])
-    #dy[L,2]=...
+    dy[L-2,2]=extrapolate_out_new(dy[L-6,2], dy[L-5,2], dy[L-4,2], dy[L-3,2]) #new because I was having problems with g extrapolation at right border
+    dy[L-1,2]=extrapolate_out_new(dy[L-5,2], dy[L-4,2], dy[L-3,2], dy[L-2,2])
+    dy[L,2]=extrapolate_out_new(dy[L-4,2], dy[L-3,2], dy[L-2,2], dy[L-1,2])
     return dy
 end
 
