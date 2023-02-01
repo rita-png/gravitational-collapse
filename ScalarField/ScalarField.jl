@@ -44,25 +44,17 @@ end
 function interpolate(x,x1,x2,y1,y2)
     return y1+(y2-y1)*(x-x1)/(x2-x1)
 end
+#(1−x)^4=x^4−4x^3+6x^2−4x+1 ex. 4th order polynomial
+
+
 
 # Extrapolation
 
-function extrapolate_in(y2,y3)
-    return y2 + (y2-y3)
-end
-
-function extrapolate_out(y1,y2)
-    return y2 + (y2-y1)
-end
-
-
-# NEW Extrapolation
-
-function extrapolate_out_new(y0,y1,y2,y3)
+function extrapolate_out(y0,y1,y2,y3)
     return -y0 + 4*y1 - 6*y2 + 4*y3
 end
 
-function extrapolate_in_new(y0,y1,y2,y3)
+function extrapolate_in(y0,y1,y2,y3)
     return -y3 + 4*y2 - 6*y1 + 4*y0
 end
 
@@ -123,7 +115,7 @@ function rk4wrapper(f,y0,x,u)
 end
 
 
-"""function rungekutta4_data(fbar_data,y0,x)
+"function rungekutta4_data(fbar_data,y0,x)
     
     n = length(x)
     y = zeros(n)
@@ -141,7 +133,7 @@ end
         y[i+1] = y[i] .+ (h/6) * (k1 .+ 2*k2 .+ 2*k3 .+ k4)
     end
     return y
-end"""
+end"
 
 
 #ghosts
@@ -150,21 +142,21 @@ function ghost(y)
     L=length(y[:,1])
     
     #inner boundary extrapolation
-    y[3,:]=extrapolate_in_new(y[4,:], y[5,:], y[6,:], y[7,:])
-    y[2,:]=extrapolate_in_new(y[3,:], y[4,:], y[5,:], y[6,:])
-    y[1,:]=extrapolate_in_new(y[2,:], y[3,:], y[4,:], y[5,:])
+    y[3,:]=extrapolate_in(y[4,:], y[5,:], y[6,:], y[7,:])
+    y[2,:]=extrapolate_in(y[3,:], y[4,:], y[5,:], y[6,:])
+    y[1,:]=extrapolate_in(y[2,:], y[3,:], y[4,:], y[5,:])
 
     #outer boundary extrapolation
-    y[L-2,:]=extrapolate_out_new(y[L-6,:], y[L-5,:], y[L-4,:], y[L-3,:])
-    y[L-1,:]=extrapolate_out_new(y[L-5,:], y[L-4,:], y[L-3,:], y[L-2,:])
-    y[L,:]=extrapolate_out_new(y[L-4,:], y[L-3,:], y[L-2,:], y[L-1,:])
+    y[L-2,:]=extrapolate_out(y[L-6,:], y[L-5,:], y[L-4,:], y[L-3,:])
+    y[L-1,:]=extrapolate_out(y[L-5,:], y[L-4,:], y[L-3,:], y[L-2,:])
+    y[L,:]=extrapolate_out(y[L-4,:], y[L-3,:], y[L-2,:], y[L-1,:])
    
 
     return y
 end
 
 
-#6th order dissipation, added to 4th order original scheme #new
+#6th order dissipation, added to 4th order original scheme
 function dissipation6(y,i)
         delta6=(y[i+3,:]-6*y[i+2,:]+15*y[i+1,:]-20*y[i,:]+15*y[i-1,:]-6*y[i-2,:]+y[i-3,:]);
     return (-1)^3*epsilon*1/(dx)*delta6
@@ -184,17 +176,14 @@ DDer(y,i,k)=(-y[i+2,k]+16*y[i+1,k]-30*y[i,k]+16*y[i-1,k]-y[i-2,k])/(12*(R[i+1]-R
 
 int(x) = floor(Int, x)
 
-#Initial data for psibar and psi
+# Initial data for psibar and psi
 SFconstraint_psibar(psibar0,R1)=-sin.(R1)
 
 # Test Model RHSs for the bulk equations.
-#TMconstraint_f(f0,R1,time)=sin(R1 .+ time); ### function A(ut,xt)
-#SFconstraint_m(m0,R1,time)=2*pi .* R1 .^2 *(1 .- 2*(1-x)/x*m)
-#SFconstraint_beta(beta0,R1,time)=2*pi .* R1 .* (1 .- R1)# .* ((1 .- R1) ./ R1 .* state_array[int.(R1./dx.+1),4] .- R1 .^(-2)).^2
+SFconstraint_m(m0,R1,time)=2*pi .* R1 .^2 *(1 .- 2 .* (1 .- R1) ./ R1 .* state_array[int.(R1 ./ dx .+ 1),1]) #* ((1 .- R1) ./ R1 .* state_array[int.(R1./dx.+1),4] .- state_array[int.(R1./dx.+1),3] ./ R1^2)^2
 
-#SFconstraint_beta(beta0,R1,time)=2*pi *((1 .- R1) .^2 .* state_array[int.(R1./dx.+1),4] .+ psi .- (1 .-r1) .* state_array[int.(R1./dx.+1),4]) UNCOMMENT THIS
+SFconstraint_beta(beta0,R1,time)=2*pi .* R1 .* (1 .- R1) #* ((1 .- R1) ./ R1 .* state_array[int.(R1./dx.+1),4] .- state_array[int.(R1./dx.+1),3] ./ R1^2)^2
 
-#SFconstraint_beta(beta0,R1,time)=state_array[int.(R1./dx.+1),4]
 
 "function globalwork()
     return  R1 .* state_array[4:L-3,4]
@@ -250,9 +239,9 @@ function TMRHS(y,t)
     #outer boundary
     #dy[L-3,2]=2.0/10.0*pi*cos(2.0*pi/10.0*(R[L-2]*2.0+t));#y[L-2,1];
     dy[L-3,2]=2.0/10.0*pi*cos(2.0*pi/10.0*(R[L-3]*2.0+t))#+1/2*y[L-2,1]; # +1/2f, ie +1/2*y[l-2,1]
-    dy[L-2,2]=extrapolate_out_new(dy[L-6,2], dy[L-5,2], dy[L-4,2], dy[L-3,2]) #new because I was having problems with g extrapolation at right border
-    dy[L-1,2]=extrapolate_out_new(dy[L-5,2], dy[L-4,2], dy[L-3,2], dy[L-2,2])
-    dy[L,2]=extrapolate_out_new(dy[L-4,2], dy[L-3,2], dy[L-2,2], dy[L-1,2])
+    dy[L-2,2]=extrapolate_out(dy[L-6,2], dy[L-5,2], dy[L-4,2], dy[L-3,2])
+    dy[L-1,2]=extrapolate_out(dy[L-5,2], dy[L-4,2], dy[L-3,2], dy[L-2,2])
+    dy[L,2]=extrapolate_out(dy[L-4,2], dy[L-3,2], dy[L-2,2], dy[L-1,2])
     return dy
 end
 
