@@ -137,18 +137,26 @@ function ghost(y)
     return y
 end
 
+
+
 #fourth order  dissipation
 function dissipation4(y,i)
         delta4=(y[i+2,:]-4*y[i+1,:]+6*y[i,:]-4*y[i-1,:]+y[i-2,:]);
     return (-1)^4*epsilon*1/(dx)*delta4
 end
 
+#second order  dissipation #new
+function dissipation2(y,i)
+    delta2=(y[i+1,:]-2*y[i,:]+y[i-1,:]);
+return (-1)^2*epsilon*1/(dx)*delta2
+end
 
 
 # Discretization of derivatives
-#should be improved using 4th order finite diff, see 2nd page of https://www.dam.brown.edu/people/alcyew/handouts/numdiff.pdf
-Der(y,i,k)=(y[i+1,k]-y[i-1,k])/(R[i+1]-R[i-1]);
-DDer(y,i,k)=(y[i+1,k]-2.0*y[i,k]+y[i-1,k])/(R[i+1]-R[i-1])^2.0;
+#Der(y,i,k)=(y[i+1,k]-y[i-1,k])/(R[i+1]-R[i-1]); #2nd order
+Der(y,i,k)=(-y[i+2,k]+8*y[i+1,k]-8*y[i-1,k]+y[i-2,k])/(12*(R[i+1]-R[i])); #4th order
+#DDer(y,i,k)=(-y[i+2,k]+8*y[i+1,k]-8*y[i-1,k]-y[i-2,k])/(12*(R[i+1]-R[i])); #2nd order
+DDer(y,i,k)=(-y[i+2,k]+16*y[i+1,k]-30*y[i,k]+16*y[i-1,k]-y[i-2,k])/(12*(R[i+1]-R[i])^2); #4th order
 
 
 # Test Model RHSs for the bulk equations.
@@ -159,7 +167,7 @@ function bulkTM(y,i)
     dy=zeros(length(y[1,:]));
 
     dy[1]=0;
-    dy[2]=1.0/2.0*(0.0*y[i,1]+Der(y,i,2))#-dissipation4(y,i)[2]; #g
+    dy[2]=1.0/2.0*(0.0*y[i,1]+Der(y,i,2))-dissipation4(y,i)[2];#-dissipation4(y,i)[2]; #g
 
     return dy
 end
@@ -201,4 +209,3 @@ function TMRHS(y,t)
 
     return dy
 end
-
