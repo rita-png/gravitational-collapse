@@ -183,10 +183,10 @@ SFconstraint_psibar(psibar0,R1)=-sin.(R1)
 # (3.6.16)
 #SFconstraint_m(m0,R1,time)=2*pi .* R1 .^2 *(1 .- 2 .* (1 .- R1) ./ R1 .* state_array[int.(R1 ./ dx .+ 1),1]) * ((1 .- R1) ./ R1 .* state_array[int.(R1./dx.+1),4] .- state_array[int.(R1./dx.+1),3] ./ R1^2)^2
 
-SFconstraint_m(beta0,R1,time)=2*pi ./ R1 .^2 .* (1-2*(1 .- R1) .* state_array[int.(R1 ./ dx .+ 1),1] ./ R1) .* (state_array[int.(R1 ./ dx .+ 1),3] .+ (R1 .- 1) R1 .* state_array[int.(R1 ./ dx .+ 1),4]) .^2
+#COMMENTED SFconstraint_m(beta0,R1,time)=2*pi ./ R1 .^2 .* (1-2*(1 .- R1) .* state_array[int.(R1 ./ dx .+ 1),1] ./ R1) .* (state_array[int.(R1 ./ dx .+ 1),3] .+ (R1 .- 1) R1 .* state_array[int.(R1 ./ dx .+ 1),4]) .^2
 
 #SFconstraint_beta(beta0,R1,time)=2*pi .* R1 .* (1 .- R1) * ((1 .- R1) ./ R1 .* state_array[int.(R1./dx.+1),4] .- state_array[int.(R1./dx.+1),3] ./ R1^2)^2
-SFconstraint_beta(m0,R1,time)=2*pi ./ R1 .^3 .*(R1 .+ 2 .* (R1 .- 1) .* state_array[int.(R1 ./ dx .+ 1),1] ) .* (state_array[int.(R1 ./ dx .+ 1),3] .+ (R1 .- 1) .* R1 .* state_array[int.(R1 ./ dx .+ 1),4]) .^2
+#COMMENTED SFconstraint_beta(m0,R1,time)=2*pi ./ R1 .^3 .*(R1 .+ 2 .* (R1 .- 1) .* state_array[int.(R1 ./ dx .+ 1),1] ) .* (state_array[int.(R1 ./ dx .+ 1),3] .+ (R1 .- 1) .* R1 .* state_array[int.(R1 ./ dx .+ 1),4]) .^2
 
 
 "function globalfunc()
