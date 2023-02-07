@@ -1,26 +1,13 @@
 # Definition of gaussian initial data functions
 
-function scalar_timeder(R)
-    n=length(R);
-    if n==1
-        z= (B* (exp(-((R - R01)/s1)^2) + exp(-((R + R01)/s1)^2))/(sqrt(2*pi)*s1))
-    else
-        z=zeros(n);
-        for i in 1:n
-            z[i]= (B* (exp(-((R[i] - R01)/s1)^2) + exp(-((R[i] + R01)/s1)^2))/(sqrt(2*pi)*s1))
-        end
-    end
-    return z
-end
-
 function scalar_spaceder(R)
     n=length(R);
     if n==1
-        z=(P* (-((2 *exp(-((R - R02)^2/s2^2)) *(R - R02))/s2^2) - (2*exp(-((R + R02)^2/s2^2))* (R + R02))/s2^2))/(sqrt(2*pi)* s2); #+ (P3* (-((2 *exp(-((R - R03)^2/s2^2)) *(R - R03))/s2^2) - (2*exp(-((R + R03)^2/s2^2))* (R + R03))/s2^2))/(sqrt(2*pi)* s2);
+        z=(Amp* (-((2 *exp(-((R - c)^2/sigma^2)) *(R - c))/sigma^2) - (2*exp(-((R + c)^2/sigma^2))* (R + c))/sigma^2))/(sqrt(2*pi)* sigma);
     else
     z=zeros(n);
     for i in 1:n
-        z[i]=(P* (-((2 *exp(-((R[i] - R02)^2/s2^2)) *(R[i] - R02))/s2^2) - (2*exp(-((R[i] + R02)^2/s2^2))* (R[i] + R02))/s2^2))/(sqrt(2*pi)* s2); #+ (P3* (-((2 *exp(-((R[i] - R03)^2/s2^2)) *(R[i] - R03))/s2^2) - (2*exp(-((R[i] + R03)^2/s2^2))* (R[i] + R03))/s2^2))/(sqrt(2*pi)* s2)
+        z[i]=(Amp* (-((2 *exp(-((R[i] - c)^2/sigma^2)) *(R[i] - c))/sigma^2) - (2*exp(-((R[i] + c)^2/sigma^2))* (R[i] + c))/sigma^2))/(sqrt(2*pi)* sigma);
     end
     end
     return z
@@ -29,11 +16,11 @@ end
 function scalar_field(R)
     n=length(R);
     if n==1
-        z= (P* (exp(-((R - R02)/s2)^2) + exp(-((R + R02)/s2)^2))/(sqrt(2*pi)*s2))
+        z= (Amp* (exp(-((R - c)/sigma)^2) + exp(-((R + c)/sigma)^2))/(sqrt(2*pi)*sigma))
     else
         z=zeros(n);
         for i in 1:n
-            z[i]= (P* (exp(-((R[i] - R02)/s2)^2) + exp(-((R[i] + R02)/s2)^2))/(sqrt(2*pi)*s2))
+            z[i]= (Amp* (exp(-((R[i] - c)/sigma)^2) + exp(-((R[i] + c)/sigma)^2))/(sqrt(2*pi)*sigma))
         end
     end
     return z
@@ -184,7 +171,7 @@ SFconstraint_psibar(psibar0,R1)=-sin.(R1)
 #COMMENTED SFconstraint_m(beta0,R1,time)=2*pi ./ R1 .^2 .* (1-2*(1 .- R1) .* state_array[int.(R1 ./ dx .+ 1),1] ./ R1) .* (state_array[int.(R1 ./ dx .+ 1),3] .+ (R1 .- 1) R1 .* state_array[int.(R1 ./ dx .+ 1),4]) .^2
 
 function SFconstraint_beta(beta0,R1,time)
-    if R1<3
+    if R1<10^(-7)
         z = 0
         print("R=0!!!")
     else
@@ -196,7 +183,7 @@ end
 
 
 function SFconstraint_m(m0,R1,time)
-    if R1<3
+    if R1<10^(-7)
         z = 0
         print("R=0!!!")
     else
@@ -213,8 +200,11 @@ end"
 function bulkTM(y,i)
     dy=zeros(length(y[1,:]));
 
-    dy[1]=0;
-    dy[2]=1.0/2.0*(0.0*y[i,1]+Der(y,i,2)) #g
+    dy[1]=0; #m
+    dy[2]=0; #beta
+    dy[3]=0; #psi
+    #dy[4]=1.0/2.0*(0.0*y[i,1]+Der(y,i,2))-dissipation6(y,i)[4]; #psi,x
+    dy[4]=1.0/2.0*(0.0*y[i,1]+Der(y,i,2))-dissipation6(y,i)[4]; #psi,x #CHANGE THIS
 
     return dy
 end
@@ -222,8 +212,11 @@ end
 function bulkTMdiss(y,i)
     dy=zeros(length(y[1,:]));
 
-    dy[1]=0;
-    dy[2]=1.0/2.0*(0.0*y[i,1]+Der(y,i,2))-dissipation6(y,i)[2]; #g
+    dy[1]=0; #m
+    dy[2]=0; #beta
+    dy[3]=0; #psi
+    #dy[4]=1.0/2.0*(0.0*y[i,1]+Der(y,i,2))-dissipation6(y,i)[4]; #psi,x
+    dy[4]=1.0/2.0*(0.0*y[i,1]+Der(y,i,2))-dissipation6(y,i)[4]; #psi,x
 
     return dy
 end
