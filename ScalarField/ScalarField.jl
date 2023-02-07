@@ -102,26 +102,6 @@ function rk4wrapper(f,y0,x,u)
 end
 
 
-"function rungekutta4_data(fbar_data,y0,x)
-    
-    n = length(x)
-    y = zeros(n)
-    y[1] = y0;
-    for i in 1:n-1
-        h = x[2] .- x[1]
-        k1 = f(y[i], x[i])
-        k1 = fbar_data[i]
-
-        k2 = f(y[i] .+ k1 * h/2, x[i] .+ h/2)
-        k2 = interpolate(x[i],x[i+1],fbar_data[i],fbar_data[i+1])
-
-        k3 = f(y[i] .+ k2 * h/2, x[i] .+ h/2)
-        k4 = f(y[i] .+ k3 * h, x[i] .+ h)
-        y[i+1] = y[i] .+ (h/6) * (k1 .+ 2*k2 .+ 2*k3 .+ k4)
-    end
-    return y
-end"
-
 
 #ghosts
 
@@ -164,7 +144,7 @@ DDer(y,i,k)=(-y[i+2,k]+16*y[i+1,k]-30*y[i,k]+16*y[i-1,k]-y[i-2,k])/(12*(R[i+1]-R
 int(x) = floor(Int, x)
 
 # Initial data for psibar and psi
-SFconstraint_psibar(psibar0,R1)=-sin.(R1)
+#SFconstraint_psibar(psibar0,R1)=-sin.(R1)
 
 # Test Model RHSs for the bulk equations (3.6.16)
 
@@ -197,31 +177,48 @@ end
     return  R1 .* state_array[4:L-3,4]
 end"
 
-function bulkTM(y,i)
+function bulkSF(y,i)
+    dy=zeros(length(y[1,:]));
+
+    dy[1]=0; #m
+    dy[2]=0; #beta
+    dy[3]=0; #psi
+    #dy[4]=1.0/2.0*(0.0*y[i,1]+Der(y,i,2)); #psi,x
+    dy[4]=-1.0/2.0*exp(2.0*y[i,2])*((2.0*exp(2.0*(R[i]-y[i,3]+R[i]*y[i,3])*y[i,2]/R[i])*(R[i]-1.0)^2*(R[i]*((R[i]-1.0)*Der(y,i,1)+R[i]*Der(y,i,2))+y[i,1]*(1.0+2.0*(R[i]-1.0)*R[i]*Der(y,i,2))))/R[i]^2 -
+    ((-1.0+R[i])^3*(R[i]+2.0*(R[i]-1.0)*y[i,1])*Der(y,i,3))/R[i]^2 - ((1.0-R[i])^3*(1.0-2.0*(R[i]-1.0)^2*Der(y,i,1))*Der(y,i,3))/R[i] - (2.0*(R[i]-1.0)^4*(R[i]+2.0*(R[i]-1.0)*y[i,1])*Der(y,i,2)*Der(y,i,3))/R[i]
+    - (DDer(y,i,3)) - (2.0*(R[i]-1.0)*y[i,1]*DDer(y,i,3))/R[i]); #psi,x
+    return dy
+end
+
+function bulkSFdiss(y,i)
     dy=zeros(length(y[1,:]));
 
     dy[1]=0; #m
     dy[2]=0; #beta
     dy[3]=0; #psi
     #dy[4]=1.0/2.0*(0.0*y[i,1]+Der(y,i,2))-dissipation6(y,i)[4]; #psi,x
-    dy[4]=1.0/2.0*(0.0*y[i,1]+Der(y,i,2))-dissipation6(y,i)[4]; #psi,x #CHANGE THIS
+    
+    #dy[4]=-1.0/2.0*exp(2.0*beta)*((2.0*exp(2*(x-psi+x*psi)*beta/x)*(x-1)^2*(x*((x-1)*Dm+x*Dbeta)+m*(1+2*(x-1)*x*Dbeta)))/x^2 - ((-1.0+x)^3*(x+2.0*(x-1.0)*m)*Dpsi)/x^2 - ((1-x)^3*(1-2*(x-1)^2*Dm)*Dpsi)/x - (2*(x-1)^4*(x+2(x-1)*m)*Dbeta*Dpsi)/x - (DDpsi)- (2*(x-1)*m*DDpsi)/x)
+    # x = R[i]
+    # m = y[i,1]
+    # beta = y[i,2]
+    # Dm = Der(y,i,1)
+    # Dbeta = Der(y,i,2)
+    # Dpsi = Der(y,i,3)
+    # DDpsi = DDer(y,i,3)
+    
+    if i>3
+        dy[4]=-1.0/2.0*exp(2.0*y[i,2])*((2.0*exp(2.0*(R[i]-y[i,3]+R[i]*y[i,3])*y[i,2]/R[i])*(R[i]-1.0)^2*(R[i]*((R[i]-1.0)*Der(y,i,1)+R[i]*Der(y,i,2))+y[i,1]*(1.0+2.0*(R[i]-1.0)*R[i]*Der(y,i,2))))/R[i]^2 -
+        ((-1.0+R[i])^3*(R[i]+2.0*(R[i]-1.0)*y[i,1])*Der(y,i,3))/R[i]^2 - ((1.0-R[i])^3*(1.0-2.0*(R[i]-1.0)^2*Der(y,i,1))*Der(y,i,3))/R[i] - (2.0*(R[i]-1.0)^4*(R[i]+2.0*(R[i]-1.0)*y[i,1])*Der(y,i,2)*Der(y,i,3))/R[i]
+        - (DDer(y,i,3)) - (2.0*(R[i]-1.0)*y[i,1]*DDer(y,i,3))/R[i]) - dissipation6(y,i)[4]; #psi,x
+    else
+        dy[4]=0 # WRITE BOXOPERATOR APPROX HERE
+    end
 
     return dy
 end
 
-function bulkTMdiss(y,i)
-    dy=zeros(length(y[1,:]));
-
-    dy[1]=0; #m
-    dy[2]=0; #beta
-    dy[3]=0; #psi
-    #dy[4]=1.0/2.0*(0.0*y[i,1]+Der(y,i,2))-dissipation6(y,i)[4]; #psi,x
-    dy[4]=1.0/2.0*(0.0*y[i,1]+Der(y,i,2))-dissipation6(y,i)[4]; #psi,x
-
-    return dy
-end
-
-function boundaryTM(y,i)
+function boundarySF(y,i)
     dy=zeros(length(y[1,:]));
     dy[1]=1.0; #f
     return dy
@@ -229,33 +226,32 @@ end
 
 # Defining the function in the RHS of the evolution equation system
 
-function TMRHS(y,t)
+function SF_RHS(y,t)
     L=length(R)
     dy=zeros((L,length(y[1,:])));
 
 
-    y[4:L-3,1]=rk4wrapper(TMconstraint_f,f0,R1,t);
-    
-    
-    y=ghost(y)
+    #y[4:L-3,1]=rk4wrapper(SFconstraint_f,f0,R1,t);    
+    #y=ghost(y)
 
-    global state_array[:,1] = y[:,1]
+    #global state_array[:,1] = y[:,1]
         
-        for i in 4:(L-3)
-                dy[i,:]=bulkTMdiss(y,i);
-        end
+    for i in 4:(L-3)
+            dy[i,:]=bulkSFdiss(y,i);
+            #dy[i,4]=bulkSFdiss(y,i);
+    end
 
 
-    #dy[4,:]=boundaryTM(y,4);
-    #dy[L-3,:]=boundaryTM(y,L-3);
+    #dy[4,:]=boundarySF(y,4);
+    #dy[L-3,:]=boundarySF(y,L-3);
 
 
     #outer boundary
     #dy[L-3,2]=2.0/10.0*pi*cos(2.0*pi/10.0*(R[L-2]*2.0+t));#y[L-2,1];
-    dy[L-3,2]=2.0/10.0*pi*cos(2.0*pi/10.0*(R[L-3]*2.0+t))#+1/2*y[L-2,1]; # +1/2f, ie +1/2*y[l-2,1]
+    "dy[L-3,2]=2.0/10.0*pi*cos(2.0*pi/10.0*(R[L-3]*2.0+t))#+1/2*y[L-2,1]; # +1/2f, ie +1/2*y[l-2,1]
     dy[L-2,2]=extrapolate_out(dy[L-6,2], dy[L-5,2], dy[L-4,2], dy[L-3,2])
     dy[L-1,2]=extrapolate_out(dy[L-5,2], dy[L-4,2], dy[L-3,2], dy[L-2,2])
-    dy[L,2]=extrapolate_out(dy[L-4,2], dy[L-3,2], dy[L-2,2], dy[L-1,2])
+    dy[L,2]=extrapolate_out(dy[L-4,2], dy[L-3,2], dy[L-2,2], dy[L-1,2])"
     return dy
 end
 
