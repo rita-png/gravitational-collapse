@@ -179,15 +179,32 @@ int(x) = floor(Int, x)
 # Initial data for psibar and psi
 SFconstraint_psibar(psibar0,R1)=-sin.(R1)
 
-# Test Model RHSs for the bulk equations.
-# (3.6.16)
-#SFconstraint_m(m0,R1,time)=2*pi .* R1 .^2 *(1 .- 2 .* (1 .- R1) ./ R1 .* state_array[int.(R1 ./ dx .+ 1),1]) * ((1 .- R1) ./ R1 .* state_array[int.(R1./dx.+1),4] .- state_array[int.(R1./dx.+1),3] ./ R1^2)^2
+# Test Model RHSs for the bulk equations (3.6.16)
 
 #COMMENTED SFconstraint_m(beta0,R1,time)=2*pi ./ R1 .^2 .* (1-2*(1 .- R1) .* state_array[int.(R1 ./ dx .+ 1),1] ./ R1) .* (state_array[int.(R1 ./ dx .+ 1),3] .+ (R1 .- 1) R1 .* state_array[int.(R1 ./ dx .+ 1),4]) .^2
 
-#SFconstraint_beta(beta0,R1,time)=2*pi .* R1 .* (1 .- R1) * ((1 .- R1) ./ R1 .* state_array[int.(R1./dx.+1),4] .- state_array[int.(R1./dx.+1),3] ./ R1^2)^2
-#COMMENTED SFconstraint_beta(m0,R1,time)=2*pi ./ R1 .^3 .*(R1 .+ 2 .* (R1 .- 1) .* state_array[int.(R1 ./ dx .+ 1),1] ) .* (state_array[int.(R1 ./ dx .+ 1),3] .+ (R1 .- 1) .* R1 .* state_array[int.(R1 ./ dx .+ 1),4]) .^2
+function SFconstraint_beta(beta0,R1,time)
+    if R1<3
+        z = 0
+        print("R=0!!!")
+    else
+        z = 2 .* pi .* (1 .- R1) ./ R1 .^3 .* (state_array[int.(R1 ./ dx .+ 1),3] .+ (R1 .- 1) .* R1 .* state_array[int.(R1 ./ dx .+ 1),4]) .^2
+    end
 
+    return z
+end
+
+
+function SFconstraint_m(m0,R1,time)
+    if R1<3
+        z = 0
+        print("R=0!!!")
+    else
+        z = 2*pi .* (R1 .+ 2 .* (R1 .- 1) .* state_array[int.(R1 ./ dx .+ 1),1]) ./ R1 .^3 .* (state_array[int.(R1 ./ dx .+ 1),3] .+ (R1 .- 1) .* R1 .* state_array[int.(R1 ./ dx .+ 1),4]) .^2
+    end
+
+    return z
+end
 
 "function globalfunc()
     return  R1 .* state_array[4:L-3,4]
