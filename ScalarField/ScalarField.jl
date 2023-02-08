@@ -148,8 +148,6 @@ int(x) = floor(Int, x)
 
 # Test Model RHSs for the bulk equations (3.6.16)
 
-#COMMENTED SFconstraint_m(beta0,R1,time)=2*pi ./ R1 .^2 .* (1-2*(1 .- R1) .* state_array[int.(R1 ./ dx .+ 1),1] ./ R1) .* (state_array[int.(R1 ./ dx .+ 1),3] .+ (R1 .- 1) R1 .* state_array[int.(R1 ./ dx .+ 1),4]) .^2
-
 function SFconstraint_beta(beta0,R1,time)
     if R1<10^(-7)
         z = 0
@@ -183,10 +181,13 @@ function bulkSF(y,i)
     dy[1]=0; #m
     dy[2]=0; #beta
     dy[3]=0; #psi
-    #dy[4]=1.0/2.0*(0.0*y[i,1]+Der(y,i,2)); #psi,x
-    dy[4]=-1.0/2.0*exp(2.0*y[i,2])*((2.0*exp(2.0*(R[i]-y[i,3]+R[i]*y[i,3])*y[i,2]/R[i])*(R[i]-1.0)^2*(R[i]*((R[i]-1.0)*Der(y,i,1)+R[i]*Der(y,i,2))+y[i,1]*(1.0+2.0*(R[i]-1.0)*R[i]*Der(y,i,2))))/R[i]^2 -
-    ((-1.0+R[i])^3*(R[i]+2.0*(R[i]-1.0)*y[i,1])*Der(y,i,3))/R[i]^2 - ((1.0-R[i])^3*(1.0-2.0*(R[i]-1.0)^2*Der(y,i,1))*Der(y,i,3))/R[i] - (2.0*(R[i]-1.0)^4*(R[i]+2.0*(R[i]-1.0)*y[i,1])*Der(y,i,2)*Der(y,i,3))/R[i]
-    - (DDer(y,i,3)) - (2.0*(R[i]-1.0)*y[i,1]*DDer(y,i,3))/R[i]); #psi,x
+    if i<5 #for i<3 I get a NaN
+        dy[4]=0.0  # WRITE BOXOPERATOR APPROX HERE
+    else
+        dy[4]=-1.0/2.0*exp(2.0*y[i,2])#*((2.0*exp(2.0*(R[i]-y[i,3]+R[i]*y[i,3])*y[i,2]/R[i])*(R[i]-1.0)^2*(R[i]*((R[i]-1.0)*Der(y,i,1)+R[i]*Der(y,i,2))+y[i,1]*(1.0+2.0*(R[i]-1.0)*R[i]*Der(y,i,2))))/R[i]^2 - ((-1.0+R[i])^3*(R[i]+2.0*(R[i]-1.0)*y[i,1])*Der(y,i,3))/R[i]^2 - ((1.0-R[i])^3*(1.0-2.0*(R[i]-1.0)^2*Der(y,i,1))*Der(y,i,3))/R[i] - (2.0*(R[i]-1.0)^4*(R[i]+2.0*(R[i]-1.0)*y[i,1])*Der(y,i,2)*Der(y,i,3))/R[i] - (DDer(y,i,3)) - (2.0*(R[i]-1.0)*y[i,1]*DDer(y,i,3))/R[i]); #psi,x
+        
+    end
+    println("i = ", i, " dy[4] = ", dy[4])
     return dy
 end
 
@@ -196,8 +197,7 @@ function bulkSFdiss(y,i)
     dy[1]=0; #m
     dy[2]=0; #beta
     dy[3]=0; #psi
-    #dy[4]=1.0/2.0*(0.0*y[i,1]+Der(y,i,2))-dissipation6(y,i)[4]; #psi,x
-    
+
     #dy[4]=-1.0/2.0*exp(2.0*beta)*((2.0*exp(2*(x-psi+x*psi)*beta/x)*(x-1)^2*(x*((x-1)*Dm+x*Dbeta)+m*(1+2*(x-1)*x*Dbeta)))/x^2 - ((-1.0+x)^3*(x+2.0*(x-1.0)*m)*Dpsi)/x^2 - ((1-x)^3*(1-2*(x-1)^2*Dm)*Dpsi)/x - (2*(x-1)^4*(x+2(x-1)*m)*Dbeta*Dpsi)/x - (DDpsi)- (2*(x-1)*m*DDpsi)/x)
     # x = R[i]
     # m = y[i,1]
@@ -212,7 +212,7 @@ function bulkSFdiss(y,i)
         ((-1.0+R[i])^3*(R[i]+2.0*(R[i]-1.0)*y[i,1])*Der(y,i,3))/R[i]^2 - ((1.0-R[i])^3*(1.0-2.0*(R[i]-1.0)^2*Der(y,i,1))*Der(y,i,3))/R[i] - (2.0*(R[i]-1.0)^4*(R[i]+2.0*(R[i]-1.0)*y[i,1])*Der(y,i,2)*Der(y,i,3))/R[i]
         - (DDer(y,i,3)) - (2.0*(R[i]-1.0)*y[i,1]*DDer(y,i,3))/R[i]) - dissipation6(y,i)[4]; #psi,x
     else
-        dy[4]=0 # WRITE BOXOPERATOR APPROX HERE
+        dy[4]=1 # WRITE BOXOPERATOR APPROX HERE
     end
 
     return dy
@@ -237,7 +237,7 @@ function SF_RHS(y,t)
     #global state_array[:,1] = y[:,1]
         
     for i in 4:(L-3)
-            dy[i,:]=bulkSFdiss(y,i);
+            dy[i,:]=bulkSF(y,i);
             #dy[i,4]=bulkSFdiss(y,i);
     end
 
@@ -245,8 +245,18 @@ function SF_RHS(y,t)
     #dy[4,:]=boundarySF(y,4);
     #dy[L-3,:]=boundarySF(y,L-3);
 
-
+    #inner boundary
+    dy[1,4]=0
+    dy[2,4]=0
+    dy[3,4]=0
+    dy[4,4]=0
+    
     #outer boundary
+    dy[L-3,4]=0
+    dy[L-2,4]=0
+    dy[L-1,4]=0
+    dy[L,4]=0
+    
     #dy[L-3,2]=2.0/10.0*pi*cos(2.0*pi/10.0*(R[L-2]*2.0+t));#y[L-2,1];
     "dy[L-3,2]=2.0/10.0*pi*cos(2.0*pi/10.0*(R[L-3]*2.0+t))#+1/2*y[L-2,1]; # +1/2f, ie +1/2*y[l-2,1]
     dy[L-2,2]=extrapolate_out(dy[L-6,2], dy[L-5,2], dy[L-4,2], dy[L-3,2])
