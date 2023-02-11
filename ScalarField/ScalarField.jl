@@ -71,20 +71,35 @@ function rungekutta4molstep(f,y00,T,w::Int64,ex)
     #y = zeros(length(R),2);
     y = y00;
         h = dt; # only for equally spaced grid in time and space, otherwise (T[w+1] - T[w])
-        k1 = f(y[:,:], T[w])
+        k1 = f(y[:,:], T[w],y00)
         """println(T[w])
         println(T[w]+ h/2)
         println(T[w]+ h)"""
         k1=ghost(k1)
-        k2 = f(y[:,:] + k1 * h/2, T[w] + h/2)
+        k2 = f(y[:,:] + k1 * h/2, T[w] + h/2,y00)
         k2=ghost(k2)
-        k3 = f(y[:,:] + k2 * h/2, T[w] + h/2)
+        k3 = f(y[:,:] + k2 * h/2, T[w] + h/2,y00)
         k3=ghost(k3)
-        k4 = f(y[:,:] + k3 * h, T[w] + h)
+        k4 = f(y[:,:] + k3 * h, T[w] + h,y00)
         k4=ghost(k4)
         y[:,:] = y[:,:] + (h/6) * (k1 + 2*k2 + 2*k3 + k4)
     return ghost(y[:,:])
 end
+
+"""function rk4wrapper(f,y0,x,u, statearray_data)
+    n = length(x)
+    y = zeros(n)
+    y[1] = y0;
+    for i in 1:n-1
+        h = x[2] .- x[1]
+        k1 = f(y[i], x[i],u, statearray_data)
+        k2 = f(y[i] .+ k1 * h/2, x[i] .+ h/2,u, statearray_data)
+        k3 = f(y[i] .+ k2 * h/2, x[i] .+ h/2,u, statearray_data)
+        k4 = f(y[i] .+ k3 * h, x[i] .+ h,u, statearray_data)
+        y[i+1] = y[i] .+ (h/6) * (k1 .+ 2*k2 .+ 2*k3 .+ k4)
+    end
+    return y
+end"""
 
 function rk4wrapper(f,y0,x,u)
     n = length(x)
@@ -100,7 +115,6 @@ function rk4wrapper(f,y0,x,u)
     end
     return y
 end
-
 
 
 #ghosts
@@ -143,19 +157,21 @@ DDer(y,i,k)=(-y[i+2,k]+16*y[i+1,k]-30*y[i,k]+16*y[i-1,k]-y[i-2,k])/(12*(R[i+1]-R
 
 int(x) = floor(Int, x)
 
-# Initial data for psibar and psi
-#SFconstraint_psibar(psibar0,R1)=-sin.(R1)
 
 # Test Model RHSs for the bulk equations (3.6.16)
 
-function SFconstraint_beta(beta0,R1,time)
+function SFconstraint_beta(beta0,R1,time) # y is statearray_data
     if R1<10^(-7)
         z = 0
         print("R=0!!!")
     else
-        z = 2 .* pi .* (1 .- R1) ./ R1 .^3 .* (state_array[int.(R1 ./ dx .+ 1),3] .+ (R1 .- 1) .* R1 .* state_array[int.(R1 ./ dx .+ 1),4]) .^2
+        #z = 2 .* pi .* (1 .- R1) ./ R1 .^3 .* (state_array[int.(R1 ./ dx .+ 1),3] .+ (R1 .- 1) .* R1 .* state_array[int.(R1 ./ dx .+ 1),4]) .^2
+        z = 2 .* pi .* (1 ./ R1.^3 .- 1 ./ R1.^2) .* (state_array[int.(R1 ./ dx .+ 1),3] .+ (R1 .- 1) .* R1 .* state_array[int.(R1 ./ dx .+ 1),4]) .^2
+        #z = 2 .* pi .* (1 .- R1) ./ R1 .^3 .* (y[int.(R1 ./ dx .+ 4),3] .+ (R1 .- 1) .* R1 .* y[int.(R1 ./ dx .+ 4),4]) .^2
     end
 
+
+    #print(y[:,1])
     return z
 end
 
@@ -166,6 +182,7 @@ function SFconstraint_m(m0,R1,time)
         print("R=0!!!")
     else
         z = 2*pi .* (R1 .+ 2 .* (R1 .- 1) .* state_array[int.(R1 ./ dx .+ 1),1]) ./ R1 .^3 .* (state_array[int.(R1 ./ dx .+ 1),3] .+ (R1 .- 1) .* R1 .* state_array[int.(R1 ./ dx .+ 1),4]) .^2
+        #z = 2*pi .* (R1 .+ 2 .* (R1 .- 1) .* y[int.(R1 ./ dx .+ 4),1]) ./ R1 .^3 .* (y[int.(R1 ./ dx .+ 4),3] .+ (R1 .- 1) .* R1 .* y[int.(R1 ./ dx .+ 4),4]) .^2
     end
 
     return z
@@ -181,13 +198,30 @@ function bulkSF(y,i)
     dy[1]=0; #m
     dy[2]=0; #beta
     dy[3]=0; #psi
+    
     if i<5 #for i<3 I get a NaN
-        dy[4]=0.0  # WRITE BOXOPERATOR APPROX HERE
+        dy[4]=5  # WRITE BOXOPERATOR APPROX HERE
+
+    elseif R[i]>0.95
+        #dy[4]=1.0/2.0*exp(2.0*y[i,2])* DDer(y,i,3); #psi,x
+        dy[4]=5
+
+
     else
-        dy[4]=-1.0/2.0*exp(2.0*y[i,2])*((2.0*exp(2.0*(R[i]-y[i,3]+R[i]*y[i,3])*y[i,2]/R[i])*(R[i]-1.0)^2*(R[i]*((R[i]-1.0)*Der(y,i,1)+R[i]*Der(y,i,2))+y[i,1]*(1.0+2.0*(R[i]-1.0)*R[i]*Der(y,i,2))))/R[i]^2 - ((-1.0+R[i])^3*(R[i]+2.0*(R[i]-1.0)*y[i,1])*Der(y,i,3))/R[i]^2 - ((1.0-R[i])^3*(1.0-2.0*(R[i]-1.0)^2*Der(y,i,1))*Der(y,i,3))/R[i] - (2.0*(R[i]-1.0)^4*(R[i]+2.0*(R[i]-1.0)*y[i,1])*Der(y,i,2)*Der(y,i,3))/R[i] - (DDer(y,i,3)) - (2.0*(R[i]-1.0)*y[i,1]*DDer(y,i,3))/R[i]); #psi,x
+        #dy[4]=1.0/2.0*exp(2.0*y[i,2])* DDer(y,i,3); #psi,x
+        dy[4]=5
+
+
+        """println("i = ", i, " dy[4] = ", dy[4])
+        println(" DDer(y,i,3) = ", DDer(y,i,3))
+        println("num = ", (-y[i+2,3]+16*y[i+1,3]-30*y[i,3]+16*y[i-1,3]-y[i-2,3]))
+        println(-y[i+2,3],16*y[i+1,3],30*y[i,3],16*y[i-1,3],y[i-2,3])"""
         
+
+        #dy[4]=-1.0/2.0*exp(2.0*y[i,2])*((2.0*exp(2.0*(R[i]-y[i,3]+R[i]*y[i,3])*y[i,2]/R[i])*(R[i]-1.0)^2*(R[i]*((R[i]-1.0)*Der(y,i,1)+R[i]*Der(y,i,2))+y[i,1]*(1.0+2.0*(R[i]-1.0)*R[i]*Der(y,i,2))))/R[i]^2 - ((-1.0+R[i])^3*(R[i]+2.0*(R[i]-1.0)*y[i,1])*Der(y,i,3))/R[i]^2 - ((1.0-R[i])^3*(1.0-2.0*(R[i]-1.0)^2*Der(y,i,1))*Der(y,i,3))/R[i] - (2.0*(R[i]-1.0)^4*(R[i]+2.0*(R[i]-1.0)*y[i,1])*Der(y,i,2)*Der(y,i,3))/R[i] - (DDer(y,i,3)) - (2.0*(R[i]-1.0)*y[i,1]*DDer(y,i,3))/R[i]); #psi,x
+        #dy[4]=1.0/2.0*exp(2.0*y[i,2])* DDer(y,i,3); #psi,x
     end
-    println("i = ", i, " dy[4] = ", dy[4])
+    
     return dy
 end
 
@@ -226,12 +260,12 @@ end
 
 # Defining the function in the RHS of the evolution equation system
 
-function SF_RHS(y,t)
+function SF_RHS(y,t, statearray_data)
     L=length(R)
     dy=zeros((L,length(y[1,:])));
 
 
-    #y[4:L-3,1]=rk4wrapper(SFconstraint_f,f0,R1,t);    
+    #y[4:L-3,1]=rk4wrapper(SFconstraint_f,f0,R1,t,statearray_data);    
     #y=ghost(y)
 
     #global state_array[:,1] = y[:,1]
