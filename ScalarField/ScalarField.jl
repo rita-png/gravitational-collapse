@@ -151,6 +151,12 @@ function dissipation4(y,i)
 end
 
 
+#2nd order  dissipation, added to 1st order scheme ##NEW##
+function dissipation2(y,i)
+        delta2=(y[i+1,:]-2*y[i,:]+y[i-1,:]);
+    return (-1)^1*epsilon*1/(dx)*delta2
+end
+
 # Discretization of derivatives
 Der(y,i,k)=(-y[i+2,k]+8*y[i+1,k]-8*y[i-1,k]+y[i-2,k])/(12*(R[i+1]-R[i])); #4th order
 DDer(y,i,k)=(-y[i+2,k]+16*y[i+1,k]-30*y[i,k]+16*y[i-1,k]-y[i-2,k])/(12*(R[i+1]-R[i])^2); #4th order
@@ -200,16 +206,16 @@ function bulkSF(y,i)
     dy[3]=0; #psi
     
     if i<5 #for i<3 I get a NaN
-        dy[4]=5  # WRITE BOXOPERATOR APPROX HERE
+        dy[4]=exp(2.0*y[i,2])-dissipation2(y,i)[4];
 
     elseif R[i]>0.95
-        #dy[4]=1.0/2.0*exp(2.0*y[i,2])* DDer(y,i,3); #psi,x
-        dy[4]=5
+        dy[4]=1#1.0/2.0*exp(2.0*y[i,2])* Der(y,i,4)-dissipation2(y,i)[4]; #psi,x
 
 
     else
-        #dy[4]=1.0/2.0*exp(2.0*y[i,2])* DDer(y,i,3); #psi,x
-        dy[4]=5
+        #dy[4]=1.0/2.0*exp(2.0*y[i,2])* Der(y,i,4) - dissipation2(y,i)[4]; 
+        dy[4]=1#-1.0/2.0*exp(2.0*y[i,2])*((2.0*exp(2.0*(R[i]-y[i,3]+R[i]*y[i,3])*y[i,2]/R[i])*(R[i]-1.0)^2*(R[i]*((R[i]-1.0)*Der(y,i,1)+R[i]*Der(y,i,2))+y[i,1]*(1.0+2.0*(R[i]-1.0)*R[i]*Der(y,i,2))))/R[i]^2 - ((-1.0+R[i])^3*(R[i]+2.0*(R[i]-1.0)*y[i,1])*y[i,4])/R[i]^2 - ((1.0-R[i])^3*(1.0-2.0*(R[i]-1.0)^2*Der(y,i,1))*y[i,4])/R[i] - (2.0*(R[i]-1.0)^4*(R[i]+2.0*(R[i]-1.0)*y[i,1])*Der(y,i,2)*y[i,4])/R[i] - (Der(y,i,4)) - (2.0*(R[i]-1.0)*y[i,1]*Der(y,i,4))/R[i]) #- dissipation6(y,i)[4];
+
 
 
         """println("i = ", i, " dy[4] = ", dy[4])
@@ -217,15 +223,12 @@ function bulkSF(y,i)
         println("num = ", (-y[i+2,3]+16*y[i+1,3]-30*y[i,3]+16*y[i-1,3]-y[i-2,3]))
         println(-y[i+2,3],16*y[i+1,3],30*y[i,3],16*y[i-1,3],y[i-2,3])"""
         
-
-        #dy[4]=-1.0/2.0*exp(2.0*y[i,2])*((2.0*exp(2.0*(R[i]-y[i,3]+R[i]*y[i,3])*y[i,2]/R[i])*(R[i]-1.0)^2*(R[i]*((R[i]-1.0)*Der(y,i,1)+R[i]*Der(y,i,2))+y[i,1]*(1.0+2.0*(R[i]-1.0)*R[i]*Der(y,i,2))))/R[i]^2 - ((-1.0+R[i])^3*(R[i]+2.0*(R[i]-1.0)*y[i,1])*Der(y,i,3))/R[i]^2 - ((1.0-R[i])^3*(1.0-2.0*(R[i]-1.0)^2*Der(y,i,1))*Der(y,i,3))/R[i] - (2.0*(R[i]-1.0)^4*(R[i]+2.0*(R[i]-1.0)*y[i,1])*Der(y,i,2)*Der(y,i,3))/R[i] - (DDer(y,i,3)) - (2.0*(R[i]-1.0)*y[i,1]*DDer(y,i,3))/R[i]); #psi,x
-        #dy[4]=1.0/2.0*exp(2.0*y[i,2])* DDer(y,i,3); #psi,x
     end
     
     return dy
 end
 
-function bulkSFdiss(y,i)
+"function bulkSFdiss(y,i)
     dy=zeros(length(y[1,:]));
 
     dy[1]=0; #m
@@ -250,7 +253,7 @@ function bulkSFdiss(y,i)
     end
 
     return dy
-end
+end"
 
 function boundarySF(y,i)
     dy=zeros(length(y[1,:]));
