@@ -206,15 +206,15 @@ function bulkSF(y,i)
     dy[3]=0; #psi
     
     if i<5 #for i<3 I get a NaN
-        dy[4]=exp(2.0*y[i,2])-dissipation2(y,i)[4];
+        dy[4]=0#exp(2.0*y[i,2])-dissipation2(y,i)[4];
 
     elseif R[i]>0.95
-        dy[4]=1#1.0/2.0*exp(2.0*y[i,2])* Der(y,i,4)-dissipation2(y,i)[4]; #psi,x
+        dy[4]=1.0/2.0*exp(2.0*y[i,2])* Der(y,i,4)-dissipation2(y,i)[4]; #psi,x
 
 
     else
         #dy[4]=1.0/2.0*exp(2.0*y[i,2])* Der(y,i,4) - dissipation2(y,i)[4]; 
-        dy[4]=1#-1.0/2.0*exp(2.0*y[i,2])*((2.0*exp(2.0*(R[i]-y[i,3]+R[i]*y[i,3])*y[i,2]/R[i])*(R[i]-1.0)^2*(R[i]*((R[i]-1.0)*Der(y,i,1)+R[i]*Der(y,i,2))+y[i,1]*(1.0+2.0*(R[i]-1.0)*R[i]*Der(y,i,2))))/R[i]^2 - ((-1.0+R[i])^3*(R[i]+2.0*(R[i]-1.0)*y[i,1])*y[i,4])/R[i]^2 - ((1.0-R[i])^3*(1.0-2.0*(R[i]-1.0)^2*Der(y,i,1))*y[i,4])/R[i] - (2.0*(R[i]-1.0)^4*(R[i]+2.0*(R[i]-1.0)*y[i,1])*Der(y,i,2)*y[i,4])/R[i] - (Der(y,i,4)) - (2.0*(R[i]-1.0)*y[i,1]*Der(y,i,4))/R[i]) #- dissipation6(y,i)[4];
+        dy[4]=-1.0/2.0*exp(2.0*y[i,2])*((2.0*exp(2.0*(R[i]-y[i,3]+R[i]*y[i,3])*y[i,2]/R[i])*(R[i]-1.0)^2*(R[i]*((R[i]-1.0)*Der(y,i,1)+R[i]*Der(y,i,2))+y[i,1]*(1.0+2.0*(R[i]-1.0)*R[i]*Der(y,i,2))))/R[i]^2 - ((-1.0+R[i])^3*(R[i]+2.0*(R[i]-1.0)*y[i,1])*y[i,4])/R[i]^2 - ((1.0-R[i])^3*(1.0-2.0*(R[i]-1.0)^2*Der(y,i,1))*y[i,4])/R[i] - (2.0*(R[i]-1.0)^4*(R[i]+2.0*(R[i]-1.0)*y[i,1])*Der(y,i,2)*y[i,4])/R[i] - (Der(y,i,4)) - (2.0*(R[i]-1.0)*y[i,1]*Der(y,i,4))/R[i]) - dissipation2(y,i)[4];
 
 
 
