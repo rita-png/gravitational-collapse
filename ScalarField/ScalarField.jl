@@ -206,7 +206,7 @@ function bulkSF(y,i)
     dy[3]=0; #psi
     
     if i<5 #for i<3 I get a NaN
-        dy[4]=0#exp(2.0*y[i,2])-dissipation2(y,i)[4];
+        dy[4]=exp(2.0*y[i,2])-dissipation2(y,i)[4];
 
     elseif R[i]>0.95
         dy[4]=1.0/2.0*exp(2.0*y[i,2])* Der(y,i,4)-dissipation2(y,i)[4]; #psi,x
