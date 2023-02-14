@@ -169,7 +169,6 @@ int(x) = floor(Int, x)
 function SFconstraint_beta(beta0,R1,time) # y is statearray_data
     if R1<10^(-7)
         z = 0
-        print("R=0!!!")
     else
         #z = 2 .* pi .* (1 .- R1) ./ R1 .^3 .* (state_array[int.(R1 ./ dx .+ 1),3] .+ (R1 .- 1) .* R1 .* state_array[int.(R1 ./ dx .+ 1),4]) .^2
         z = 2 .* pi .* (1 ./ R1.^3 .- 1 ./ R1.^2) .* (state_array[int.(R1 ./ dx .+ 1),3] .+ (R1 .- 1) .* R1 .* state_array[int.(R1 ./ dx .+ 1),4]) .^2
@@ -181,11 +180,15 @@ function SFconstraint_beta(beta0,R1,time) # y is statearray_data
     return z
 end
 
+function SFconstraint_4(beta0,R1,time) # y is statearray_data
+    z= R1.^2
+    return z
+end
+
 
 function SFconstraint_m(m0,R1,time)
     if R1<10^(-7)
         z = 0
-        print("R=0!!!")
     else
         z = 2*pi .* (R1 .+ 2 .* (R1 .- 1) .* state_array[int.(R1 ./ dx .+ 1),1]) ./ R1 .^3 .* (state_array[int.(R1 ./ dx .+ 1),3] .+ (R1 .- 1) .* R1 .* state_array[int.(R1 ./ dx .+ 1),4]) .^2
         #z = 2*pi .* (R1 .+ 2 .* (R1 .- 1) .* y[int.(R1 ./ dx .+ 4),1]) ./ R1 .^3 .* (y[int.(R1 ./ dx .+ 4),3] .+ (R1 .- 1) .* R1 .* y[int.(R1 ./ dx .+ 4),4]) .^2
@@ -206,54 +209,23 @@ function bulkSF(y,i)
     dy[3]=0; #psi
     
     if i<5 #for i<3 I get a NaN
-        dy[4]=exp(2.0*y[i,2])-dissipation2(y,i)[4];
+        dy[4]=0;#-dissipation2(y,i)[4];
 
     elseif R[i]>0.95
-        dy[4]=1.0/2.0*exp(2.0*y[i,2])* Der(y,i,4)-dissipation2(y,i)[4]; #psi,x
+        dy[4]=1.0/2.0*exp(2.0*y[i,2])* Der(y,i,4);#-dissipation2(y,i)[4]; #psi,x
 
 
     else
         #dy[4]=1.0/2.0*exp(2.0*y[i,2])* Der(y,i,4) - dissipation2(y,i)[4]; 
-        dy[4]=-1.0/2.0*exp(2.0*y[i,2])*((2.0*exp(2.0*(R[i]-y[i,3]+R[i]*y[i,3])*y[i,2]/R[i])*(R[i]-1.0)^2*(R[i]*((R[i]-1.0)*Der(y,i,1)+R[i]*Der(y,i,2))+y[i,1]*(1.0+2.0*(R[i]-1.0)*R[i]*Der(y,i,2))))/R[i]^2 - ((-1.0+R[i])^3*(R[i]+2.0*(R[i]-1.0)*y[i,1])*y[i,4])/R[i]^2 - ((1.0-R[i])^3*(1.0-2.0*(R[i]-1.0)^2*Der(y,i,1))*y[i,4])/R[i] - (2.0*(R[i]-1.0)^4*(R[i]+2.0*(R[i]-1.0)*y[i,1])*Der(y,i,2)*y[i,4])/R[i] - (Der(y,i,4)) - (2.0*(R[i]-1.0)*y[i,1]*Der(y,i,4))/R[i]) - dissipation2(y,i)[4];
+        dy[4]=-1.0/2.0*exp(2.0*y[i,2])*((-2.0*(-1.0+R[i])^3*y[i,3]*(R[i]*((R[i]-1.0)*Der(y,i,1)+R[i]*Der(y,i,2))+y[i,1]*(1.0+2.0*(R[i]-1.0)*R[i]*Der(y,i,2))))/R[i]^3 - ((1.0-R[i])^3*(-R[i]-2.0*(R[i]-1.0)*y[i,1] + (-1+R[i])^2 *R[i]*(1-2*Der(y,i,1)+2*(R[i]-2*y[i,1])*Der(y,i,2)))*y[i,4])/R[i]^2 - ((R[i]+2.0*(R[i]-1.0)*y[i,1])*Der(y,i,4))/R[i]);# - dissipation2(y,i)[4];
 
-
-
-        """println("i = ", i, " dy[4] = ", dy[4])
-        println(" DDer(y,i,3) = ", DDer(y,i,3))
-        println("num = ", (-y[i+2,3]+16*y[i+1,3]-30*y[i,3]+16*y[i-1,3]-y[i-2,3]))
-        println(-y[i+2,3],16*y[i+1,3],30*y[i,3],16*y[i-1,3],y[i-2,3])"""
         
     end
     
     return dy
 end
 
-"function bulkSFdiss(y,i)
-    dy=zeros(length(y[1,:]));
 
-    dy[1]=0; #m
-    dy[2]=0; #beta
-    dy[3]=0; #psi
-
-    #dy[4]=-1.0/2.0*exp(2.0*beta)*((2.0*exp(2*(x-psi+x*psi)*beta/x)*(x-1)^2*(x*((x-1)*Dm+x*Dbeta)+m*(1+2*(x-1)*x*Dbeta)))/x^2 - ((-1.0+x)^3*(x+2.0*(x-1.0)*m)*Dpsi)/x^2 - ((1-x)^3*(1-2*(x-1)^2*Dm)*Dpsi)/x - (2*(x-1)^4*(x+2(x-1)*m)*Dbeta*Dpsi)/x - (DDpsi)- (2*(x-1)*m*DDpsi)/x)
-    # x = R[i]
-    # m = y[i,1]
-    # beta = y[i,2]
-    # Dm = Der(y,i,1)
-    # Dbeta = Der(y,i,2)
-    # Dpsi = Der(y,i,3)
-    # DDpsi = DDer(y,i,3)
-    
-    if i>3
-        dy[4]=-1.0/2.0*exp(2.0*y[i,2])*((2.0*exp(2.0*(R[i]-y[i,3]+R[i]*y[i,3])*y[i,2]/R[i])*(R[i]-1.0)^2*(R[i]*((R[i]-1.0)*Der(y,i,1)+R[i]*Der(y,i,2))+y[i,1]*(1.0+2.0*(R[i]-1.0)*R[i]*Der(y,i,2))))/R[i]^2 -
-        ((-1.0+R[i])^3*(R[i]+2.0*(R[i]-1.0)*y[i,1])*Der(y,i,3))/R[i]^2 - ((1.0-R[i])^3*(1.0-2.0*(R[i]-1.0)^2*Der(y,i,1))*Der(y,i,3))/R[i] - (2.0*(R[i]-1.0)^4*(R[i]+2.0*(R[i]-1.0)*y[i,1])*Der(y,i,2)*Der(y,i,3))/R[i]
-        - (DDer(y,i,3)) - (2.0*(R[i]-1.0)*y[i,1]*DDer(y,i,3))/R[i]) - dissipation6(y,i)[4]; #psi,x
-    else
-        dy[4]=1 # WRITE BOXOPERATOR APPROX HERE
-    end
-
-    return dy
-end"
 
 function boundarySF(y,i)
     dy=zeros(length(y[1,:]));
@@ -263,12 +235,12 @@ end
 
 # Defining the function in the RHS of the evolution equation system
 
-function SF_RHS(y,t, statearray_data)
+function SF_RHS(y,t)
     L=length(R)
     dy=zeros((L,length(y[1,:])));
 
 
-    #y[4:L-3,1]=rk4wrapper(SFconstraint_f,f0,R1,t,statearray_data);    
+    #y[4:L-3,1]=rk4wrapper(SFconstraint_f,f0,R1,t);    
     #y=ghost(y)
 
     #global state_array[:,1] = y[:,1]
