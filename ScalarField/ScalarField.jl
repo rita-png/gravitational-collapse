@@ -166,22 +166,20 @@ int(x) = floor(Int, x)
 
 # Test Model RHSs for the bulk equations (3.6.16)
 
-function SFconstraint_beta(beta0,R1,time) # y is statearray_data
-    if R1<10^(-7)
+function SFconstraint_beta(beta0,RR) # y is statearray_data
+    if RR<0.1
         z = 0
     else
-        #z = 2 .* pi .* (1 .- R1) ./ R1 .^3 .* (state_array[int.(R1 ./ dx .+ 1),3] .+ (R1 .- 1) .* R1 .* state_array[int.(R1 ./ dx .+ 1),4]) .^2
-        z = 2 .* pi .* (1 ./ R1.^3 .- 1 ./ R1.^2) .* (state_array[int.(R1 ./ dx .+ 1),3] .+ (R1 .- 1) .* R1 .* state_array[int.(R1 ./ dx .+ 1),4]) .^2
+        z = 2 .* pi .* (1 .- RR) ./ RR .^3 .* (state_array[int.(RR ./ dx .+ 1),3] .+ (RR .- 1) .* RR .* state_array[int.(RR ./ dx .+ 1),4]) .^2
         #z = 2 .* pi .* (1 .- R1) ./ R1 .^3 .* (y[int.(R1 ./ dx .+ 4),3] .+ (R1 .- 1) .* R1 .* y[int.(R1 ./ dx .+ 4),4]) .^2
     end
 
-
-    #print(y[:,1])
     return z
 end
 
-function SFconstraint_4(beta0,R1,time) # y is statearray_data
-    z= 0.1.*sin.(R1.*40)
+function SFconstraint_4(beta0,R1) # y is statearray_data
+    z=state_array[int.(R1 ./ dx .+ 1),3]
+    #z= 0.1.*sin.(R1.*40)
     return z
 end
 
