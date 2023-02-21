@@ -26,6 +26,38 @@ function scalar_field(R)
     return z
 end
 
+function init_gaussian(x,r0,sigma,A)
+    n=length(x);
+    if n==1
+        z= A * (x/(1-x))^2 * exp(-((x/(1-x)-r0)/sigma)^2)
+    else
+        z=zeros(n);
+        for i in 1:n
+            if i<n-4
+                z[i] = A * (x[i]/(1-x[i]))^2 * exp(-((x[i]/(1-x[i])-r0)/sigma)^2)
+            else
+                z[n]=0 #avoid NaN for x=1
+            end
+        end
+    end
+    return z
+end
+
+function init_gaussian_der(x,r0,sigma,A)
+    n=length(x);
+    if n==1
+        z= 2*A * x/(1-x)^3 * exp(-((x/(1-x)-r0)/sigma)^2) * (1 - x/(1-x) * (x/(1-x) - r0) / sigma^2)
+    else
+        z=zeros(n);
+        for i in 1:n
+            if i<n-4 #avoid NaN for x=1, otherwise, it's 0
+                z[i] = 2*A * x[i]/(1-x[i])^3 * exp(-((x[i]/(1-x[i])-r0)/sigma)^2) * (1 - x[i]/(1-x[i]) * (x[i]/(1-x[i]) - r0) / sigma^2)
+            end
+        end
+    end
+    return z
+end
+
 # Interpolation
 
 function interpolate(x,x1,x2,y1,y2)
@@ -194,9 +226,6 @@ function SFconstraint_m(m0,R1,time)
     return z
 end
 
-"function globalfunc()
-    return  R1 .* state_array[4:L-3,4]
-end"
 
 function bulkSF(y,i)
     dy=zeros(length(y[1,:]));
@@ -206,15 +235,13 @@ function bulkSF(y,i)
     dy[3]=0; #psi
     
     if i<5 #for i<3 I get a NaN
-        dy[4]=exp(2.0*y[i,2])-dissipation2(y,i)[4];#try 0 but I think it will be worse, careful
+        dy[4]=exp(2.0*y[i,2])-dissipation4(y,i)[4];#try 0 but I think it will be worse, careful
 
-    elseif R[i]>0.95
-        dy[4]=1.0/2.0*exp(2.0*y[i,2])* Der(y,i,4)-dissipation2(y,i)[4]; #psi,x
-
+    #elseif R[i]>0.95
+    #    dy[4]=1.0/2.0*exp(2.0*y[i,2])* Der(y,i,4);#-dissipation4(y,i)[4]; dissipation here is unstable
 
     else
-        #dy[4]=1.0/2.0*exp(2.0*y[i,2])* Der(y,i,4) - dissipation2(y,i)[4]; 
-        dy[4]=-1.0/2.0*exp(2.0*y[i,2])*((2.0*exp(2.0*(R[i]-y[i,3]+R[i]*y[i,3])*y[i,2]/R[i])*(R[i]-1.0)^2*(R[i]*((R[i]-1.0)*Der(y,i,1)+R[i]*Der(y,i,2))+y[i,1]*(1.0+2.0*(R[i]-1.0)*R[i]*Der(y,i,2))))/R[i]^2 - ((-1.0+R[i])^3*(R[i]+2.0*(R[i]-1.0)*y[i,1])*y[i,4])/R[i]^2 - ((1.0-R[i])^3*(1.0-2.0*(R[i]-1.0)^2*Der(y,i,1))*y[i,4])/R[i] - (2.0*(R[i]-1.0)^4*(R[i]+2.0*(R[i]-1.0)*y[i,1])*Der(y,i,2)*y[i,4])/R[i] - (Der(y,i,4)) - (2.0*(R[i]-1.0)*y[i,1]*Der(y,i,4))/R[i]) - dissipation2(y,i)[4];
+        dy[4]=-1.0/2.0*exp(2.0*y[i,2])*((2.0*exp(2.0*(R[i]-y[i,3]+R[i]*y[i,3])*y[i,2]/R[i])*(R[i]-1.0)^2*(R[i]*((R[i]-1.0)*Der(y,i,1)+R[i]*Der(y,i,2))+y[i,1]*(1.0+2.0*(R[i]-1.0)*R[i]*Der(y,i,2))))/R[i]^2 - ((-1.0+R[i])^3*(R[i]+2.0*(R[i]-1.0)*y[i,1])*y[i,4])/R[i]^2 - ((1.0-R[i])^3*(1.0-2.0*(R[i]-1.0)^2*Der(y,i,1))*y[i,4])/R[i] - (2.0*(R[i]-1.0)^4*(R[i]+2.0*(R[i]-1.0)*y[i,1])*Der(y,i,2)*y[i,4])/R[i] - (Der(y,i,4)) - (2.0*(R[i]-1.0)*y[i,1]*Der(y,i,4))/R[i]) - dissipation4(y,i)[4];
 
 
     end
@@ -243,7 +270,6 @@ function SF_RHS(y,t, statearray_data)
         
     for i in 4:(L-3)
             dy[i,:]=bulkSF(y,i);
-            #dy[i,4]=bulkSFdiss(y,i);
     end
 
 
