@@ -177,9 +177,9 @@ end
 
 
 #4th order  dissipation, added to 2nd order original scheme
-function dissipation4(y,i)
+function dissipation4(y,i,eps)
         delta4=(y[i+2,:]-4*y[i+1,:]+6*y[i,:]-4*y[i-1,:]+y[i-2,:]);
-    return (-1)^2*epsilon*1/(dx)*delta4
+    return (-1)^2*eps*1/(dx)*delta4
 end
 
 
@@ -233,18 +233,9 @@ function bulkSF(y,i)
     dy[1]=0; #m
     dy[2]=0; #beta
     dy[3]=0; #psi
+
     
-    if i<5 #for i<3 I get a NaN
-        dy[4]=exp(2.0*y[i,2])-dissipation4(y,i)[4];#try 0 but I think it will be worse, careful
-
-    #elseif R[i]>0.95
-    #    dy[4]=1.0/2.0*exp(2.0*y[i,2])* Der(y,i,4);#-dissipation4(y,i)[4]; dissipation here is unstable
-
-    else
-        dy[4]=-1.0/2.0*exp(2.0*y[i,2])*((2.0*exp(2.0*(R[i]-y[i,3]+R[i]*y[i,3])*y[i,2]/R[i])*(R[i]-1.0)^2*(R[i]*((R[i]-1.0)*Der(y,i,1)+R[i]*Der(y,i,2))+y[i,1]*(1.0+2.0*(R[i]-1.0)*R[i]*Der(y,i,2))))/R[i]^2 - ((-1.0+R[i])^3*(R[i]+2.0*(R[i]-1.0)*y[i,1])*y[i,4])/R[i]^2 - ((1.0-R[i])^3*(1.0-2.0*(R[i]-1.0)^2*Der(y,i,1))*y[i,4])/R[i] - (2.0*(R[i]-1.0)^4*(R[i]+2.0*(R[i]-1.0)*y[i,1])*Der(y,i,2)*y[i,4])/R[i] - (Der(y,i,4)) - (2.0*(R[i]-1.0)*y[i,1]*Der(y,i,4))/R[i]) - dissipation4(y,i)[4];
-
-
-    end
+    dy[4]=-1.0/2.0*exp(2.0*y[i,2])*((2.0*exp(2.0*(R[i]-y[i,3]+R[i]*y[i,3])*y[i,2]/R[i])*(R[i]-1.0)^2*(R[i]*((R[i]-1.0)*Der(y,i,1)+R[i]*Der(y,i,2))+y[i,1]*(1.0+2.0*(R[i]-1.0)*R[i]*Der(y,i,2))))/R[i]^2 - ((-1.0+R[i])^3*(R[i]+2.0*(R[i]-1.0)*y[i,1])*y[i,4])/R[i]^2 - ((1.0-R[i])^3*(1.0-2.0*(R[i]-1.0)^2*Der(y,i,1))*y[i,4])/R[i] - (2.0*(R[i]-1.0)^4*(R[i]+2.0*(R[i]-1.0)*y[i,1])*Der(y,i,2)*y[i,4])/R[i] - (Der(y,i,4)) - (2.0*(R[i]-1.0)*y[i,1]*Der(y,i,4))/R[i]) - dissipation4(y,i,0.1)[4];
     
     return dy
 end
@@ -269,10 +260,22 @@ function SF_RHS(y,t, statearray_data)
     #global state_array[:,1] = y[:,1]
         
     for i in 4:(L-3)
+        if i<5 #left, for i<3 I get a NaN
+
+            #dy[i,1] to dy[i,3] stay 0
+            dy[i,4]=exp(2.0*y[i,2])-dissipation4(y,i,0.1)[4];#try 0 but I think it will be worse, careful
+
+        elseif R[i] < 0.85 #bulk
             dy[i,:]=bulkSF(y,i);
+
+        else #right
+            #dy[i,4]=1.0/2.0*exp(2.0*y[i,2])* Der(y,i,4)-dissipation4(y,i,eps=0.3)[4]; #PROXIMO PASSO É FAZER EVOLUCAO COM ESTA DISSIPACAO AQUI p >0.8, A ULTIMA VEZ FOI SEM DISS PARA >0.85. instabilities a partir de T >800
+            dy[i,4]=-1.0/2.0*exp(2.0*y[i,2])*((2.0*exp(2.0*(R[i]-y[i,3]+R[i]*y[i,3])*y[i,2]/R[i])*(R[i]-1.0)^2*(R[i]*((R[i]-1.0)*Der(y,i,1)+R[i]*Der(y,i,2))+y[i,1]*(1.0+2.0*(R[i]-1.0)*R[i]*Der(y,i,2))))/R[i]^2 - ((-1.0+R[i])^3*(R[i]+2.0*(R[i]-1.0)*y[i,1])*y[i,4])/R[i]^2 - ((1.0-R[i])^3*(1.0-2.0*(R[i]-1.0)^2*Der(y,i,1))*y[i,4])/R[i] - (2.0*(R[i]-1.0)^4*(R[i]+2.0*(R[i]-1.0)*y[i,1])*Der(y,i,2)*y[i,4])/R[i] - (Der(y,i,4)) - (2.0*(R[i]-1.0)*y[i,1]*Der(y,i,4))/R[i]);# - dissipation4(y,i,0.05)[4];
+
+        end
     end
 
-
+    
     #dy[4,:]=boundarySF(y,4);
     #dy[L-3,:]=boundarySF(y,L-3);
 
@@ -283,10 +286,10 @@ function SF_RHS(y,t, statearray_data)
     dy[4,4]=0
     
     #outer boundary
-    dy[L-3,4]=0#?
-    dy[L-2,4]=0
-    dy[L-1,4]=0
-    dy[L,4]=0
+    dy[L-3,4]=1.0/2.0*exp(2.0*y[L-3,2])* Der(y,L-3,4)
+    dy[L-2,4]=1.0/2.0*exp(2.0*y[L-3,2])* Der(y,L-2,4)
+    dy[L-1,4]=extrapolate_out(dy[L-5,4], dy[L-4,4], dy[L-3,4], dy[L-2,4])
+    dy[L,4]=extrapolate_out(dy[L-4,4], dy[L-3,4], dy[L-2,4], dy[L-1,4])
     
     #dy[L-3,2]=2.0/10.0*pi*cos(2.0*pi/10.0*(R[L-2]*2.0+t));#y[L-2,1];
     "dy[L-3,2]=2.0/10.0*pi*cos(2.0*pi/10.0*(R[L-3]*2.0+t))#+1/2*y[L-2,1]; # +1/2f, ie +1/2*y[l-2,1]
