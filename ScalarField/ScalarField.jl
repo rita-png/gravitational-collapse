@@ -70,7 +70,6 @@ function rungekutta4(f,y0,T)
     return y
 end
 
-
 # Runge Kutta integrator used for the method of lines
 
 function rungekutta4molstep(f,y00,T,w::Int64,ex)
@@ -107,7 +106,7 @@ end
     return y
 end"""
 
-function rk4wrapper(f,y0,x,u)
+function rk4wrapper(f,y0,x,u) # u depicts T array or state_array data
     n = length(x)
     y = zeros(n)
     y[1] = y0;
@@ -172,31 +171,68 @@ int(x) = floor(Int, x)
 
 # Test Model RHSs for the bulk equations (3.6.16)
 
-function SFconstraint_beta(beta0,XX) # y is statearray_data
-    if XX<10^(-15)
-        z = 2.0 .* pi
-    elseif abs.(XX .- 1.0)<10^(-15)
-        z=0
+
+function SFconstraint_beta(beta0,x1,data)
+
+    spl = scipyinterpolate.splrep(X[4:L-3], data[:,3],k=5)
+    psi(x) = scipyinterpolate.splev(x, spl)
+
+    spl = scipyinterpolate.splrep(X[4:L-3], data[:,4],k=5)
+    derpsi(x) = scipyinterpolate.splev(x, spl)
+    
+    if x1<10^(-15)
+        z = 0.0
+    elseif abs.(x1 .- 1.0)<10^(-15)
+        z = 0.0
     else
-        z = 2.0 .* pi .* (1.0 .- XX) .* state_array[int.(XX ./ dx .+ 1),2] #./ XX .^3.0 #.* (state_array[int.(XX ./ dx .+ 1),3] .+ (XX .- 1) .* XX .* state_array[int.(XX ./ dx .+ 1),4]) .^2
-        #z = 2 .* pi .* (1 .- X1) ./ X1 .^3 .* (y[int.(X1 ./ dx .+ 4),3] .+ (X1 .- 1) .* X1 .* y[int.(X1 ./ dx .+ 4),4]) .^2
+        z = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (psi(x1) .+ (x1 .- 1) .* x1 .* derpsi(x1)) .^2
     end
 
     return z
 end
 
-function SFconstraint_4(beta0,X1) # y is statearray_data
-    z=state_array[int.(X1 ./ dx .+ 1),3]
+function SFconstraint_4(beta0,x1,data)
+    
+    spl = scipyinterpolate.splrep(X[4:L-3], data[:,2],k=5)
+    beta(x) = scipyinterpolate.splev(x, spl)
+
+    spl = scipyinterpolate.splrep(X[4:L-3], data[:,3],k=5)
+    psi(x) = scipyinterpolate.splev(x, spl)
+
+    spl = scipyinterpolate.splrep(X[4:L-3], data[:,4],k=5)
+    derpsi(x) = scipyinterpolate.splev(x, spl)
+
+    z = 2.0 .* pi .* (1.0 .- x1) .* psi(x1)#.* beta(x1) #./ x1 .^3.0 #.* (psi(x1) .+ (x1 .- 1) .* x1 .* derpsi(x1)) .^2
+    
+    #z = f(x1)
+    #z = 2.0 .* pi .* (1.0 .- x1) .* f(x1)
+    
+    #interp data[:,2], find interp func f
+    #state_array[int.(XX ./ dx .+ 1),2] is now f[x1]
+
+    #z=data[i,3]
+    #z=state_array[int.(X1 ./ dx .+ 1),3]
     #z= 0.1.*sin.(X1.*40)
     return z
 end
 
-function SFconstraint_m(m0,X1,time)
-    if X1<10^(-15)
+function SFconstraint_m(m0,x1,data)
+
+    spl = scipyinterpolate.splrep(X[4:L-3], data[:,1],k=5)
+    m(x) = scipyinterpolate.splev(x, spl)
+
+    spl = scipyinterpolate.splrep(X[4:L-3], data[:,3],k=5)
+    psi(x) = scipyinterpolate.splev(x, spl)
+
+    spl = scipyinterpolate.splrep(X[4:L-3], data[:,4],k=5)
+    derpsi(x) = scipyinterpolate.splev(x, spl)
+
+    if x1<10^(-15)
         z = 0
+    elseif abs.(x1 .- 1.0)<10^(-15)
+        z = 2*pi .* (psi(x1)) .^2
     else
-        z = 2*pi .* (X1 .+ 2 .* (X1 .- 1) .* state_array[int.(X1 ./ dx .+ 1),1]) ./ X1 .^3 .* (state_array[int.(X1 ./ dx .+ 1),3] .+ (X1 .- 1) .* X1 .* state_array[int.(X1 ./ dx .+ 1),4]) .^2
-        #z = 2*pi .* (X1 .+ 2 .* (X1 .- 1) .* y[int.(X1 ./ dx .+ 4),1]) ./ X1 .^3 .* (y[int.(X1 ./ dx .+ 4),3] .+ (X1 .- 1) .* X1 .* y[int.(X1 ./ dx .+ 4),4]) .^2
+        z = 2*pi .* (x1 .+ 2 .* (x1 .- 1) .* m(x1)) ./ x1 .^3 .* (psi(x1) .+ (x1 .- 1) .* x1 .* derpsi(x1)) .^2
     end
 
     return z
