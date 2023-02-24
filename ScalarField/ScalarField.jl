@@ -1,31 +1,5 @@
 # Definition of gaussian initial data functions
 
-function scalar_spaceder(R)
-    n=length(R);
-    if n==1
-        z=(Amp* (-((2 *exp(-((R - c)^2/sigma^2)) *(R - c))/sigma^2) - (2*exp(-((R + c)^2/sigma^2))* (R + c))/sigma^2))/(sqrt(2*pi)* sigma);
-    else
-    z=zeros(n);
-    for i in 1:n
-        z[i]=(Amp* (-((2 *exp(-((R[i] - c)^2/sigma^2)) *(R[i] - c))/sigma^2) - (2*exp(-((R[i] + c)^2/sigma^2))* (R[i] + c))/sigma^2))/(sqrt(2*pi)* sigma);
-    end
-    end
-    return z
-end
-
-function scalar_field(R)
-    n=length(R);
-    if n==1
-        z= (Amp* (exp(-((R - c)/sigma)^2) + exp(-((R + c)/sigma)^2))/(sqrt(2*pi)*sigma))
-    else
-        z=zeros(n);
-        for i in 1:n
-            z[i]= (Amp* (exp(-((R[i] - c)/sigma)^2) + exp(-((R[i] + c)/sigma)^2))/(sqrt(2*pi)*sigma))
-        end
-    end
-    return z
-end
-
 function init_gaussian(x,r0,sigma,A)
     n=length(x);
     if n==1
@@ -100,7 +74,7 @@ end
 # Runge Kutta integrator used for the method of lines
 
 function rungekutta4molstep(f,y00,T,w::Int64,ex)
-    #y = zeros(length(R),2);
+    #y = zeros(length(X),2);
     y = y00;
         h = dt; # only for equally spaced grid in time and space, otherwise (T[w+1] - T[w])
         k1 = f(y[:,:], T[w],y00)
@@ -190,37 +164,39 @@ function dissipation2(y,i)
 end
 
 # Discretization of derivatives
-Der(y,i,k)=(-y[i+2,k]+8*y[i+1,k]-8*y[i-1,k]+y[i-2,k])/(12*(R[i+1]-R[i])); #4th order
-DDer(y,i,k)=(-y[i+2,k]+16*y[i+1,k]-30*y[i,k]+16*y[i-1,k]-y[i-2,k])/(12*(R[i+1]-R[i])^2); #4th order
+Der(y,i,k)=(-y[i+2,k]+8*y[i+1,k]-8*y[i-1,k]+y[i-2,k])/(12*(X[i+1]-X[i])); #4th order
+DDer(y,i,k)=(-y[i+2,k]+16*y[i+1,k]-30*y[i,k]+16*y[i-1,k]-y[i-2,k])/(12*(X[i+1]-X[i])^2); #4th order
 
 int(x) = floor(Int, x)
 
 
 # Test Model RHSs for the bulk equations (3.6.16)
 
-function SFconstraint_beta(beta0,RR) # y is statearray_data
-    if RR<0.1
-        z = 0
+function SFconstraint_beta(beta0,XX) # y is statearray_data
+    if XX<10^(-15)
+        z = 2.0 .* pi
+    elseif abs.(XX .- 1.0)<10^(-15)
+        z=0
     else
-        z = 2 .* pi .* (1 .- RR) ./ RR .^3 .* (state_array[int.(RR ./ dx .+ 1),3] .+ (RR .- 1) .* RR .* state_array[int.(RR ./ dx .+ 1),4]) .^2
-        #z = 2 .* pi .* (1 .- R1) ./ R1 .^3 .* (y[int.(R1 ./ dx .+ 4),3] .+ (R1 .- 1) .* R1 .* y[int.(R1 ./ dx .+ 4),4]) .^2
+        z = 2.0 .* pi .* (1.0 .- XX) .* state_array[int.(XX ./ dx .+ 1),2] #./ XX .^3.0 #.* (state_array[int.(XX ./ dx .+ 1),3] .+ (XX .- 1) .* XX .* state_array[int.(XX ./ dx .+ 1),4]) .^2
+        #z = 2 .* pi .* (1 .- X1) ./ X1 .^3 .* (y[int.(X1 ./ dx .+ 4),3] .+ (X1 .- 1) .* X1 .* y[int.(X1 ./ dx .+ 4),4]) .^2
     end
 
     return z
 end
 
-function SFconstraint_4(beta0,R1) # y is statearray_data
-    z=state_array[int.(R1 ./ dx .+ 1),3]
-    #z= 0.1.*sin.(R1.*40)
+function SFconstraint_4(beta0,X1) # y is statearray_data
+    z=state_array[int.(X1 ./ dx .+ 1),3]
+    #z= 0.1.*sin.(X1.*40)
     return z
 end
 
-function SFconstraint_m(m0,R1,time)
-    if R1<10^(-7)
+function SFconstraint_m(m0,X1,time)
+    if X1<10^(-15)
         z = 0
     else
-        z = 2*pi .* (R1 .+ 2 .* (R1 .- 1) .* state_array[int.(R1 ./ dx .+ 1),1]) ./ R1 .^3 .* (state_array[int.(R1 ./ dx .+ 1),3] .+ (R1 .- 1) .* R1 .* state_array[int.(R1 ./ dx .+ 1),4]) .^2
-        #z = 2*pi .* (R1 .+ 2 .* (R1 .- 1) .* y[int.(R1 ./ dx .+ 4),1]) ./ R1 .^3 .* (y[int.(R1 ./ dx .+ 4),3] .+ (R1 .- 1) .* R1 .* y[int.(R1 ./ dx .+ 4),4]) .^2
+        z = 2*pi .* (X1 .+ 2 .* (X1 .- 1) .* state_array[int.(X1 ./ dx .+ 1),1]) ./ X1 .^3 .* (state_array[int.(X1 ./ dx .+ 1),3] .+ (X1 .- 1) .* X1 .* state_array[int.(X1 ./ dx .+ 1),4]) .^2
+        #z = 2*pi .* (X1 .+ 2 .* (X1 .- 1) .* y[int.(X1 ./ dx .+ 4),1]) ./ X1 .^3 .* (y[int.(X1 ./ dx .+ 4),3] .+ (X1 .- 1) .* X1 .* y[int.(X1 ./ dx .+ 4),4]) .^2
     end
 
     return z
@@ -235,7 +211,7 @@ function bulkSF(y,i)
     dy[3]=0; #psi
 
     
-    dy[4]=-1.0/2.0*exp(2.0*y[i,2])*((2.0*exp(2.0*(R[i]-y[i,3]+R[i]*y[i,3])*y[i,2]/R[i])*(R[i]-1.0)^2*(R[i]*((R[i]-1.0)*Der(y,i,1)+R[i]*Der(y,i,2))+y[i,1]*(1.0+2.0*(R[i]-1.0)*R[i]*Der(y,i,2))))/R[i]^2 - ((-1.0+R[i])^3*(R[i]+2.0*(R[i]-1.0)*y[i,1])*y[i,4])/R[i]^2 - ((1.0-R[i])^3*(1.0-2.0*(R[i]-1.0)^2*Der(y,i,1))*y[i,4])/R[i] - (2.0*(R[i]-1.0)^4*(R[i]+2.0*(R[i]-1.0)*y[i,1])*Der(y,i,2)*y[i,4])/R[i] - (Der(y,i,4)) - (2.0*(R[i]-1.0)*y[i,1]*Der(y,i,4))/R[i]) - dissipation4(y,i,0.1)[4];
+    dy[4]=-1.0/2.0*exp(2.0*y[i,2])*((2.0*exp(2.0*(X[i]-y[i,3]+X[i]*y[i,3])*y[i,2]/X[i])*(X[i]-1.0)^2*(X[i]*((X[i]-1.0)*Der(y,i,1)+X[i]*Der(y,i,2))+y[i,1]*(1.0+2.0*(X[i]-1.0)*X[i]*Der(y,i,2))))/X[i]^2 - ((-1.0+X[i])^3*(X[i]+2.0*(X[i]-1.0)*y[i,1])*y[i,4])/X[i]^2 - ((1.0-X[i])^3*(1.0-2.0*(X[i]-1.0)^2*Der(y,i,1))*y[i,4])/X[i] - (2.0*(X[i]-1.0)^4*(X[i]+2.0*(X[i]-1.0)*y[i,1])*Der(y,i,2)*y[i,4])/X[i] - (Der(y,i,4)) - (2.0*(X[i]-1.0)*y[i,1]*Der(y,i,4))/X[i]) - dissipation4(y,i,0.1)[4];
     
     return dy
 end
@@ -250,11 +226,11 @@ end
 # Defining the function in the RHS of the evolution equation system
 
 function SF_RHS(y,t, statearray_data)
-    L=length(R)
+    L=length(X)
     dy=zeros((L,length(y[1,:])));
 
 
-    #y[4:L-3,1]=rk4wrapper(SFconstraint_f,f0,R1,t,statearray_data);    
+    #y[4:L-3,1]=rk4wrapper(SFconstraint_f,f0,X1,t,statearray_data);    
     #y=ghost(y)
 
     #global state_array[:,1] = y[:,1]
@@ -265,12 +241,12 @@ function SF_RHS(y,t, statearray_data)
             #dy[i,1] to dy[i,3] stay 0
             dy[i,4]=exp(2.0*y[i,2])-dissipation4(y,i,0.1)[4];#try 0 but I think it will be worse, careful
 
-        elseif R[i] < 0.85 #bulk
+        elseif X[i] < 0.80 #bulk
             dy[i,:]=bulkSF(y,i);
 
         else #right
-            #dy[i,4]=1.0/2.0*exp(2.0*y[i,2])* Der(y,i,4)-dissipation4(y,i,eps=0.3)[4]; #PROXIMO PASSO É FAZER EVOLUCAO COM ESTA DISSIPACAO AQUI p >0.8, A ULTIMA VEZ FOI SEM DISS PARA >0.85. instabilities a partir de T >800
-            dy[i,4]=-1.0/2.0*exp(2.0*y[i,2])*((2.0*exp(2.0*(R[i]-y[i,3]+R[i]*y[i,3])*y[i,2]/R[i])*(R[i]-1.0)^2*(R[i]*((R[i]-1.0)*Der(y,i,1)+R[i]*Der(y,i,2))+y[i,1]*(1.0+2.0*(R[i]-1.0)*R[i]*Der(y,i,2))))/R[i]^2 - ((-1.0+R[i])^3*(R[i]+2.0*(R[i]-1.0)*y[i,1])*y[i,4])/R[i]^2 - ((1.0-R[i])^3*(1.0-2.0*(R[i]-1.0)^2*Der(y,i,1))*y[i,4])/R[i] - (2.0*(R[i]-1.0)^4*(R[i]+2.0*(R[i]-1.0)*y[i,1])*Der(y,i,2)*y[i,4])/R[i] - (Der(y,i,4)) - (2.0*(R[i]-1.0)*y[i,1]*Der(y,i,4))/R[i]);# - dissipation4(y,i,0.05)[4];
+            #dy[i,4]=1.0/2.0*exp(2.0*y[i,2])* Der(y,i,4)-dissipation4(y,i,eps=0.3)[4];
+            dy[i,4]=-1.0/2.0*exp(2.0*y[i,2])*((2.0*exp(2.0*(X[i]-y[i,3]+X[i]*y[i,3])*y[i,2]/X[i])*(X[i]-1.0)^2*(X[i]*((X[i]-1.0)*Der(y,i,1)+X[i]*Der(y,i,2))+y[i,1]*(1.0+2.0*(X[i]-1.0)*X[i]*Der(y,i,2))))/X[i]^2 - ((-1.0+X[i])^3*(X[i]+2.0*(X[i]-1.0)*y[i,1])*y[i,4])/X[i]^2 - ((1.0-X[i])^3*(1.0-2.0*(X[i]-1.0)^2*Der(y,i,1))*y[i,4])/X[i] - (2.0*(X[i]-1.0)^4*(X[i]+2.0*(X[i]-1.0)*y[i,1])*Der(y,i,2)*y[i,4])/X[i] - (Der(y,i,4)) - (2.0*(X[i]-1.0)*y[i,1]*Der(y,i,4))/X[i]) - dissipation4(y,i,0.3)[4];# - dissipation4(y,i,0.05)[4];
 
         end
     end
@@ -281,21 +257,17 @@ function SF_RHS(y,t, statearray_data)
 
     #inner boundary
     dy[1,4]=0
-    dy[2,4]=0#try dy[2,:]=0
+    dy[2,4]=0
     dy[3,4]=0
     dy[4,4]=0
     
     #outer boundary
-    dy[L-3,4]=1.0/2.0*exp(2.0*y[L-3,2])* Der(y,L-3,4)
-    dy[L-2,4]=1.0/2.0*exp(2.0*y[L-3,2])* Der(y,L-2,4)
+    dy[L-3,4]=extrapolate_out(dy[L-7,4], dy[L-6,4], dy[L-5,4], dy[L-4,4])#1.0/2.0*exp(2.0*y[L-3,2])* Der(y,L-3,4)
+    dy[L-2,4]=extrapolate_out(dy[L-6,4], dy[L-5,4], dy[L-4,4], dy[L-3,4])#1.0/2.0*exp(2.0*y[L-3,2])* Der(y,L-2,4)
     dy[L-1,4]=extrapolate_out(dy[L-5,4], dy[L-4,4], dy[L-3,4], dy[L-2,4])
     dy[L,4]=extrapolate_out(dy[L-4,4], dy[L-3,4], dy[L-2,4], dy[L-1,4])
     
-    #dy[L-3,2]=2.0/10.0*pi*cos(2.0*pi/10.0*(R[L-2]*2.0+t));#y[L-2,1];
-    "dy[L-3,2]=2.0/10.0*pi*cos(2.0*pi/10.0*(R[L-3]*2.0+t))#+1/2*y[L-2,1]; # +1/2f, ie +1/2*y[l-2,1]
-    dy[L-2,2]=extrapolate_out(dy[L-6,2], dy[L-5,2], dy[L-4,2], dy[L-3,2])
-    dy[L-1,2]=extrapolate_out(dy[L-5,2], dy[L-4,2], dy[L-3,2], dy[L-2,2])
-    dy[L,2]=extrapolate_out(dy[L-4,2], dy[L-3,2], dy[L-2,2], dy[L-1,2])"
+
     return dy
 end
 
