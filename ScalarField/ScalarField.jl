@@ -91,22 +91,9 @@ function rungekutta4molstep(f,y00,T,w::Int64,ex)
     return ghost(y[:,:])
 end
 
-"""function rk4wrapper(f,y0,x,u, statearray_data)
-    n = length(x)
-    y = zeros(n)
-    y[1] = y0;
-    for i in 1:n-1
-        h = x[2] .- x[1]
-        k1 = f(y[i], x[i],u, statearray_data)
-        k2 = f(y[i] .+ k1 * h/2, x[i] .+ h/2,u, statearray_data)
-        k3 = f(y[i] .+ k2 * h/2, x[i] .+ h/2,u, statearray_data)
-        k4 = f(y[i] .+ k3 * h, x[i] .+ h,u, statearray_data)
-        y[i+1] = y[i] .+ (h/6) * (k1 .+ 2*k2 .+ 2*k3 .+ k4)
-    end
-    return y
-end"""
 
-function rk4wrapper(f,y0,x,u) # u depicts T array or state_array data
+
+"function rk4wrapper(f,y0,x,u) # u depicts T array or state_array data
     n = length(x)
     y = zeros(n)
     y[1] = y0;
@@ -119,8 +106,44 @@ function rk4wrapper(f,y0,x,u) # u depicts T array or state_array data
         y[i+1] = y[i] .+ (h/6) * (k1 .+ 2*k2 .+ 2*k3 .+ k4)
     end
     return y
+end"
+
+function rk4wrapper(f,y0,x,u,spl_func) # u depicts T array or state_array data
+    n = length(x)
+    y = zeros(n)
+    y[1] = y0;
+    for i in 1:n-1
+        h = x[2] .- x[1]
+        k1 = f(y[i], x[i],u,spl_func,y[i])
+        k2 = f(y[i] .+ k1 * h/2, x[i] .+ h/2,u,spl_func,y[i])
+        k3 = f(y[i] .+ k2 * h/2, x[i] .+ h/2,u,spl_func,y[i])
+        k4 = f(y[i] .+ k3 * h, x[i] .+ h,u,spl_func,y[i])
+        y[i+1] = y[i] .+ (h/6) * (k1 .+ 2*k2 .+ 2*k3 .+ k4)
+    end
+    return y
 end
 
+function m_rk4wrapper(f,y0,x,u,spl_func) # u depicts T array or state_array data
+    n = length(x)
+    y = zeros(n)
+    y[1] = y0;
+    spl_x = []
+    spl_y = []
+
+    for i in 1:n-1
+
+        spl_m = scipyinterpolate.splrep(spl_x,spl_y,k=4) #u should be only the ones that have been in the for loop so far until i
+        m(xx) = scipyinterpolate.splev(xx, spl_m)
+
+        h = x[2] .- x[1]
+        k1 = f(y[i], x[i],u,spl_func,spl_m)
+        k2 = f(y[i] .+ k1 * h/2, x[i] .+ h/2,u,spl_func,spl_m)
+        k3 = f(y[i] .+ k2 * h/2, x[i] .+ h/2,u,spl_func,spl_m)
+        k4 = f(y[i] .+ k3 * h, x[i] .+ h,u,spl_func,spl_m)
+        y[i+1] = y[i] .+ (h/6) * (k1 .+ 2*k2 .+ 2*k3 .+ k4)
+    end
+    return y
+end
 
 #ghosts
 
@@ -172,14 +195,18 @@ int(x) = floor(Int, x)
 # Test Model RHSs for the bulk equations (3.6.16)
 
 
-function SFconstraint_beta(beta0,x1,data)
-
-    spl = scipyinterpolate.splrep(X[4:L-3], data[:,3],k=5)
+function SFconstraint_beta(beta0,x1,data,interp_funcs)
+    
+    psi = interp_funcs[1]
+    derpsi = interp_funcs[2]
+    
+    "spl = scipyinterpolate.splrep(X[4:L-3], data[:,3],k=5)
     psi(x) = scipyinterpolate.splev(x, spl)
 
     spl = scipyinterpolate.splrep(X[4:L-3], data[:,4],k=5)
-    derpsi(x) = scipyinterpolate.splev(x, spl)
-    
+    derpsi(x) = scipyinterpolate.splev(x, spl)"
+
+
     if x1<10^(-15)
         z = 0.0
     elseif abs.(x1 .- 1.0)<10^(-15)
@@ -191,7 +218,7 @@ function SFconstraint_beta(beta0,x1,data)
     return z
 end
 
-function SFconstraint_4(beta0,x1,data)
+function SFconstraint_4(beta0,x1,data,interp_funcs)
     
     spl = scipyinterpolate.splrep(X[4:L-3], data[:,2],k=5)
     beta(x) = scipyinterpolate.splev(x, spl)
@@ -216,16 +243,11 @@ function SFconstraint_4(beta0,x1,data)
     return z
 end
 
-function SFconstraint_m(m0,x1,data)
+function SFconstraint_m(m0,x1,data,interp_funcs)
 
-    spl = scipyinterpolate.splrep(X[4:L-3], data[:,1],k=5)
-    m(x) = scipyinterpolate.splev(x, spl)
-
-    spl = scipyinterpolate.splrep(X[4:L-3], data[:,3],k=5)
-    psi(x) = scipyinterpolate.splev(x, spl)
-
-    spl = scipyinterpolate.splrep(X[4:L-3], data[:,4],k=5)
-    derpsi(x) = scipyinterpolate.splev(x, spl)
+    psi = interp_funcs[1]
+    derpsi = interp_funcs[2]
+    m = y0
 
     if x1<10^(-15)
         z = 0
