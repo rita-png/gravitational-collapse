@@ -189,23 +189,37 @@ end
 Der(y,i,k)=(-y[i+2,k]+8*y[i+1,k]-8*y[i-1,k]+y[i-2,k])/(12*(X[i+1]-X[i])); #4th order
 DDer(y,i,k)=(-y[i+2,k]+16*y[i+1,k]-30*y[i,k]+16*y[i-1,k]-y[i-2,k])/(12*(X[i+1]-X[i])^2); #4th order
 
+function Der_cont(interp_func,x,i)
+
+    dx = X[i+1]-X[i]
+
+    f=interp_func
+
+    return ((-f(x+2*dx) + 8*f(x+dx) - 8*f(x-dx) + f(x-2*dx)) / (12*dx))
+
+end
+
+function DDer_cont(interp_func,x,i)
+
+    dx = X[i+1]-X[i]
+
+    f=interp_func
+
+    return ((-f(x+2*dx) + 16*f(x+dx) - 30*f(x) + 16*f(x-dx) - f(x-2*dx)) / (12*dx^2))
+
+end
+
+
 int(x) = floor(Int, x)
 
 
 # Test Model RHSs for the bulk equations (3.6.16)
 
 
-function SFconstraint_beta(beta0,x1,interp_funcs)
+function SFconstraint_beta(beta0,x1,time,interp_funcs)
     
     psi = interp_funcs[3]
     derpsi = interp_funcs[4]
-    
-    "spl = scipyinterpolate.splrep(X[4:L-3], data[:,3],k=5)
-    psi(x) = scipyinterpolate.splev(x, spl)
-
-    spl = scipyinterpolate.splrep(X[4:L-3], data[:,4],k=5)
-    derpsi(x) = scipyinterpolate.splev(x, spl)"
-
 
     if x1<10^(-15)
         z = 0.0
@@ -243,7 +257,7 @@ function SFconstraint_4(beta0,x1,data,interp_funcs)
     return z
 end
 
-function SFconstraint_m(m0,x1,interp_funcs)
+function SFconstraint_m(m0,x1,time,interp_funcs)
 
     m = interp_funcs[1]
     psi = interp_funcs[3]
@@ -261,12 +275,8 @@ function SFconstraint_m(m0,x1,interp_funcs)
 end
 
 
-function bulkSF(y,i,interp_funcs)
+function bulkSF(y,i)
     
-    m = interp_funcs[1]
-    beta = interp_funcs[2]
-    psi = interp_funcs[3]
-    derpsi = interp_funcs[4]
     
     dy=zeros(length(y[1,:]));
 
@@ -274,8 +284,7 @@ function bulkSF(y,i,interp_funcs)
     dy[2]=0; #beta
     dy[3]=0; #psi
 
-    
-    dy[4]=-1.0/2.0 .* exp.(2.0 * beta.(X[i])) .* ((2.0 * exp.(2.0 * (X[i] .- psi.(X[i]) .+ X[i] .* psi.(X[i])) .* beta.(X[i]) ./ X[i]) .* (X[i] .- 1.0) .^ 2.0 .* (X[i] .* ((X[i] .- 1.0) .* Der(y,i,1) .+ X[i] .* Der(y,i,2)) .+ m(X[i]) .* (1.0 .+ 2.0 .* (X[i] .- 1.0) .* X[i] .* Der(y,i,2)))) ./ X[i] .^ 2.0 .- ((-1.0 .+ X[i]) .^ 3.0 .* (X[i] .+ 2.0 .*(X[i] .- 1.0) .* m(X[i])) .* derpsi(X[i])) ./ X[i] .^ 2.0 .- ((1.0 .- X[i]) .^ 3.0 .* (1.0 .- 2.0 .* (X[i] .- 1.0) .^ 2.0 .* Der(y,i,1)) .* derpsi(X[i])) ./ X[i] .- (2.0 .* (X[i] .- 1.0) .^ 4.0 .* (X[i] .+ 2.0 .* (X[i] .- 1.0) .* m(X[i])) .* Der(y,i,2) .* derpsi(X[i])) ./ X[i] .- (Der(y,i,4)) .- (2.0 .* (X[i] .- 1.0) .* m(X[i]) .* Der(y,i,4)) ./ X[i]) .- dissipation4(y,i,0.1)[4];
+    dy[4]=-1.0/2.0*exp(2.0*y[i,2])*((2.0*exp(2.0*(X[i]-y[i,3]+X[i]*y[i,3])*y[i,2]/X[i])*(X[i]-1.0)^2*(X[i]*((X[i]-1.0)*Der(y,i,1)+X[i]*Der(y,i,2))+y[i,1]*(1.0+2.0*(X[i]-1.0)*X[i]*Der(y,i,2))))/X[i]^2 - ((-1.0+X[i])^3*(X[i]+2.0*(X[i]-1.0)*y[i,1])*y[i,4])/X[i]^2 - ((1.0-X[i])^3*(1.0-2.0*(X[i]-1.0)^2*Der(y,i,1))*y[i,4])/X[i] - (2.0*(X[i]-1.0)^4*(X[i]+2.0*(X[i]-1.0)*y[i,1])*Der(y,i,2)*y[i,4])/X[i] - (Der(y,i,4)) - (2.0*(X[i]-1.0)*y[i,1]*Der(y,i,4))/X[i]) - dissipation4(y,i,0.1)[4];
     
     return dy
 end
@@ -300,25 +309,25 @@ function SF_RHS(y,t,interp_funcs)
     dy=zeros((L,length(y[1,:])));
 
     
-    #i had y[i,2] which now becomes beta(X[i]) heree
+    #i had y[i,2] which now becomes beta(X[i]); Der(y,i,1) becomes Der_cont(m_func,X[i],i); X[i] remains X[i]
 
     for i in 4:(L-3)
-        if i<5 #left, for i<3 I get a NaN
+        if X[i]<10^(-15) #left
 
-            #dm(X[i]) to dy[i,3] stay 0
-            #dy[i,4]=exp.(2.0 .* beta.(X[i])) .- dissipation4(y,i,0.1)[4];#try 0 but I think it will be worse, careful
-            dy[i,:]=bulkSF(y,i,interp_funcs);
-        elseif X[i] < 0.80 #bulk
-            dy[i,:]=bulkSF(y,i,interp_funcs);
+            #dy[i,1] to dy[i,3] stay 0
+            dy[i,4]=exp(2.0*y[i,2])-dissipation4(y,i,0.1)[4];#try 0 but I think it will be worse, careful
+
+        elseif X[i] < (1-10^(-15)) #bulk
+            dy[i,:]=bulkSF(y,i);
 
         else #right
             #dy[i,4]=1.0/2.0*exp(2.0*y[i,2])* Der(y,i,4)-dissipation4(y,i,eps=0.3)[4];
-            #dy[4]=-1.0/2.0*exp.(2.0 .* beta(X[i]))*((2.0 .* exp.(2.0 .* (X[i] .- psi(X[i]) .+ X[i] .* psi(X[i])) .* beta(X[i]) ./ X[i]) .* (X[i] .- 1.0) .^ 2.0 .* (X[i] .* ((X[i] .- 1.0) .* Der(y,i,1) .+ X[i] .* Der(y,i,2)) .+ m(X[i]) .* (1.0 .+ 2.0 .* (X[i] .- 1.0) .* X[i] .* Der(y,i,2)))) ./ X[i] .^ 2.0 .- ((-1.0 .+ X[i]) .^ 3.0 .* (X[i] .+ 2.0 .*(X[i] .- 1.0) .* m(X[i])) .* derpsi(X[i])) ./ X[i] .^ 2.0 .- ((1.0 .- X[i]) .^ 3.0 .* (1.0 .- 2.0 .* (X[i] .- 1.0) .^ 2.0 .* Der(y,i,1)) .* derpsi(X[i])) ./ X[i] .- (2.0 .* (X[i] .- 1.0) .^ 4.0 .* (X[i] .+ 2.0 .* (X[i] .- 1.0) .* m(X[i])) .* Der(y,i,2) .* derpsi(X[i])) ./ X[i] .- (Der(y,i,4)) .- (2.0 .* (X[i] .- 1.0) .* m(X[i]) .* Der(y,i,4)) ./ X[i]) .- dissipation4(y,i,0.3)[4];
-            
-            dy[i,:]=bulkSF(y,i,interp_funcs);
+            dy[i,4]=-1.0/2.0*exp(2.0*y[i,2])*((2.0*exp(2.0*(X[i]-y[i,3]+X[i]*y[i,3])*y[i,2]/X[i])*(X[i]-1.0)^2*(X[i]*((X[i]-1.0)*Der(y,i,1)+X[i]*Der(y,i,2))+y[i,1]*(1.0+2.0*(X[i]-1.0)*X[i]*Der(y,i,2))))/X[i]^2 - ((-1.0+X[i])^3*(X[i]+2.0*(X[i]-1.0)*y[i,1])*y[i,4])/X[i]^2 - ((1.0-X[i])^3*(1.0-2.0*(X[i]-1.0)^2*Der(y,i,1))*y[i,4])/X[i] - (2.0*(X[i]-1.0)^4*(X[i]+2.0*(X[i]-1.0)*y[i,1])*Der(y,i,2)*y[i,4])/X[i] - (Der(y,i,4)) - (2.0*(X[i]-1.0)*y[i,1]*Der(y,i,4))/X[i]) - dissipation4(y,i,0.3)[4];# - dissipation4(y,i,0.05)[4];
+
         end
     end
 
+    ######dy[i,5]=-1.0/2.0*(1-X[i])^2*exp(2.0*y[i,2])*(1-2*y[i,1]*(1-R[i])/R[i]);#dissipation4
     
     #dy[4,:]=boundarySF(y,4);
     #dy[L-3,:]=boundarySF(y,L-3);
