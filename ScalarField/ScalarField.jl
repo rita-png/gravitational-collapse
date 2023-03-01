@@ -73,19 +73,19 @@ end
 # Runge Kutta integrator used for the method of lines
 
 function rungekutta4molstep(f,y00,T,w::Int64,ex,spl_func)
-
+    X=state_array[:,5]
     y = y00;
         h = dt; # only for equally spaced grid in time and space, otherwise (T[w+1] - T[w])
-        k1 = f(y[:,:], T[w],spl_func)
+        k1 = f(y[:,:], T[w],spl_func,X)
         """println(T[w])
         println(T[w]+ h/2)
         println(T[w]+ h)"""
         k1=ghost(k1)
-        k2 = f(y[:,:] + k1 * h/2, T[w] + h/2,spl_func)
+        k2 = f(y[:,:] + k1 * h/2, T[w] + h/2,spl_func,X)
         k2=ghost(k2)
-        k3 = f(y[:,:] + k2 * h/2, T[w] + h/2,spl_func)
+        k3 = f(y[:,:] + k2 * h/2, T[w] + h/2,spl_func,X)
         k3=ghost(k3)
-        k4 = f(y[:,:] + k3 * h, T[w] + h,spl_func)
+        k4 = f(y[:,:] + k3 * h, T[w] + h,spl_func,X)
         k4=ghost(k4)
         y[:,:] = y[:,:] + (h/6) * (k1 + 2*k2 + 2*k3 + k4)
     return ghost(y[:,:])
@@ -127,19 +127,26 @@ function m_rk4wrapper(f,y0,x,u,spl_func) # u depicts T array or state_array data
     n = length(x)
     y = zeros(n)
     y[1] = y0;
-    spl_x = []
-    spl_y = []
+
+    m_data = []
+
+    bound=10
 
     for i in 1:n-1
 
-        spl_m = scipyinterpolate.splrep(spl_x,spl_y,k=4) #u should be only the ones that have been in the for loop so far until i
-        m(xx) = scipyinterpolate.splev(xx, spl_m)
+        m_data.append(y[i])
+        m_func = 0
+
+        if i>k
+            spl_m = scipyinterpolate.splrep(x[i-bound:i-1],m_data[i-bound:i-1],k=4)
+            m_func(xx) = scipyinterpolate.splev(xx, spl_m)
+        end
 
         h = x[2] .- x[1]
-        k1 = f(y[i], x[i],u,spl_func,spl_m)
-        k2 = f(y[i] .+ k1 * h/2, x[i] .+ h/2,u,spl_func,spl_m)
-        k3 = f(y[i] .+ k2 * h/2, x[i] .+ h/2,u,spl_func,spl_m)
-        k4 = f(y[i] .+ k3 * h, x[i] .+ h,u,spl_func,spl_m)
+        k1 = f(y[i], x[i],u,spl_func,m_func,i,bound)
+        k2 = f(y[i] .+ k1 * h/2, x[i] .+ h/2,u,spl_func,m_func,i,bound)
+        k3 = f(y[i] .+ k2 * h/2, x[i] .+ h/2,u,spl_func,m_func,i,bound)
+        k4 = f(y[i] .+ k3 * h, x[i] .+ h,u,spl_func,m_func,i,bound)
         y[i+1] = y[i] .+ (h/6) * (k1 .+ 2*k2 .+ 2*k3 .+ k4)
     end
     return y
@@ -186,8 +193,8 @@ function dissipation2(y,i)
 end
 
 # Discretization of derivatives
-Der(y,i,k)=(-y[i+2,k]+8*y[i+1,k]-8*y[i-1,k]+y[i-2,k])/(12*(X[i+1]-X[i])); #4th order
-DDer(y,i,k)=(-y[i+2,k]+16*y[i+1,k]-30*y[i,k]+16*y[i-1,k]-y[i-2,k])/(12*(X[i+1]-X[i])^2); #4th order
+Der(y,i,k,X)=(-y[i+2,k]+8*y[i+1,k]-8*y[i-1,k]+y[i-2,k])/(12*(X[i+1]-X[i])); #4th order
+DDer(y,i,k,X)=(-y[i+2,k]+16*y[i+1,k]-30*y[i,k]+16*y[i-1,k]-y[i-2,k])/(12*(X[i+1]-X[i])^2); #4th order
 
 function Der_cont(interp_func,x,i)
 
@@ -257,7 +264,7 @@ function SFconstraint_4(beta0,x1,data,interp_funcs)
     return z
 end
 
-function SFconstraint_m(m0,x1,time,interp_funcs)
+"function SFconstraint_m(m0,x1,time,interp_funcs)
 
     m = interp_funcs[1]
     psi = interp_funcs[3]
@@ -272,10 +279,33 @@ function SFconstraint_m(m0,x1,time,interp_funcs)
     end
 
     return z
+end"
+
+function SFconstraint_m(m0,x1,time,interp_funcs,new_m,i,bound)
+
+    
+    if i<=bound
+        m=m = interp_funcs[1] #previous slice data
+    else
+        m=new_m #current slice data
+    end
+
+    psi = interp_funcs[3]
+    derpsi = interp_funcs[4]
+
+
+    if x1<10^(-15)
+        z = 0
+    elseif abs.(x1 .- 1.0)<10^(-15)
+        z = 2*pi .* (psi(x1)) .^2
+    else
+        z = 2*pi .* (x1 .+ 2 .* (x1 .- 1) .* m(x1)) ./ x1 .^3 .* (psi(x1) .+ (x1 .- 1) .* x1 .* derpsi(x1)) .^2
+    end
+    
+    return z
 end
 
-
-function bulkSF(y,i)
+function bulkSF(y,i,X)
     
     
     dy=zeros(length(y[1,:]));
@@ -284,8 +314,10 @@ function bulkSF(y,i)
     dy[2]=0; #beta
     dy[3]=0; #psi
 
-    dy[4]=-1.0/2.0*exp(2.0*y[i,2])*((2.0*exp(2.0*(X[i]-y[i,3]+X[i]*y[i,3])*y[i,2]/X[i])*(X[i]-1.0)^2*(X[i]*((X[i]-1.0)*Der(y,i,1)+X[i]*Der(y,i,2))+y[i,1]*(1.0+2.0*(X[i]-1.0)*X[i]*Der(y,i,2))))/X[i]^2 - ((-1.0+X[i])^3*(X[i]+2.0*(X[i]-1.0)*y[i,1])*y[i,4])/X[i]^2 - ((1.0-X[i])^3*(1.0-2.0*(X[i]-1.0)^2*Der(y,i,1))*y[i,4])/X[i] - (2.0*(X[i]-1.0)^4*(X[i]+2.0*(X[i]-1.0)*y[i,1])*Der(y,i,2)*y[i,4])/X[i] - (Der(y,i,4)) - (2.0*(X[i]-1.0)*y[i,1]*Der(y,i,4))/X[i]) - dissipation4(y,i,0.1)[4];
+    dy[4]=-1.0/2.0*exp(2.0*y[i,2])*((2.0*exp(2.0*(X[i]-y[i,3]+X[i]*y[i,3])*y[i,2]/X[i])*(X[i]-1.0)^2*(X[i]*((X[i]-1.0)*Der(y,i,1,X)+X[i]*Der(y,i,2,X))+y[i,1]*(1.0+2.0*(X[i]-1.0)*X[i]*Der(y,i,2,X))))/X[i]^2 - ((-1.0+X[i])^3*(X[i]+2.0*(X[i]-1.0)*y[i,1])*y[i,4])/X[i]^2 - ((1.0-X[i])^3*(1.0-2.0*(X[i]-1.0)^2*Der(y,i,1,X))*y[i,4])/X[i] - (2.0*(X[i]-1.0)^4*(X[i]+2.0*(X[i]-1.0)*y[i,1])*Der(y,i,2,X)*y[i,4])/X[i] - (Der(y,i,4,X)) - (2.0*(X[i]-1.0)*y[i,1]*Der(y,i,4,X))/X[i]) - dissipation4(y,i,0.1)[4];
     
+    dy[5]=0;
+
     return dy
 end
 
@@ -298,7 +330,7 @@ end
 
 # Defining the function in the RHS of the evolution equation system
 
-function SF_RHS(y,t,interp_funcs)
+function SF_RHS(y,t,interp_funcs,X)
     
     m = interp_funcs[1]
     beta = interp_funcs[2]
@@ -312,20 +344,24 @@ function SF_RHS(y,t,interp_funcs)
     #i had y[i,2] which now becomes beta(X[i]); Der(y,i,1) becomes Der_cont(m_func,X[i],i); X[i] remains X[i]
 
     for i in 4:(L-3)
-        if X[i]<10^(-15) #left
+        dy[i,4]=1
+    end
+
+
+    "for i in 4:(L-3)
+        if X[i]<10^(-7) #left
 
             #dy[i,1] to dy[i,3] stay 0
-            dy[i,4]=exp(2.0*y[i,2])-dissipation4(y,i,0.1)[4];#try 0 but I think it will be worse, careful
+            dy[i,4]=-dissipation4(y,i,0.1)[4];
 
         elseif X[i] < (1-10^(-15)) #bulk
-            dy[i,:]=bulkSF(y,i);
+            dy[i,:]=bulkSF(y,i,X);
 
         else #right
-            #dy[i,4]=1.0/2.0*exp(2.0*y[i,2])* Der(y,i,4)-dissipation4(y,i,eps=0.3)[4];
-            dy[i,4]=-1.0/2.0*exp(2.0*y[i,2])*((2.0*exp(2.0*(X[i]-y[i,3]+X[i]*y[i,3])*y[i,2]/X[i])*(X[i]-1.0)^2*(X[i]*((X[i]-1.0)*Der(y,i,1)+X[i]*Der(y,i,2))+y[i,1]*(1.0+2.0*(X[i]-1.0)*X[i]*Der(y,i,2))))/X[i]^2 - ((-1.0+X[i])^3*(X[i]+2.0*(X[i]-1.0)*y[i,1])*y[i,4])/X[i]^2 - ((1.0-X[i])^3*(1.0-2.0*(X[i]-1.0)^2*Der(y,i,1))*y[i,4])/X[i] - (2.0*(X[i]-1.0)^4*(X[i]+2.0*(X[i]-1.0)*y[i,1])*Der(y,i,2)*y[i,4])/X[i] - (Der(y,i,4)) - (2.0*(X[i]-1.0)*y[i,1]*Der(y,i,4))/X[i]) - dissipation4(y,i,0.3)[4];# - dissipation4(y,i,0.05)[4];
-
+            #dy[i,4]=-1.0/2.0*exp(2.0*y[i,2])*((2.0*exp(2.0*(X[i]-y[i,3]+X[i]*y[i,3])*y[i,2]/X[i])*(X[i]-1.0)^2*(X[i]*((X[i]-1.0)*Der(y,i,1)+X[i]*Der(y,i,2))+y[i,1]*(1.0+2.0*(X[i]-1.0)*X[i]*Der(y,i,2))))/X[i]^2 - ((-1.0+X[i])^3*(X[i]+2.0*(X[i]-1.0)*y[i,1])*y[i,4])/X[i]^2 - ((1.0-X[i])^3*(1.0-2.0*(X[i]-1.0)^2*Der(y,i,1))*y[i,4])/X[i] - (2.0*(X[i]-1.0)^4*(X[i]+2.0*(X[i]-1.0)*y[i,1])*Der(y,i,2)*y[i,4])/X[i] - (Der(y,i,4)) - (2.0*(X[i]-1.0)*y[i,1]*Der(y,i,4))/X[i]) - dissipation4(y,i,0.3)[4];# - dissipation4(y,i,0.05)[4];
+            bulkSF(y,i,X);
         end
-    end
+    end"
 
     ######dy[i,5]=-1.0/2.0*(1-X[i])^2*exp(2.0*y[i,2])*(1-2*y[i,1]*(1-R[i])/R[i]);#dissipation4
     
@@ -333,10 +369,7 @@ function SF_RHS(y,t,interp_funcs)
     #dy[L-3,:]=boundarySF(y,L-3);
 
     #inner boundary
-    dy[1,4]=0
-    dy[2,4]=0
-    dy[3,4]=0
-    dy[4,4]=0
+    
     
     #outer boundary
     dy[L-3,4]=extrapolate_out(dy[L-7,4], dy[L-6,4], dy[L-5,4], dy[L-4,4])#1.0/2.0*exp(2.0*y[L-3,2])* Der(y,L-3,4)
