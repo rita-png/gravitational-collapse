@@ -134,10 +134,12 @@ function m_rk4wrapper(f,y0,x,u,spl_func) # u depicts T array or state_array data
 
     for i in 1:n-1
 
-        m_data.append(y[i])
+        m_data = vcat(m_data,y[i]) #append
+        println("i ",i, "yi", y[i])
+        #m_data.append(y[i])
         m_func = 0
 
-        if i>k
+        if i>bound
             spl_m = scipyinterpolate.splrep(x[i-bound:i-1],m_data[i-bound:i-1],k=4)
             m_func(xx) = scipyinterpolate.splev(xx, spl_m)
         end
