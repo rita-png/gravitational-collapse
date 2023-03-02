@@ -52,8 +52,14 @@ function extrapolate_in(y0,y1,y2,y3)
 end
 
 # Updating Grid
-function update_grid(X,dx)
+function update_grid(data,dx)
     
+    #evolve grid
+    data=rungekutta4molstep(Grid_RHS,data,T,k,0,spl_funcs) #evolve X
+    data=ghost(data)
+
+    X = data[:,5]
+
     new_grid=[-3.0*dx, -2.0*dx, -dx]
 
     for i in X
@@ -61,9 +67,7 @@ function update_grid(X,dx)
             new_grid = vcat(new_grid,i) #append
         end
     end
-    new_grid = vcat(new_grid,[1+dx, 1+2.0*dx, 1+3.0*dx]) #append
-
-    #print(length(new_grid))
+    new_grid = vcat(new_grid,[1.0+dx, 1.0+2.0*dx, 1.0+3.0*dx]) #append
     
     return new_grid
 end
@@ -172,7 +176,7 @@ end
 #ghosts
 
 function ghost(y)
-    L=length(y[:,1])
+    L=length(y[:,5])
     
     #inner boundary extrapolation
     y[3,:]=extrapolate_in(y[4,:], y[5,:], y[6,:], y[7,:])
@@ -190,9 +194,9 @@ end
 
 
 #6th order dissipation, added to 4th order original scheme
-function dissipation6(y,i)
+function dissipation6(y,i,eps)
         delta6=(y[i+3,:]-6*y[i+2,:]+15*y[i+1,:]-20*y[i,:]+15*y[i-1,:]-6*y[i-2,:]+y[i-3,:]);
-    return (-1)^3*epsilon*1/(dx)*delta6
+    return (-1)^3*eps*1/(dx)*delta6
 end
 
 
@@ -215,21 +219,21 @@ DDer(y,i,k,X)=(-y[i+2,k]+16*y[i+1,k]-30*y[i,k]+16*y[i-1,k]-y[i-2,k])/(12*(X[i+1]
 
 function Der_cont(interp_func,x,i)
 
-    dx = X[i+1]-X[i]
+    dxx = X[i+1]-X[i]
 
     f=interp_func
 
-    return ((-f(x+2*dx) + 8*f(x+dx) - 8*f(x-dx) + f(x-2*dx)) / (12*dx))
+    return ((-f(x+2*dxx) + 8*f(x+dxx) - 8*f(x-dxx) + f(x-2*dxx)) / (12*dxx))
 
 end
 
 function DDer_cont(interp_func,x,i)
 
-    dx = X[i+1]-X[i]
+    dxx = X[i+1]-X[i]
 
     f=interp_func
 
-    return ((-f(x+2*dx) + 16*f(x+dx) - 30*f(x) + 16*f(x-dx) - f(x-2*dx)) / (12*dx^2))
+    return ((-f(x+2*dxx) + 16*f(x+dxx) - 30*f(x) + 16*f(x-dxx) - f(x-2*dxx)) / (12*dxx^2))
 
 end
 
@@ -256,30 +260,6 @@ function SFconstraint_beta(beta0,x1,time,interp_funcs)
     return z
 end
 
-function SFconstraint_4(beta0,x1,data,interp_funcs)
-    
-    spl = scipyinterpolate.splrep(X[4:L-3], data[:,2],k=4)
-    beta(x) = scipyinterpolate.splev(x, spl)
-
-    spl = scipyinterpolate.splrep(X[4:L-3], data[:,3],k=4)
-    psi(x) = scipyinterpolate.splev(x, spl)
-
-    spl = scipyinterpolate.splrep(X[4:L-3], data[:,4],k=4)
-    derpsi(x) = scipyinterpolate.splev(x, spl)
-
-    z = 2.0 .* pi .* (1.0 .- x1) .* psi(x1)#.* beta(x1) #./ x1 .^3.0 #.* (psi(x1) .+ (x1 .- 1) .* x1 .* derpsi(x1)) .^2
-    
-    #z = f(x1)
-    #z = 2.0 .* pi .* (1.0 .- x1) .* f(x1)
-    
-    #interp data[:,2], find interp func f
-    #state_array[int.(XX ./ dx .+ 1),2] is now f[x1]
-
-    #z=data[i,3]
-    #z=state_array[int.(X1 ./ dx .+ 1),3]
-    #z= 0.1.*sin.(X1.*40)
-    return z
-end
 
 "function SFconstraint_m(m0,x1,time,interp_funcs)
 
@@ -331,7 +311,7 @@ function bulkSF(y,i,X)
     dy[2]=0; #beta
     dy[3]=0; #psi
 
-    dy[4]=-1.0/2.0*exp(2.0*y[i,2])*((2.0*exp(2.0*(X[i]-y[i,3]+X[i]*y[i,3])*y[i,2]/X[i])*(X[i]-1.0)^2*(X[i]*((X[i]-1.0)*Der(y,i,1,X)+X[i]*Der(y,i,2,X))+y[i,1]*(1.0+2.0*(X[i]-1.0)*X[i]*Der(y,i,2,X))))/X[i]^2 - ((-1.0+X[i])^3*(X[i]+2.0*(X[i]-1.0)*y[i,1])*y[i,4])/X[i]^2 - ((1.0-X[i])^3*(1.0-2.0*(X[i]-1.0)^2*Der(y,i,1,X))*y[i,4])/X[i] - (2.0*(X[i]-1.0)^4*(X[i]+2.0*(X[i]-1.0)*y[i,1])*Der(y,i,2,X)*y[i,4])/X[i] - (Der(y,i,4,X)) - (2.0*(X[i]-1.0)*y[i,1]*Der(y,i,4,X))/X[i]) - dissipation4(y,i,0.1)[4];
+    dy[4]=-1.0/2.0*exp(2.0*y[i,2])*((2.0*exp(2.0*(X[i]-y[i,3]+X[i]*y[i,3])*y[i,2]/X[i])*(X[i]-1.0)^2*(X[i]*((X[i]-1.0)*Der(y,i,1,X)+X[i]*Der(y,i,2,X))+y[i,1]*(1.0+2.0*(X[i]-1.0)*X[i]*Der(y,i,2,X))))/X[i]^2 - ((-1.0+X[i])^3*(X[i]+2.0*(X[i]-1.0)*y[i,1])*y[i,4])/X[i]^2 - ((1.0-X[i])^3*(1.0-2.0*(X[i]-1.0)^2*Der(y,i,1,X))*y[i,4])/X[i] - (2.0*(X[i]-1.0)^4*(X[i]+2.0*(X[i]-1.0)*y[i,1])*Der(y,i,2,X)*y[i,4])/X[i] - (Der(y,i,4,X)) - (2.0*(X[i]-1.0)*y[i,1]*Der(y,i,4,X))/X[i]) - dissipation6(y,i,0.1)[4];
     
     dy[5]=0;
 
