@@ -52,7 +52,7 @@ function extrapolate_in(y0,y1,y2,y3)
 end
 
 # Updating Grid
-function update_grid(data,dx)
+function update_grid(data,dx,T,k,spl_funcs)
     
     #evolve grid
     data=rungekutta4molstep(Grid_RHS,data,T,k,0,spl_funcs) #evolve X
@@ -60,6 +60,8 @@ function update_grid(data,dx)
 
     X = data[:,5]
 
+    return X
+"""
     new_grid=[-3.0*dx, -2.0*dx, -dx]
 
     for i in X
@@ -69,7 +71,7 @@ function update_grid(data,dx)
     end
     new_grid = vcat(new_grid,[1.0+dx, 1.0+2.0*dx, 1.0+3.0*dx]) #append
     
-    return new_grid
+    return new_grid"""
 end
     
 #Building initial data with a Runge-Kutta integrator for the constraint
