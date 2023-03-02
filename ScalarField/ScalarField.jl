@@ -51,6 +51,22 @@ function extrapolate_in(y0,y1,y2,y3)
     return -y3 + 4*y2 - 6*y1 + 4*y0
 end
 
+# Updating Grid
+function update_grid(X,dx)
+    
+    new_grid=[-3.0*dx, -2.0*dx, -dx]
+
+    for i in X
+        if i>=0 && i<=1
+            new_grid = vcat(new_grid,i) #append
+        end
+    end
+    new_grid = vcat(new_grid,[1+dx, 1+2.0*dx, 1+3.0*dx]) #append
+
+    #print(length(new_grid))
+    
+    return new_grid
+end
     
 #Building initial data with a Runge-Kutta integrator for the constraint
 
@@ -135,8 +151,7 @@ function m_rk4wrapper(f,y0,x,u,spl_func) # u depicts T array or state_array data
     for i in 1:n-1
 
         m_data = vcat(m_data,y[i]) #append
-        println("i ",i, "yi", y[i])
-        #m_data.append(y[i])
+        #println("i ",i, ", yi ", y[i])
         m_func = 0
 
         if i>bound
@@ -243,13 +258,13 @@ end
 
 function SFconstraint_4(beta0,x1,data,interp_funcs)
     
-    spl = scipyinterpolate.splrep(X[4:L-3], data[:,2],k=5)
+    spl = scipyinterpolate.splrep(X[4:L-3], data[:,2],k=4)
     beta(x) = scipyinterpolate.splev(x, spl)
 
-    spl = scipyinterpolate.splrep(X[4:L-3], data[:,3],k=5)
+    spl = scipyinterpolate.splrep(X[4:L-3], data[:,3],k=4)
     psi(x) = scipyinterpolate.splev(x, spl)
 
-    spl = scipyinterpolate.splrep(X[4:L-3], data[:,4],k=5)
+    spl = scipyinterpolate.splrep(X[4:L-3], data[:,4],k=4)
     derpsi(x) = scipyinterpolate.splev(x, spl)
 
     z = 2.0 .* pi .* (1.0 .- x1) .* psi(x1)#.* beta(x1) #./ x1 .^3.0 #.* (psi(x1) .+ (x1 .- 1) .* x1 .* derpsi(x1)) .^2
@@ -345,27 +360,25 @@ function SF_RHS(y,t,interp_funcs,X)
     
     #i had y[i,2] which now becomes beta(X[i]); Der(y,i,1) becomes Der_cont(m_func,X[i],i); X[i] remains X[i]
 
-    for i in 4:(L-3)
-        dy[i,4]=1
-    end
-
-
     "for i in 4:(L-3)
-        if X[i]<10^(-7) #left
+        dy[i,4]=1
+    end"
+
+
+    for i in 4:(L-3)
+        if X[i]<10^(-7) #left #i<6
 
             #dy[i,1] to dy[i,3] stay 0
-            dy[i,4]=-dissipation4(y,i,0.1)[4];
+            dy[i,4]=0#-dissipation4(y,i,0.1)[4];
 
         elseif X[i] < (1-10^(-15)) #bulk
             dy[i,:]=bulkSF(y,i,X);
 
         else #right
             #dy[i,4]=-1.0/2.0*exp(2.0*y[i,2])*((2.0*exp(2.0*(X[i]-y[i,3]+X[i]*y[i,3])*y[i,2]/X[i])*(X[i]-1.0)^2*(X[i]*((X[i]-1.0)*Der(y,i,1)+X[i]*Der(y,i,2))+y[i,1]*(1.0+2.0*(X[i]-1.0)*X[i]*Der(y,i,2))))/X[i]^2 - ((-1.0+X[i])^3*(X[i]+2.0*(X[i]-1.0)*y[i,1])*y[i,4])/X[i]^2 - ((1.0-X[i])^3*(1.0-2.0*(X[i]-1.0)^2*Der(y,i,1))*y[i,4])/X[i] - (2.0*(X[i]-1.0)^4*(X[i]+2.0*(X[i]-1.0)*y[i,1])*Der(y,i,2)*y[i,4])/X[i] - (Der(y,i,4)) - (2.0*(X[i]-1.0)*y[i,1]*Der(y,i,4))/X[i]) - dissipation4(y,i,0.3)[4];# - dissipation4(y,i,0.05)[4];
-            bulkSF(y,i,X);
+            dy[i,:]=bulkSF(y,i,X);
         end
-    end"
-
-    ######dy[i,5]=-1.0/2.0*(1-X[i])^2*exp(2.0*y[i,2])*(1-2*y[i,1]*(1-R[i])/R[i]);#dissipation4
+    end
     
     #dy[4,:]=boundarySF(y,4);
     #dy[L-3,:]=boundarySF(y,L-3);
@@ -383,3 +396,27 @@ function SF_RHS(y,t,interp_funcs,X)
     return dy
 end
 
+function Grid_RHS(y,t,interp_funcs,X)
+    
+    m = interp_funcs[1]
+    beta = interp_funcs[2]
+
+    L=length(X)
+    dy=zeros((L,length(y[1,:])));
+
+    
+
+    for i in 4:(L-3)
+        if X[i]<10^(-7) #left
+
+            #dy[i,1] to dy[i,3] stay 0
+            dy[i,5]=-1.0/2.0*exp(2.0*y[i,2]);
+
+        else #bulk
+            dy[i,5]=-1.0/2.0*(1-X[i])^2*exp(2.0*y[i,2])*(1-2*y[i,1]*(1-X[i])/X[i]);#dissipation4
+        end
+    end
+    
+
+    return dy
+end
