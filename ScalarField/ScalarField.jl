@@ -189,8 +189,48 @@ function dissipation2(y,i)
 end
 
 # Discretization of derivatives
-Der(y,i,k,X)=(-y[i+2,k]+8*y[i+1,k]-8*y[i-1,k]+y[i-2,k])/(12*(X[i+1]-X[i])); #4th order
-DDer(y,i,k,X)=(-y[i+2,k]+16*y[i+1,k]-30*y[i,k]+16*y[i-1,k]-y[i-2,k])/(12*(X[i+1]-X[i])^2); #4th order
+#Der(y,i,k,X)=(-y[i+2,k]+8*y[i+1,k]-8*y[i-1,k]+y[i-2,k])/(12*(X[i+1]-X[i])); #4th order
+#DDer(y,i,k,X)=(-y[i+2,k]+16*y[i+1,k]-30*y[i,k]+16*y[i-1,k]-y[i-2,k])/(12*(X[i+1]-X[i])^2); #4th order
+
+function Der(y,i,k,X)
+
+    if i>=3 && i<=L-3
+        z = (-y[i+2,k]+8*y[i+1,k]-8*y[i-1,k]+y[i-2,k])/(12*(X[i+1]-X[i]));
+    else
+        dx = X[2]-X[1]
+        interp_data = []
+        
+        for j in 4:L-3
+            aux = (-y[j+2,k]+8*y[j+1,k]-8*y[j-1,k]+y[j-2,k])/(12*(dx))
+            interp_data = vcat(interp_data, aux)
+        end
+        spl = scipyinterpolate.splrep(X[4:L-3], interp_data,k=4)
+        Der_func(x) = scipyinterpolate.splev(x, spl)
+        z = Der_func(X[i])[1]
+        #println("Der!, i=",i)
+    end
+    return z
+end
+
+function DDer(y,i,k,X)
+
+    if i>=3 && i<=L-3
+        z = (-y[i+2,k]+16*y[i+1,k]-30*y[i,k]+16*y[i-1,k]-y[i-2,k])/(12*(X[i+1]-X[i])^2);
+    else
+        dx = X[2]-X[1]
+        interp_data = []
+        
+        for i in 4:L-3
+            aux = (-y[i+2,k]+16*y[i+1,k]-30*y[i,k]+16*y[i-1,k]-y[i-2,k])/(12*(dx)^2)
+            interp_data = vcat(interp_data, aux)
+        end
+        spl = scipyinterpolate.splrep(X[4:L-3], interp_data,k=4)
+        DDer_func(xx) = scipyinterpolate.splev(xx, spl)
+        z = DDer_func(X[i])[1]
+        #println("DDer!, i=",i)
+    end
+    return z
+end
 
 function Der_cont(interp_func,x,i)
 
@@ -304,23 +344,10 @@ end
 
 function SF_RHS(y,t,interp_func,X)
     
-    derpsi = interp_func
-
     L=length(X)
     dy=zeros((L,length(y[1,:])));
 
-    # updating ghostpoints
-"""
-    for i in 1:3
-        dy[i,4]= bulkSF(y,i,X)
-    for i in 1:3
-        dy[i,4]= bulkSF(y,i,X)"""
-
-    #update y
-    #rk4wrapper
-
-    
-
+ 
     for i in 5:(L-3)
         dy[i,4]=-1.0/2.0*exp(2.0*y[i,2])* ((2.0*exp(2.0*(X[i]-y[i,3]+X[i]*y[i,3])*y[i,2]/X[i])*(X[i]-1.0)^2*(X[i]*((X[i]-1.0)*Der(y,i,1,X)+X[i]*Der(y,i,2,X))+y[i,1]*(1.0+2.0*(X[i]-1.0)*X[i]*Der(y,i,2,X))))/X[i]^2 - ((-1.0+X[i])^3*(X[i]+2.0*(X[i]-1.0)*y[i,1])*y[i,4])/X[i]^2 - ((1.0-X[i])^3*(1.0-2.0*(X[i]-1.0)^2*Der(y,i,1,X))*y[i,4])/X[i] - (2.0*(X[i]-1.0)^4*(X[i]+2.0*(X[i]-1.0)*y[i,1])*Der(y,i,2,X)*y[i,4])/X[i] - (DDer(y,i,3,X)) - (2.0*(X[i]-1.0)*y[i,1]*DDer(y,i,3,X))/X[i]);# - dissipation6(y,i,0.01)[4];
     
@@ -360,6 +387,22 @@ function SF_RHS(y,t,interp_func,X)
     dy[L-1,4]=extrapolate_out(dy[L-5,4], dy[L-4,4], dy[L-3,4], dy[L-2,4])
     dy[L,4]=extrapolate_out(dy[L-4,4], dy[L-3,4], dy[L-2,4], dy[L-1,4])"""
     
+
+    return dy
+end
+
+function GP_RHS(y,t,interp_func,X)
+
+    L=length(X)
+    dy=zeros((L,length(y[1,:])));
+
+    # updating ghostpoints
+    for i in 1:3
+        dy[i,4]= dy[i,4]=-1.0/2.0*exp(2.0*y[i,2])* ((2.0*exp(2.0*(X[i]-y[i,3]+X[i]*y[i,3])*y[i,2]/X[i])*(X[i]-1.0)^2*(X[i]*((X[i]-1.0)*Der(y,i,1,X)+X[i]*Der(y,i,2,X))+y[i,1]*(1.0+2.0*(X[i]-1.0)*X[i]*Der(y,i,2,X))))/X[i]^2 - ((-1.0+X[i])^3*(X[i]+2.0*(X[i]-1.0)*y[i,1])*y[i,4])/X[i]^2 - ((1.0-X[i])^3*(1.0-2.0*(X[i]-1.0)^2*Der(y,i,1,X))*y[i,4])/X[i] - (2.0*(X[i]-1.0)^4*(X[i]+2.0*(X[i]-1.0)*y[i,1])*Der(y,i,2,X)*y[i,4])/X[i] - (DDer(y,i,3,X)) - (2.0*(X[i]-1.0)*y[i,1]*DDer(y,i,3,X))/X[i]);# - dissipation6(y,i,0.01)[4];
+    end
+    for i in L-2:L
+        dy[i,4]= dy[i,4]=-1.0/2.0*exp(2.0*y[i,2])* ((2.0*exp(2.0*(X[i]-y[i,3]+X[i]*y[i,3])*y[i,2]/X[i])*(X[i]-1.0)^2*(X[i]*((X[i]-1.0)*Der(y,i,1,X)+X[i]*Der(y,i,2,X))+y[i,1]*(1.0+2.0*(X[i]-1.0)*X[i]*Der(y,i,2,X))))/X[i]^2 - ((-1.0+X[i])^3*(X[i]+2.0*(X[i]-1.0)*y[i,1])*y[i,4])/X[i]^2 - ((1.0-X[i])^3*(1.0-2.0*(X[i]-1.0)^2*Der(y,i,1,X))*y[i,4])/X[i] - (2.0*(X[i]-1.0)^4*(X[i]+2.0*(X[i]-1.0)*y[i,1])*Der(y,i,2,X)*y[i,4])/X[i] - (DDer(y,i,3,X)) - (2.0*(X[i]-1.0)*y[i,1]*DDer(y,i,3,X))/X[i]);# - dissipation6(y,i,0.01)[4];
+    end
 
     return dy
 end
