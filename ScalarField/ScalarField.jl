@@ -133,16 +133,16 @@ end
 
 
 
-function rk4wrapper(f,y0,x,u,spl_func,psiarray) # u depicts T array, or M!!
+function rk4wrapper(f,y0,x,u,spl_funcs) # u depicts T array, or M!!
     n = length(x)
     y = zeros(n)
     y[1] = y0;
     for i in 1:n-1
         h = x[2] .- x[1]
-        k1 = f(y[i], x[i],u,spl_func,psiarray,2*i-1)
-        k2 = f(y[i] .+ k1 * h/2, x[i] .+ h/2,u,spl_func,psiarray,2*i)
-        k3 = f(y[i] .+ k2 * h/2, x[i] .+ h/2,u,spl_func,psiarray,2*i)
-        k4 = f(y[i] .+ k3 * h, x[i] .+ h,u,spl_func,psiarray,2*i+1)
+        k1 = f(y[i], x[i],u,spl_funcs)
+        k2 = f(y[i] .+ k1 * h/2, x[i] .+ h/2,u,spl_funcs)
+        k3 = f(y[i] .+ k2 * h/2, x[i] .+ h/2,u,spl_funcs)
+        k4 = f(y[i] .+ k3 * h, x[i] .+ h,u,spl_funcs)
         y[i+1] = y[i] .+ (h/6) * (k1 .+ 2*k2 .+ 2*k3 .+ k4)
     end
     return y
@@ -259,38 +259,58 @@ int(x) = floor(Int, x)
 # Test Model RHSs for the bulk equations (3.6.16)
 
 
-function SFconstraint_beta(beta0,x1,time,interp_func,psi_array,k)
+function SFconstraint_beta(beta0,x1,time,funcs)
     
-    derpsi = interp_func
-
+    psi = funcs[1]
+    derpsi = funcs[2]
+    
     if x1<10^(-15)
         z = 0.0
     elseif abs.(x1 .- 1.0)<10^(-15)
         z = 0.0
     else
         #z = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (psi(x1) .+ (x1 .- 1) .* x1 .* derpsi(x1)) .^2
-        z = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (psi_array[k] .+ (x1 .- 1) .* x1 .* derpsi(x1)) .^2
+        z = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (psi(x1)[1] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)[1]) .^2.0
+        #z = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* ((x1 .- 1.0) .* x1 .* derpsi(x1)[1]) .^2.0
     end
 
-    return z
+    #z=2.0 .* pi .* (1.0 .- x1) 
+    #return z
+    #return psi(x1)[1]
+
+    #return derpsi(x1)[1]
 end
 
 
-function SFconstraint_m(m0,x1,u,interp_func,psiarray,k)
+function SFconstraint_m(m0,x1,u,interp_func,psiarray)
 
     derpsi = interp_func
-
 
     if x1<10^(-15)
         z = 0
     elseif abs.(x1 .- 1.0)<10^(-15)
-        z = 2*pi .* (psiarray[k]) .^2
+        z = 2.0 .* pi .* (psiarray[k]) .^ 2.0
     else
-        z = 2*pi .* (x1 .+ 2 .* (x1 .- 1) .* m0) ./ x1 .^3 .* (psiarray[k] .+ (x1 .- 1) .* x1 .* derpsi(x1)) .^2
+        #z = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* m0) ./ x1 .^3.0 .* (psiarray[k] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0
+        z = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0)) ./ x1 .^3.0 .* ((x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0
     end
     
     return z
 end
+
+"""function SFconstraint_temp(m0,x1,u,interp_func,psiarray,k)
+
+    derpsi = interp_func
+
+    if x1<10^(-15)
+        z = 0
+    else
+        z = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0)) ./ x1 .^3.0 .* ((x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0
+    end
+
+    #z=2.0 * pi
+    return z
+end"""
 
 
 function bulkSF(y,i,X)
@@ -379,7 +399,7 @@ function SF_RHS(data,t,interp_func,X)
 
 """
 
-"""    for i in 4:(L-3)
+    for i in 4:(L-3)
         if X[i]<10^(-15) #left
 
             #dy[i,1] to dy[i,3] stay 0
@@ -396,7 +416,7 @@ function SF_RHS(data,t,interp_func,X)
         end
     end
     
-    """
+    
     
 """    #outer boundary
     dy[L-3,4]=extrapolate_out(dy[L-7,4], dy[L-6,4], dy[L-5,4], dy[L-4,4])#1.0/2.0*exp(2.0*y[L-3,2])* Der(y,L-3,4)
@@ -404,11 +424,13 @@ function SF_RHS(data,t,interp_func,X)
     dy[L-1,4]=extrapolate_out(dy[L-5,4], dy[L-4,4], dy[L-3,4], dy[L-2,4])
     dy[L,4]=extrapolate_out(dy[L-4,4], dy[L-3,4], dy[L-2,4], dy[L-1,4])"""
     
-    for i in 4:L-2
-        dy[i,4]=data[i,3]
-    end
+"""    for i in 1:L
+        dy[i,4]=data[i,1]
+    end"""
 
     return dy
+
+    #return data[:,1]
 end
 
 function GP_RHS(y,t,interp_func,X)
