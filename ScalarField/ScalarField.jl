@@ -127,6 +127,7 @@ function rungekutta4molstep(f,y00,T,w::Int64,ex,spl_func,X)
 
         #println(y[:,4]-.y[:,4] .- k1 .* h/2)
         y[:,:] = y[:,:] .+ (h/6) .* (k1 .+ 2 * k2 .+ 2 * k3 .+ k4)
+        
     return ghost(y[:,:])
 end
 
@@ -312,7 +313,7 @@ function boundarySF(y,X)
 
     dxx=X[L-2]-X[L-3]
 
-    #m
+    #m extrapolated
     y[3,1]=y[5,1];
     y[2,1]=y[6,1];
     y[1,1]=extrapolate_in(y[2,1], y[3,1], y[4,1], y[5,1]);
@@ -366,8 +367,8 @@ function SF_RHS(data,t,interp_func,X)
     L=length(X)
     dy=zeros((L,length(data[1,:])));
 
- 
-"""    for i in 5:(L-4)
+""" 
+    for i in 5:(L-4)
         dy[i,4]=-1.0/2.0*exp(2.0*data[i,2])*((2.0*exp(2.0*(X[i]-data[i,3]+X[i]*data[i,3])*data[i,2]/X[i])*(X[i]-1.0)^2*(X[i]*((X[i]-1.0)*Der(data,i,1,X)+X[i]*Der(data,i,2,X))+data[i,1]*(1.0+2.0*(X[i]-1.0)*X[i]*Der(data,i,2,X))))/X[i]^2 - ((-1.0+X[i])^3*(X[i]+2.0*(X[i]-1.0)*data[i,1])*data[i,4])/X[i]^2 - ((1.0-X[i])^3*(1.0-2.0*(X[i]-1.0)^2*Der(data,i,1,X))*data[i,4])/X[i] - (2.0*(X[i]-1.0)^4*(X[i]+2.0*(X[i]-1.0)*data[i,1])*Der(data,i,2,X)*data[i,4])/X[i] - (Der(data,i,4,X)) - (2.0*(X[i]-1.0)*data[i,1]*Der(data,i,4,X))/X[i]);# - dissipation6(y,i,0.01)[4];
     
         
@@ -375,10 +376,10 @@ function SF_RHS(data,t,interp_func,X)
     end
 #- (Der(y,i,4,X)) - (2.0*(X[i]-1.0)*y[i,1]*Der(y,i,4,X))/X[i]
     
+
 """
 
-
-    for i in 4:(L-3)
+"""    for i in 4:(L-3)
         if X[i]<10^(-15) #left
 
             #dy[i,1] to dy[i,3] stay 0
@@ -395,7 +396,7 @@ function SF_RHS(data,t,interp_func,X)
         end
     end
     
-    
+    """
     
 """    #outer boundary
     dy[L-3,4]=extrapolate_out(dy[L-7,4], dy[L-6,4], dy[L-5,4], dy[L-4,4])#1.0/2.0*exp(2.0*y[L-3,2])* Der(y,L-3,4)
@@ -403,6 +404,9 @@ function SF_RHS(data,t,interp_func,X)
     dy[L-1,4]=extrapolate_out(dy[L-5,4], dy[L-4,4], dy[L-3,4], dy[L-2,4])
     dy[L,4]=extrapolate_out(dy[L-4,4], dy[L-3,4], dy[L-2,4], dy[L-1,4])"""
     
+    for i in 4:L-2
+        dy[i,4]=data[i,3]
+    end
 
     return dy
 end
