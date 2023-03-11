@@ -8,7 +8,7 @@ function init_gaussian(x,r0,sigma,A)
         z=zeros(n);
         for i in 1:n
             if i<n-4
-                z[i] = A * (x[i]/(1-x[i]))^2 * exp(-((x[i]/(1-x[i])-r0)/sigma)^2)
+                z[i] = A * (x[i]/(1-x[i]))^3.0 * exp(-((x[i]/(1-x[i])-r0)/sigma)^2.0)
             else
                 z[n]=0 #avoid NaN for x=1
             end
