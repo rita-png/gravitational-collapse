@@ -312,7 +312,7 @@ function SFconstraint_m(m0,x1,time,funcs)
         z = 2.0 .* pi .* (psi(x1)[1]) .^ 2.0
     else
         #z = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* m0) ./ x1 .^3.0 .* (psiarray[k] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0
-        z = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* m0) ./ x1 .^3.0 .* (psi(x1)[1] .+     (x1 .- 1.0) .* x1 .* derpsi(x1)[1]) .^ 2.0
+        z = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* m0) ./ x1 .^3.0 .* (psi(x1)[1] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)[1]) .^ 2.0
     end
     
     return z
@@ -394,43 +394,38 @@ function SF_RHS(data,t,X)
     L=length(X)
     dy=zeros((L,length(data[1,:])));
 
-    # update interpolation psi functions for constraint_beta here
-    spl_psi = scipyinterpolate.splrep(X[4:L-3], data[4:L-3,3],k=4)
-    psi_func(x) = scipyinterpolate.splev(x, spl_psi)
-
+    # update interpolation of psi,x
     spl_derpsi = scipyinterpolate.splrep(X[4:L-3], data[4:L-3,4],k=4)
     derpsi_func(x) = scipyinterpolate.splev(x, spl_derpsi)
 
-    funcs = [psi_func derpsi_func]
-
-    #rk4wrapper to update psi
+    # rk4wrapper to update psi data
     psi0=0
     SFconstraint_psi(psi0,x) = scipyinterpolate.splev(x, spl_derpsi)
     data[4:L-3,3] = rungekutta4(SFconstraint_psi,psi0,X[4:L-3])
     data = ghost(data)
-    global state_array[:,3] = data[:,3]
+    #global state_array[:,3] = data[:,3]
 
-    #rk4wrapper to update beta
+    # update interpolation of psi
+    spl_psi = scipyinterpolate.splrep(X[4:L-3], data[4:L-3,3],k=4)
+    psi_func(x) = scipyinterpolate.splev(x, spl_psi)
+
+    funcs = [psi_func derpsi_func]
+
+    # rk4wrapper to update beta data
     beta0=0
     data[4:L-3,2] = rk4wrapper(SFconstraint_beta,beta0,X[4:L-3],t,funcs)
     data = ghost(data)
-    global state_array[:,2] = data[:,2]
+    #global state_array[:,2] = data[:,2]
 
-    #rk4wrapper to update m
+    # rk4wrapper to update m data
     m0=0
     data[4:L-3,1]=rk4wrapper(SFconstraint_m,m0,X[4:L-3],t,funcs)
     data = ghost(data)
-    global state_array[:,1] = data[:,1]
+    #global state_array[:,1] = data[:,1]
 
 
-    
-    #globally?
+ 
     #psi another RHS. but do it later
-
-    for i in 4:(L-3)
-        dy[i,4] = 1#data[i,2]
-    end
-
 
 
 
@@ -446,19 +441,19 @@ function SF_RHS(data,t,X)
     end
     println("\nOrigin of the grid is at t = ", t, " is i = ", origin_i, "\n")
    """
-"""
+
     for i in 4:L-3 #ORI
         if X[i]<10^(-15) #left
-            dy[i,4]= 0.0 #-dissipation4(y,i,0.1)[4];
+            dy[i,4]= 0.0 #-dissipation4(data,i,0.05)[4];
 
         elseif X[i] < (1-10^(-15)) #bulk
-            dy[i,4]=bulkSF(data,i,X) - dissipation6(data,i,0.05)[4];
+            dy[i,4]=bulkSF(data,i,X) - dissipation6(data,i,0.035)[4];
 
         else #right
-            dy[i,4]=bulkSF(data,i,X) - dissipation6(data,i,0.05)[4];
+            dy[i,4]=bulkSF(data,i,X) - dissipation6(data,i,0.035)[4];
         end
     end
-    """
+    
     
     
     #outer boundary
