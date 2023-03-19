@@ -111,12 +111,13 @@ function rungekutta4molstep(f,y00,T,w::Int64,ex,X)
         #println("y[:,4] ", y[:,4])
         #println("############")
         k1 = f(y[:,:], T[w],X)
-        k1=ghost(k1)
+        #k1=ghost(k1)
+        k1=boundarySF(k1,X)
         #println("k1[:,4] ", k1[:,4])
         ####println("y[:,4] ", y[:,4])
         #println("############")
         k2 = f(y[:,:] .+ k1 .* h/2, T[w] + h/2,X)
-        k2=ghost(k2)
+        k2=boundarySF(k2,X)
         #println("k2[:,4] ", k2[:,4])
         ####println("y[:,4] .+ k1 .* h/2 ", y[:,4] .+ k1 .* h/2)
         #println("############")
@@ -125,11 +126,11 @@ function rungekutta4molstep(f,y00,T,w::Int64,ex,X)
         ####println("y[:,4] .+ k1 .* h/2 .- y[:,4]", y[:,4] .+ k1 .* h/2 .- y[:,4])
         #println("############")
         k3 = f(y[:,:] .+ k2 .* h/2, T[w] + h/2,X)
-        k3=ghost(k3)
+        k3=boundarySF(k3,X)
 
         #println("############")
         k4 = f(y[:,:] .+ k3 .* h, T[w] + h,X)
-        k4=ghost(k4)
+        k4=boundarySF(k4,X)
 
         """print("\n\ny[50,4] .+ k3 .* h\n\n",y[50,4] .+ k3[50,4] .* h)
         print("\n\ny[50,4]\n\n",y[50,4])
@@ -203,10 +204,10 @@ function dissipation2(y,i)
 end
 
 # Discretization of derivatives
-#Der(y,i,k,X)=(-y[i+2,k]+8*y[i+1,k]-8*y[i-1,k]+y[i-2,k])/(12*(X[i+1]-X[i])); #4th order
-#DDer(y,i,k,X)=(-y[i+2,k]+16*y[i+1,k]-30*y[i,k]+16*y[i-1,k]-y[i-2,k])/(12*(X[i+1]-X[i])^2); #4th order
-Der(y,i,k,X)=(y[i+3,k]-9*y[i+2,k]+45*y[i+1,k]-45*y[i-1,k]+9*y[i-2,k]-y[i-3,k])/(60*(X[i+1]-X[i])); #6th order
-DDer(y,i,k,X)=(y[i+3,k]/90-3*y[i+2,k]/20+3*y[i+1,k]/2-49*y[i,k]/18+3*y[i-1,k]/2-3*y[i-2,k]/20+y[i-3,k]/90)/((X[i+1]-X[i])^2); #6th order
+Der(y,i,k,X)=(-y[i+2,k]+8*y[i+1,k]-8*y[i-1,k]+y[i-2,k])/(12*(X[i+1]-X[i])); #4th order
+DDer(y,i,k,X)=(-y[i+2,k]+16*y[i+1,k]-30*y[i,k]+16*y[i-1,k]-y[i-2,k])/(12*(X[i+1]-X[i])^2); #4th order
+#Der(y,i,k,X)=(y[i+3,k]-9*y[i+2,k]+45*y[i+1,k]-45*y[i-1,k]+9*y[i-2,k]-y[i-3,k])/(60*(X[i+1]-X[i])); #6th order
+#DDer(y,i,k,X)=(y[i+3,k]/90-3*y[i+2,k]/20+3*y[i+1,k]/2-49*y[i,k]/18+3*y[i-1,k]/2-3*y[i-2,k]/20+y[i-3,k]/90)/((X[i+1]-X[i])^2); #6th order
 
 # Finite difference approximation
 """function Der(y,i,k,X)
@@ -358,31 +359,24 @@ function boundarySF(y,X)
     y[L-1,2]=y[L-5,2];
     y[L,2]=extrapolate_out(y[L-4,2], y[L-3,2], y[L-2,2], y[L-1,2]);
     
-    #psi
-    y[3,3]=y[5,3];
-    y[2,3]=y[6,3];
-    y[1,3]=extrapolate_in(y[2,3], y[3,3], y[4,3], y[5,3]);
+    #psi odd
+    y[3,3]=-y[5,3];
+    y[2,3]=-y[6,3];
+    y[1,3]=-y[7,3];
 
-    y[L-2,3]=y[L-4,3]
-    y[L-1,3]=y[L-5,3]
+    y[L-2,3]=extrapolate_out(y[L-6,3],y[L-5,3], y[L-4,3], y[L-3,3])
+    y[L-1,3]=extrapolate_out(y[L-5,3],y[L-4,3], y[L-3,3], y[L-2,3])
     y[L,3]=extrapolate_out(y[L-4,3], y[L-3,3], y[L-2,3], y[L-1,3]);
 
-    #psi,x
+    #psi,x even
+    y[3,4]=y[5,4];
+    y[2,4]=y[6,4];
+    y[1,4]=y[7,4];
 
-    #y[L-2,4]=extrapolate_out(y[L-6,4],y[L-5,4], y[L-4,4], y[L-3,4])
-    #y[L-1,4]=extrapolate_out(y[L-5,4],y[L-4,4], y[L-3,4], y[L-2,4])
-    #y[L,4]=extrapolate_out(y[L-4,4], y[L-3,4], y[L-2,4], y[L-1,4])
+    y[L-2,4]=extrapolate_out(y[L-6,4],y[L-5,4], y[L-4,4], y[L-3,4])
+    y[L-1,4]=extrapolate_out(y[L-5,4],y[L-4,4], y[L-3,4], y[L-2,4])
+    y[L,4]=extrapolate_out(y[L-4,4], y[L-3,4], y[L-2,4], y[L-1,4])
 
-    """y[1,4]=0#Der(y,1,3,X) #0; #SHOULD GIVE 0
-    y[2,4]=0#Der(y,2,3,X) #0; #SHOULD GIVE 0
-    y[3,4]=0#Der(y,3,3,X) #0; #SHOULD GIVE 0
-
-    #y[4,4]=0
-    y[L-3,4]=0"""
-    y[L-3,4]=0#new
-    y[L-2,4]=0#Der(y,L-2,3,X) #0; #SHOULD GIVE 0
-    y[L-1,4]=0#Der(y,L-1,3,X) #0; #SHOULD GIVE 0
-    y[L,4]=0#Der(y,L,3,X) #0; #SHOULD GIVE 0"""
     
     return y
 end
@@ -444,7 +438,7 @@ function SF_RHS(data,t,X)
 
     for i in 4:L-3 #ORI
         if X[i]<10^(-15) #left
-            dy[i,4]= 0.0 #-dissipation4(data,i,0.05)[4];
+            dy[i,4]= 1/2*Der(data,i,3,X) -dissipation6(data,i,0.035)[4];
 
         elseif X[i] < (1-10^(-15)) #bulk
             dy[i,4]=bulkSF(data,i,X) - dissipation6(data,i,0.035)[4];
