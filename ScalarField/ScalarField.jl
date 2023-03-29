@@ -236,49 +236,7 @@ function Der(y,i,k,X)
     
     return z
 end
-"""
-function D(y,i,k,X)
 
-    if i>=5 && i<=L-4
-        z = (-y[i+2,k]+8*y[i+1,k]-8*y[i-1,k]+y[i-2,k])/(12*(X[i+1]-X[i]));
-    else
-        dx = X[2]-X[1]
-        interp_data = []
-        
-        for j in 5:L-4
-            aux = (-y[j+2,k]+8*y[j+1,k]-8*y[j-1,k]+y[j-2,k])/(12*(dx))
-            interp_data = vcat(interp_data, aux)
-        end
-        spl = scipyinterpolate.splrep(X[5:L-4], interp_data,k=2)
-        Der_func(x) = scipyinterpolate.splev(x, spl)
-        z = Der_func(X[i])[1]
-        #println("Der!, i=",i)
-    end
-    return z
-end
-
-function DD(y,i,k,X)
-
-    if i>=3 && i<=L-3
-        z = (-y[i+2,k]+16*y[i+1,k]-30*y[i,k]+16*y[i-1,k]-y[i-2,k])/(12*(X[i+1]-X[i])^2);
-    else
-        dx = X[2]-X[1]
-        interp_data = []
-        
-        for i in 4:L-3
-            aux = (-y[i+2,k]+16*y[i+1,k]-30*y[i,k]+16*y[i-1,k]-y[i-2,k])/(12*(dx)^2)
-            interp_data = vcat(interp_data, aux)
-        end
-        spl = scipyinterpolate.splrep(X[4:L-3], interp_data,k=2)
-        DDer_func(xx) = scipyinterpolate.splev(xx, spl)
-        z = DDer_func(X[i])[1]
-        #println("DDer!, i=",i)
-    end
-    return z
-end
-
-
-"""
 
 int(x) = floor(Int, x)
 
@@ -299,12 +257,12 @@ function SFconstraint_beta(beta0,x1,time,funcs)
         z = 0.0
     else
         #z = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (psi(x1) .+ (x1 .- 1) .* x1 .* derpsi(x1)) .^2
-        z = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (psi(x1)[1] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)[1]) .^2.0
+        z = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (psi(x1) .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0
         #z = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* ((x1 .- 1.0) .* x1 .* derpsi(x1)[1]) .^2.0
     end
 
     #z=2.0 .* pi .* (1.0 .- x1) 
-    #return z
+    return z
     #return psi(x1)[1]
 
     #return derpsi(x1)[1]
@@ -326,10 +284,10 @@ function SFconstraint_m(m0,x1,time,funcs)
     if x1<10^(-15)
         z = 0
     elseif abs.(x1 .- 1.0)<10^(-15)
-        z = 2.0 .* pi .* (psi(x1)[1]) .^ 2.0
+        z = 2.0 .* pi .* (psi(x1)) .^ 2.0
     else
         #z = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* m0) ./ x1 .^3.0 .* (psiarray[k] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0
-        z = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* m0) ./ x1 .^3.0 .* (psi(x1)[1] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)[1]) .^ 2.0
+        z = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* m0) ./ x1 .^3.0 .* (psi(x1) .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0
     end
     
     return z
@@ -356,7 +314,7 @@ function boundarySF(y,X)
 
     dxx=X[L-2]-X[L-3]
 
-    #m extrapolated
+    #m even
     y[3,1]=y[5,1];
     y[2,1]=y[6,1];
     y[1,1]=extrapolate_in(y[2,1], y[3,1], y[4,1], y[5,1]);
@@ -365,7 +323,7 @@ function boundarySF(y,X)
     y[L-1,1]=y[L-5,1]-dxx*pi*(y[L-3,3])^2;
     y[L,1]=extrapolate_out(y[L-4,1], y[L-3,1], y[L-2,1], y[L-1,1]);
 
-    #beta
+    #beta even
     y[3,2]=y[5,2];
     y[2,2]=y[6,2];
     y[1,2]=extrapolate_in(y[2,2], y[3,2], y[4,2], y[5,2]);
@@ -404,19 +362,23 @@ function SF_RHS(data,t,X)
     dy=zeros((L,length(data[1,:])));
 
     # update interpolation of psi,x
-    spl_derpsi = scipyinterpolate.splrep(X[4:L-3], data[4:L-3,4],k=4)
-    derpsi_func(x) = scipyinterpolate.splev(x, spl_derpsi)
-
+    spl_derpsi = scipyinterpolate.splrep(X[4:L-3], data[4:L-3,4],k=4)#old
+    derpsi_func(x) = scipyinterpolate.splev(x, spl_derpsi)#old
+    #derpsi_func = cubic_spline_interpolation(X[4:L-3], data[4:L-3,4],  extrapolation_bc = Line())#new
+    
     # rk4wrapper to update psi data
     psi0=0
-    SFconstraint_psi(psi0,x) = scipyinterpolate.splev(x, spl_derpsi)
-    data[4:L-3,3] = rungekutta4(SFconstraint_psi,psi0,X[4:L-3])
+    SFconstraint_psi(psi0,x) = scipyinterpolate.splev(x, spl_derpsi)#old
+    data[4:L-3,3] = rungekutta4(SFconstraint_psi,psi0,X[4:L-3])#old
+    #SFconstraint_psi(psi0,x) = derpsi_func(x)#new
+    #data[4:L-3,3] = rungekutta4(SFconstraint_psi,psi0,X[4:L-3])#new
     data = ghost(data)
     #global state_array[:,3] = data[:,3]
 
     # update interpolation of psi
-    spl_psi = scipyinterpolate.splrep(X[4:L-3], data[4:L-3,3],k=4)
-    psi_func(x) = scipyinterpolate.splev(x, spl_psi)
+    spl_psi = scipyinterpolate.splrep(X[4:L-3], data[4:L-3,3],k=4)#old
+    psi_func(x) = scipyinterpolate.splev(x, spl_psi)#old
+    #psi_func = cubic_spline_interpolation(X[4:L-3], data[4:L-3,3],  extrapolation_bc = Line())#new
 
     funcs = [psi_func derpsi_func]
 
@@ -511,3 +473,79 @@ function doublegrid(X)
     return new_grid
 
 end
+
+using ProgressMeter
+function timeevolution(state_array,finaltime,dir,dt)
+    
+    @showprogress for t in 1:finaltime
+    
+        if isnan(state_array[L-3,4])
+            print("boom at t=", t*dt)
+            explode = true
+            timestep = t
+            break
+        end
+        
+        #X = update_grid(state_array[:,:],T,t)
+        
+        X=initX#initX #state_array[:,5]
+        X1=X[4:L-3]
+    
+        #update ghost points
+        state_array=boundarySF(state_array,X)
+       
+        #evolve psi,x
+        state_array[:,:] = rungekutta4molstep(SF_RHS,state_array[:,:],T,t,0,X) #evolve psi,x
+        #global state_array=ghost(state_array)
+    
+        #global aux=SF_RHS(state_array[:,:], 0,0,X)
+        
+        #calculate psi from psi,x
+        spl_derpsi = scipyinterpolate.splrep(initX[4:L-3], state_array[4:L-3,4],k=4)
+        psi0=0
+        SFconstraint_psi(psi0,x) = scipyinterpolate.splev(x, spl_derpsi)
+    
+        state_array[4:L-3,3] = rungekutta4(SFconstraint_psi,psi0,initX1)
+        #global state_array=ghost(state_array);
+    
+        spl_psi = scipyinterpolate.splrep(initX[4:L-3], state_array[4:L-3,3],k=4)
+        psi_func(x) = scipyinterpolate.splev(x, spl_psi)
+        derpsi_func(x) = scipyinterpolate.splev(x, spl_derpsi)
+    
+        funcs = [psi_func derpsi_func]
+        
+        #evolve beta
+        state_array[4:L-3,2]=rk4wrapper(SFconstraint_beta,beta0,X1,T[t+1],funcs)
+        #global state_array=ghost(state_array)
+        
+        #evolve m
+        state_array[4:L-3,1]=rk4wrapper(SFconstraint_m,m0,X1,T[t+1],funcs)
+        #global state_array=ghost(state_array)
+        
+        #CSV.write(dir*"/time_step$k.csv", Tables.table(transpose(Matrix(state_array))), writeheader=false)
+        if t%10==0
+            CSV.write(dir*"/time_step$t.csv", Tables.table(state_array), writeheader=false)
+        end
+
+        #threshold for apparent black hole formation
+        global monitor_ratio = zeros(L)
+        for i in 1:L
+            global monitor_ratio[i] = 2*state_array[i,1]/initX[i]*(1-initX[i])
+            if monitor_ratio[i]>0.6
+                global criticality = true
+                println("Supercritical evolution!")
+                println("i = ", i, " t = ", t, " monitor ratio = ", monitor_ratio[i])
+                global timestep = t
+                break
+            end
+        end
+        
+
+        global timestep = t
+    end
+
+    global evol_stats = [criticality A sigma r0 timestep explode]
+
+    CSV.write("/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA/parameters.csv", Tables.table(evol_stats), writeheader=true,header=["criticality", "A", "sigma", "r0", "timestep", "explode"]);
+
+end    
