@@ -19,15 +19,26 @@ scipyinterpolate = pyimport("scipy.interpolate")
 
 
 # Parameters
+"""m = 1
+res=m;
+N=100.0#2.0^m*1000.0;#2.0^m*500.0;#N=2.0^m*500.0#2.0^m*100.0;
+Xf=1.0;
+
+dx=Xf/(2.0^m*500.0)
+dt=round(dx,digits=10);
+Nt=100.0#100.0*2^m*10
+Tf=1#Nt*dt; #final time"""
+
 m = 1
 res=m;
-N=2.0^m*250.0#2.0^m*1000.0;#2.0^m*500.0;#N=2.0^m*500.0#2.0^m*100.0;
+N=2.0^m*500.0/2#2.0^m*1000.0;#2.0^m*500.0;#N=2.0^m*500.0#2.0^m*100.0;
 Xf=1.0;
 
 dx=Xf/N;
 dt=round(dx,digits=10);
-Nt=100.0*2^m*10#100.0*2^m*10
-Tf=Nt*dt; #final time
+Nt=100.0*2^m*5/2#100.0*2^m*10
+Tf=1#Nt*dt; #final time
+#print(Tf)
 
 # Setting RESOLUTION
 
@@ -107,76 +118,10 @@ evol_stats = [criticality A sigma r0 timestep explode]
 monitor_ratio = zeros(L)
 CSV.write(dir*"/parameters.csv", Tables.table(evol_stats), writeheader=true, header=["criticality", "A", "sigma", "r0", "timestep", "explode"])
 
-for t in ProgressBar(1:1200)#length(T)
-    
-    if isnan(state_array[L-3,4])
-        print("boom at timestep=", t)
-        global explode = 1.0
-        global timestep = t
-        break
-    end
-    
-    
-    X=initX #state_array[:,5]
-    X1=X[4:L-3]
+#trash.jl goes here
 
-    #update ghost points
-    #state_array=boundarySF(state_array,X)
-   
-    #evolve psi,x
-    global state_array[:,1:4] = rungekutta4molstep(SF_RHS,state_array[:,1:4],T,t,0,initX) #evolve psi,x
-    global state_array=ghost(state_array)
+finaltime=length(T)-1
+timeevolution(state_array,finaltime,dir,dt)
 
-    #global aux=SF_RHS(state_array[:,:], 0,0,X)
-    
-    #calculate psi from psi,x
-    global spl_derpsi = scipyinterpolate.splrep(initX[4:L-3], state_array[4:L-3,4],k=4)
-    psi0=0
-    SFconstraint_psi(psi0,x) = scipyinterpolate.splev(x, spl_derpsi)
-
-    global state_array[4:L-3,3] = rungekutta4(SFconstraint_psi,psi0,initX1)
-    global state_array=ghost(state_array);
-
-    global spl_psi = scipyinterpolate.splrep(initX[4:L-3], state_array[4:L-3,3],k=4)
-    global psi_func(x) = scipyinterpolate.splev(x, spl_psi)
-    global derpsi_func(x) = scipyinterpolate.splev(x, spl_derpsi)
-
-    global funcs = [psi_func derpsi_func]
-    
-    #evolve beta
-    global state_array[4:L-3,2]=rk4wrapper(SFconstraint_beta,beta0,X1,T[t+1],funcs)
-    global state_array=ghost(state_array)
-    
-    #evolve m
-    global state_array[4:L-3,1]=rk4wrapper(SFconstraint_m,m0,X1,T[t+1],funcs)
-    global state_array=ghost(state_array)
-    
-    #CSV.write(dir*"/time_step$k.csv", Tables.table(transpose(Matrix(state_array))), writeheader=false)
-    CSV.write(dir*"/time_step$t.csv", Tables.table(state_array), writeheader=false)
-    
-    
-    #threshold for apparent black hole formation
-    global monitor_ratio = zeros(L)
-    for i in 1:L
-        global monitor_ratio[i] = 2*state_array[i,1]/initX[i]*(1-initX[i])
-        if monitor_ratio[i]>1.0
-            global criticality = 1.0
-            println("Supercritical evolution!")
-            println("i = ", i, " t = ", t, " monitor ratio = ", monitor_ratio[i])
-            global critical_stop += 1
-            global timestep = t
-        end
-    end
-    
-    if critical_stop >=15
-        print("Found apparent horizon formation")
-        global timestep = t
-        break
-    end
-    global timestep = t
-end
-
-
-global evol_stats = [criticality A sigma r0 timestep explode]
 
 CSV.write("/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA/bisectionsearch/parameters.csv", Tables.table(evol_stats), writeheader=true,header=["criticality", "A", "sigma", "r0", "timestep", "explode"]);

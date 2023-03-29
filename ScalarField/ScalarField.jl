@@ -476,9 +476,9 @@ end
 
 using ProgressMeter
 function timeevolution(state_array,finaltime,dir,dt)
-    
+
     @showprogress for t in 1:finaltime
-    
+
         if isnan(state_array[L-3,4])
             print("boom at t=", t*dt)
             explode = true
@@ -523,21 +523,25 @@ function timeevolution(state_array,finaltime,dir,dt)
         #global state_array=ghost(state_array)
         
         #CSV.write(dir*"/time_step$k.csv", Tables.table(transpose(Matrix(state_array))), writeheader=false)
+        
         if t%10==0
             CSV.write(dir*"/time_step$t.csv", Tables.table(state_array), writeheader=false)
         end
 
         #threshold for apparent black hole formation
         global monitor_ratio = zeros(L)
+        
         for i in 1:L
             global monitor_ratio[i] = 2*state_array[i,1]/initX[i]*(1-initX[i])
-            if monitor_ratio[i]>0.6
+            if monitor_ratio[i]>1.0
                 global criticality = true
-                println("Supercritical evolution!")
+                println("Supercritical evolution! At timestep ", t*dt)
                 println("i = ", i, " t = ", t, " monitor ratio = ", monitor_ratio[i])
                 global timestep = t
-                break
             end
+        end
+        if criticality == true
+            break
         end
         
 
