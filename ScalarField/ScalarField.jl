@@ -475,7 +475,7 @@ function doublegrid(X)
 end
 
 using ProgressMeter
-function timeevolution(state_array,finaltime,dir,dt)
+function timeevolution(state_array,finaltime,dir,dt,run)
 
     @showprogress for t in 1:finaltime
 
@@ -523,9 +523,9 @@ function timeevolution(state_array,finaltime,dir,dt)
         #global state_array=ghost(state_array)
         
         #CSV.write(dir*"/time_step$k.csv", Tables.table(transpose(Matrix(state_array))), writeheader=false)
-        
+        run=int(run)
         if t%10==0
-            CSV.write(dir*"/time_step$t.csv", Tables.table(state_array), writeheader=false)
+            CSV.write(dir*"/run$run/time_step$t.csv", Tables.table(state_array), writeheader=false)
         end
 
         #threshold for apparent black hole formation
@@ -548,8 +548,9 @@ function timeevolution(state_array,finaltime,dir,dt)
         global timestep = t
     end
 
-    global evol_stats = [criticality A sigma r0 timestep explode]
+    global evol_stats = [criticality A sigma r0 timestep explode run]
 
-    CSV.write("/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA/parameters.csv", Tables.table(evol_stats), writeheader=true,header=["criticality", "A", "sigma", "r0", "timestep", "explode"]);
+    return evol_stats
+    #CSV.write("/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA/parameters.csv", Tables.table(evol_stats), writeheader=true,header=["criticality", "A", "sigma", "r0", "timestep", "explode", "run"],append=true);
 
 end    

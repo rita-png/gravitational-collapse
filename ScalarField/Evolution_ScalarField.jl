@@ -12,6 +12,7 @@ println("#######3")"""
 
 
 A = ARGS[1]
+run = ARGS[2]
 
 include("./ScalarField.jl");
 scipy = pyimport("scipy")
@@ -31,12 +32,12 @@ Tf=1#Nt*dt; #final time"""
 
 m = 1
 res=m;
-N=2.0^m*500.0/2#2.0^m*1000.0;#2.0^m*500.0;#N=2.0^m*500.0#2.0^m*100.0;
+N=2.0^m*750.0/2.0#2.0^m*1000.0;#2.0^m*500.0;#N=2.0^m*500.0#2.0^m*100.0;
 Xf=1.0;
 
 dx=Xf/N;
 dt=round(dx,digits=10);
-Nt=100.0*2^m*5/2#100.0*2^m*10
+Nt=2^m*750.0/2.0#100.0*2^m*10
 Tf=1#Nt*dt; #final time
 #print(Tf)
 
@@ -108,20 +109,24 @@ state_array[:,1]=initm;
 state_array = ghost(state_array);
 
 #CSV.write(dir*"/time_step0.csv", Tables.table(transpose(Matrix(state_array))), writeheader=false)
-CSV.write(dir*"/time_step0.csv", Tables.table(state_array), writeheader=false)
+run=int(run)
+CSV.write(dir*"/run$run/time_step0.csv", Tables.table(state_array), writeheader=false)
 
 timestep=0
 criticality=0.0
 explode=0.0
 critical_stop=0
-evol_stats = [criticality A sigma r0 timestep explode]
+evol_stats = [criticality A sigma r0 timestep explode run]
 monitor_ratio = zeros(L)
-CSV.write(dir*"/parameters.csv", Tables.table(evol_stats), writeheader=true, header=["criticality", "A", "sigma", "r0", "timestep", "explode"])
 
+run=int(run)
+if run == 1
+    CSV.write(dir*"/parameters.csv", Tables.table(evol_stats), writeheader=true, header=["criticality", "A", "sigma", "r0", "timestep", "explode", "run"])
+end
 #trash.jl goes here
 
 finaltime=length(T)-1
-timeevolution(state_array,finaltime,dir,dt)
+stats=timeevolution(state_array,finaltime,dir,dt,run)
 
 
-CSV.write("/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA/bisectionsearch/parameters.csv", Tables.table(evol_stats), writeheader=true,header=["criticality", "A", "sigma", "r0", "timestep", "explode"]);
+CSV.write("/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA/bisectionsearch/parameters.csv", Tables.table(stats), writeheader=true,header=["criticality", "A", "sigma", "r0", "timestep", "explode", "run"],append=true);

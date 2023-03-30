@@ -9,9 +9,9 @@ using CSV, Tables, DataFrames, ProgressBars, Plots
 
 
 global low_bound = 0.100
-global high_bound = 0.150
+global high_bound = 0.126
 global run = 1
-global runmax = 50
+global runmax = 20
 
 
 plt_A_crit = Vector{Float64}()
@@ -27,11 +27,11 @@ while(run <= runmax)
     println("\n########")
     println("\nBisection search run ##", run, "\nLow bound = ",low_bound,"; High bound = ", high_bound,"; A = ", A,"\n")
 
-    global ARGS = [A]
+    global ARGS = [A,run]
     include("./Evolution_ScalarField.jl");
     df = CSV.read("./DATA/bisectionsearch/parameters.csv", DataFrame)
 
-    if (df[1, :criticality]) == 0.0
+    if (df[run+1, :criticality]) == 0.0
         println("\nNon critical!")
         push!(plt_A_non_crit, A)
         push!(plt_x1, run)
@@ -40,14 +40,14 @@ while(run <= runmax)
         push!(plt_A_crit, A)
         push!(plt_x2, run)
     end
-    println("\nA = ",df[1, :A], " sigma = ", df[1, :sigma], " r0 = ", df[1, :r0], " Final timestep = ", df[1, :timestep], " explode = ", df[1, :explode])
+    println("\nA = ",df[run+1, :A], " sigma = ", df[run+1, :sigma], " r0 = ", df[run+1, :r0], " Final timestep = ", df[run+1, :timestep], " explode = ", df[run+1, :explode])
 
     #println(df[1, :explode])
-    if (df[1, :explode]) == 1.0
-        println("Found a NaN at timestep ",df[1, :timestep])
+    if (df[run+1, :explode]) == 1.0
+        println("Found a NaN at timestep ",df[run+1, :timestep])
     end
     
-    if (df[1, :criticality]) == 1.0
+    if (df[run+1, :criticality]) == 1.0
         global high_bound = A
     else
         global low_bound = A
