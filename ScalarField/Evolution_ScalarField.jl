@@ -123,7 +123,6 @@ run=int(run)
 if run == 1
     CSV.write(dir*"/parameters.csv", Tables.table(evol_stats), writeheader=true, header=["criticality", "A", "sigma", "r0", "timestep", "explode", "run"])
 end
-#trash.jl goes here
 
 finaltime=length(T)-1
 stats=timeevolution(state_array,finaltime,dir,dt,run)

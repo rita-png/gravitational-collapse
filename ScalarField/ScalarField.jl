@@ -480,8 +480,8 @@ function timeevolution(state_array,finaltime,dir,dt,run)
     @showprogress for t in 1:finaltime
 
         if isnan(state_array[L-3,4])
-            print("boom at t=", t*dt)
             explode = true
+            println("boom at t=", t*dt)
             timestep = t
             break
         end
@@ -524,9 +524,11 @@ function timeevolution(state_array,finaltime,dir,dt,run)
         
         #CSV.write(dir*"/time_step$k.csv", Tables.table(transpose(Matrix(state_array))), writeheader=false)
         run=int(run)
-        if t%10==0
-            CSV.write(dir*"/run$run/time_step$t.csv", Tables.table(state_array), writeheader=false)
-        end
+        """if t%10==0
+            #CSV.write(dir*"/run$run/time_step$t.csv", Tables.table(state_array), writeheader=false)
+            CSV.write(dir*"/time_step$t.csv", Tables.table(state_array), writeheader=false)
+        end"""
+        CSV.write(dir*"/time_step$t.csv", Tables.table(state_array), writeheader=false)
 
         #threshold for apparent black hole formation
         global monitor_ratio = zeros(L)
