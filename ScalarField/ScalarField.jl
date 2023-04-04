@@ -53,6 +53,39 @@ function extrapolate_in(y0,y1,y2,y3)
     return -y3 + 4*y2 - 6*y1 + 4*y0
 end
 
+# Calculating dt
+function update_dt(X, m, beta)
+
+    L = length(X)
+    c = []
+    ori=find_origin(X)
+    for i in (ori+1):(L-4)
+        c = vcat(c,2*X[i]/((1-X[i])^3*exp(2*beta[i])*(m[i]-X[i]/(1-X[i]))))
+    end
+    dxx = []
+
+    for i in (ori+1):(L-4)
+        dxx = vcat(dxx,X[i+1]-X[i])
+    end
+    return minimum(c)
+end
+
+function find_origin(X)
+
+    origin_i=Int64
+    L=length(X)
+    #origin_i = 4
+    for i in 1:L
+        if X[i] >= 0
+            origin_i = i
+            break
+        end
+    end
+    #println("\nOrigin of the grid is at t = ", t, " is i = ", origin_i, "\n")
+
+    return origin_i
+end
+
 # Updating Grid
 function update_grid(data,T,k)
     
@@ -354,6 +387,8 @@ function boundarySF(y,X)
     return y
 end
 
+
+
 # Defining the function in the RHS of the evolution equation system
 
 function SF_RHS(data,t,X)
@@ -362,23 +397,24 @@ function SF_RHS(data,t,X)
     dy=zeros((L,length(data[1,:])));
 
     # update interpolation of psi,x
-    spl_derpsi = scipyinterpolate.splrep(X[4:L-3], data[4:L-3,4],k=4)#old
-    derpsi_func(x) = scipyinterpolate.splev(x, spl_derpsi)#old
-    #derpsi_func = cubic_spline_interpolation(X[4:L-3], data[4:L-3,4],  extrapolation_bc = Line())#new
+    #spl_derpsi = scipyinterpolate.splrep(X[4:L-3], data[4:L-3,4],k=4)#old
+    #derpsi_func(x) = scipyinterpolate.splev(x, spl_derpsi)#old
+    derpsi_func = Spline1D(X[4:L-3],data[4:L-3,4],k=4)#new
+    
     
     # rk4wrapper to update psi data
     psi0=0
-    SFconstraint_psi(psi0,x) = scipyinterpolate.splev(x, spl_derpsi)#old
-    data[4:L-3,3] = rungekutta4(SFconstraint_psi,psi0,X[4:L-3])#old
-    #SFconstraint_psi(psi0,x) = derpsi_func(x)#new
-    #data[4:L-3,3] = rungekutta4(SFconstraint_psi,psi0,X[4:L-3])#new
+    #SFconstraint_psi(psi0,x) = scipyinterpolate.splev(x, spl_derpsi)#old
+    #data[4:L-3,3] = rungekutta4(SFconstraint_psi,psi0,X[4:L-3])#old
+    SFconstraint_psi(psi0,x) = derpsi_func(x)#new
+    data[4:L-3,3] = rungekutta4(SFconstraint_psi,psi0,X[4:L-3])#new
     data = ghost(data)
     #global state_array[:,3] = data[:,3]
 
     # update interpolation of psi
-    spl_psi = scipyinterpolate.splrep(X[4:L-3], data[4:L-3,3],k=4)#old
-    psi_func(x) = scipyinterpolate.splev(x, spl_psi)#old
-    #psi_func = cubic_spline_interpolation(X[4:L-3], data[4:L-3,3],  extrapolation_bc = Line())#new
+    #spl_psi = scipyinterpolate.splrep(X[4:L-3], data[4:L-3,3],k=4)#old
+    #psi_func(x) = scipyinterpolate.splev(x, spl_psi)#old
+    psi_func = Spline1D(X[4:L-3], data[4:L-3,3],  k=4)#new
 
     funcs = [psi_func derpsi_func]
 
@@ -498,19 +534,21 @@ function timeevolution(state_array,finaltime,dir,dt,run)
         state_array[:,:] = rungekutta4molstep(SF_RHS,state_array[:,:],T,t,0,X) #evolve psi,x
         #global state_array=ghost(state_array)
     
-        #global aux=SF_RHS(state_array[:,:], 0,0,X)
         
         #calculate psi from psi,x
-        spl_derpsi = scipyinterpolate.splrep(initX[4:L-3], state_array[4:L-3,4],k=4)
+        #spl_derpsi = scipyinterpolate.splrep(initX[4:L-3], state_array[4:L-3,4],k=4)#old
+        derpsi_func = Spline1D(X[4:L-3],state_array[4:L-3,4],k=4)#new
         psi0=0
-        SFconstraint_psi(psi0,x) = scipyinterpolate.splev(x, spl_derpsi)
-    
-        state_array[4:L-3,3] = rungekutta4(SFconstraint_psi,psi0,initX1)
+        #SFconstraint_psi(psi0,x) = scipyinterpolate.splev(x, spl_derpsi)#old
+        SFconstraint_psi(psi0,x) = derpsi_func(x)#new
+        
+        state_array[4:L-3,3] = rungekutta4(SFconstraint_psi,psi0,X[4:L-3])
         #global state_array=ghost(state_array);
     
-        spl_psi = scipyinterpolate.splrep(initX[4:L-3], state_array[4:L-3,3],k=4)
-        psi_func(x) = scipyinterpolate.splev(x, spl_psi)
-        derpsi_func(x) = scipyinterpolate.splev(x, spl_derpsi)
+        #spl_psi = scipyinterpolate.splrep(initX[4:L-3], state_array[4:L-3,3],k=4)#old
+        #psi_func(x) = scipyinterpolate.splev(x, spl_psi) #old
+        psi_func = Spline1D(initX[4:L-3], state_array[4:L-3,3],k=4)#new
+        #derpsi_func(x) = scipyinterpolate.splev(x, spl_derpsi) #old
     
         funcs = [psi_func derpsi_func]
         
