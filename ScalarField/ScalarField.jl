@@ -70,7 +70,7 @@ function update_dt(X, m, beta,dx,ginit)
 
     g=dt_scale(X,m,beta,dx)
    
-    return  0.8*dx*ginit/g
+    return  dx*sqrt(ginit/g)
 end
 
 function find_origin(X)
@@ -476,12 +476,12 @@ function timeevolution(state_array,finaltime,dir,dt,run)
     T_array = [0.0]
     iter = 0
 
-    while t<=finaltime#@TRACKS
+    while t<=finaltime#@TRACK
 
         iter = iter + 1
 
         #update time increment
-        global dt = update_dt(initX,state_array[:,1],state_array[:,2],dx,ginit)
+        #global dt = update_dt(initX,state_array[:,1],state_array[:,2],dx,ginit)
         t = t + dt
         println("iteration ", iter, " dt is ", dt, ", time of iteration is ", t)
     
@@ -522,11 +522,11 @@ function timeevolution(state_array,finaltime,dir,dt,run)
         
         #CSV.write(dir*"/time_step$k.csv", Tables.table(transpose(Matrix(state_array))), writeheader=false)
         run=int(run)
-        """if t%10==0
+        if iter%10==0
             #CSV.write(dir*"/run$run/time_step$iter.csv", Tables.table(state_array), writeheader=false)
             CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
-        end"""
-        CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
+        end
+        
 
         #threshold for apparent black hole formation
         global monitor_ratio = zeros(L)
@@ -536,7 +536,7 @@ function timeevolution(state_array,finaltime,dir,dt,run)
             if monitor_ratio[i]>1.0
                 global criticality = true
                 println("Supercritical evolution! At timestep ", t*dt)
-                println("i = ", i, " t = ", t, " monitor ratio = ", monitor_ratio[i])
+                println("Gridpoint = ", i, " t = ", t, " monitor ratio = ", monitor_ratio[i])
                 global timestep = iter
             end
         end
