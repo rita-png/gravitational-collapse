@@ -175,6 +175,22 @@ function rk4wrapper(f,y0,x,u,spl_funcs) # u depicts T array, or M!!
     return y
 end
 
+function n_rk4wrapper(f,y0,x,u,spl_funcs) # u depicts T array, or M!!
+    L = length(x)
+    n = length(y0)
+    y = zeros(L,n)
+    y[1,:] = y0;
+    for i in 1:L-1
+        h = x[2] .- x[1]
+        k1 = f(y[i,:], x[i],u,spl_funcs)
+        k2 = f(y[i,:] .+ k1 * h/2, x[i] .+ h/2,u,spl_funcs)
+        k3 = f(y[i,:] .+ k2 * h/2, x[i] .+ h/2,u,spl_funcs)
+        k4 = f(y[i,:] .+ k3 * h, x[i] .+ h,u,spl_funcs)
+        y[i+1,:] = y[i,:] .+ (h/6) * (k1 .+ 2*k2 .+ 2*k3 .+ k4)
+    end
+    return y[:,:]
+end
+
 #ghosts
 
 function ghost(y)
@@ -346,6 +362,27 @@ function boundarySF(y,X)
 end
 
 
+function RHS(y0,x1,time,funcs)
+    
+    z=zeros(length(y0))
+    psi = funcs[1]
+    derpsi = funcs[2]
+
+    if x1<10^(-15) #left
+        z[1] = 0.0;
+        z[2] = 0.0;
+    elseif abs.(x1 .- 1.0)<10^(-15) #right
+        z[1] = 2.0 .* pi .* (psi(x1)) .^ 2.0
+        z[2] = 0.0
+    else #right
+        z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (psi(x1) .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;
+        z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (psi(x1) .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0;
+    end
+
+
+    return z[:]
+end
+
 
 # Defining the function in the RHS of the evolution equation system
 
@@ -355,23 +392,17 @@ function SF_RHS(data,t,X)
     dy=zeros((L,length(data[1,:])));
 
     # update interpolation of psi,x
-    #spl_derpsi = scipyinterpolate.splrep(X[4:L-3], data[4:L-3,4],k=4)#old
-    #derpsi_func(x) = scipyinterpolate.splev(x, spl_derpsi)#old
     derpsi_func = Spline1D(X[4:L-3],data[4:L-3,4],k=4)#new
     
     
     # rk4wrapper to update psi data
     psi0=0
-    #SFconstraint_psi(psi0,x) = scipyinterpolate.splev(x, spl_derpsi)#old
-    #data[4:L-3,3] = rungekutta4(SFconstraint_psi,psi0,X[4:L-3])#old
     SFconstraint_psi(psi0,x) = derpsi_func(x)#new
     data[4:L-3,3] = rungekutta4(SFconstraint_psi,psi0,X[4:L-3])#new
     data = ghost(data)
     #global state_array[:,3] = data[:,3]
 
     # update interpolation of psi
-    #spl_psi = scipyinterpolate.splrep(X[4:L-3], data[4:L-3,3],k=4)#old
-    #psi_func(x) = scipyinterpolate.splev(x, spl_psi)#old
     psi_func = Spline1D(X[4:L-3], data[4:L-3,3],  k=4)#new
 
     funcs = [psi_func derpsi_func]
@@ -512,14 +543,19 @@ function timeevolution(state_array,finaltime,dir,dt,run)
     
         funcs = [psi_func derpsi_func]
         
-        #evolve beta
+        #old
+        """#evolve beta
         state_array[4:L-3,2]=rk4wrapper(SFconstraint_beta,beta0,X1,t,funcs)
         #global state_array=ghost(state_array)
         
         #evolve m
         state_array[4:L-3,1]=rk4wrapper(SFconstraint_m,m0,X1,t,funcs)
-        #global state_array=ghost(state_array)
-        
+        #global state_array=ghost(state_array)"""
+
+        #new
+        y00=[0 0]
+        state_array[4:L-3,1:2] = n_rk4wrapper(RHS,y00,X1,t,funcs) #evolve m and beta together
+
         #CSV.write(dir*"/time_step$k.csv", Tables.table(transpose(Matrix(state_array))), writeheader=false)
         run=int(run)
         if iter%10==0
