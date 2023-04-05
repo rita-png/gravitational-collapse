@@ -54,20 +54,23 @@ function extrapolate_in(y0,y1,y2,y3)
 end
 
 # Calculating dt
-function update_dt(X, m, beta)
+function dt_scale(X, m, beta,dx)
 
     L = length(X)
-    c = []
+    g = []
     ori=find_origin(X)
-    for i in (ori+1):(L-4)
-        c = vcat(c,2*X[i]/((1-X[i])^3*exp(2*beta[i])*(m[i]-X[i]/(1-X[i]))))
+    for i in (ori:(L-4))
+        g = vcat(g,exp(2*beta[i])*m[i])
     end
-    dxx = []
+    
+    return  maximum(g)
+end
 
-    for i in (ori+1):(L-4)
-        dxx = vcat(dxx,X[i+1]-X[i])
-    end
-    return minimum(c)
+function update_dt(X, m, beta,dx,ginit)
+
+    g=dt_scale(X,m,beta,dx)
+   
+    return  0.8*dx*ginit/g
 end
 
 function find_origin(X)
@@ -92,7 +95,7 @@ function update_grid(data,T,k)
     dx = data[2,5]-data[1,5]
 
     #evolve grid
-    data = rungekutta4molstep(Grid_RHS,data,T,k,0,data[:,5]) #evolve X
+    data = rungekutta4molstep(Grid_RHS,data,T,k,data[:,5]) #evolve X
     #data=ghost(data)
     
     X = data[:,5]
@@ -135,45 +138,21 @@ end
 
 # Runge Kutta integrator used for the method of lines
 
-function rungekutta4molstep(f,y00,T,w::Int64,ex,X)
+function rungekutta4molstep(f,y00,T,w::Int64,X)
     y = y00;
     X=collect(X)
         h = T[w+1]-T[w]
         #print("\n\nh = ", h, " \n")
         #h = dt; # only for equally spaced grid in time and space, otherwise (T[w+1] - T[w])
-        #println("y[:,4] ", y[:,4])
-        #println("############")
         k1 = f(y[:,:], T[w],X)
         #k1=ghost(k1)
         k1=boundarySF(k1,X)
-        #println("k1[:,4] ", k1[:,4])
-        ####println("y[:,4] ", y[:,4])
-        #println("############")
         k2 = f(y[:,:] .+ k1 .* h/2, T[w] + h/2,X)
         k2=boundarySF(k2,X)
-        #println("k2[:,4] ", k2[:,4])
-        ####println("y[:,4] .+ k1 .* h/2 ", y[:,4] .+ k1 .* h/2)
-        #println("############")
-
-        #println("k2[:,4].-k1[:,4] ", k2[:,4] .- k1[:,4])
-        ####println("y[:,4] .+ k1 .* h/2 .- y[:,4]", y[:,4] .+ k1 .* h/2 .- y[:,4])
-        #println("############")
         k3 = f(y[:,:] .+ k2 .* h/2, T[w] + h/2,X)
         k3=boundarySF(k3,X)
-
-        #println("############")
         k4 = f(y[:,:] .+ k3 .* h, T[w] + h,X)
         k4=boundarySF(k4,X)
-
-        """print("\n\ny[50,4] .+ k3 .* h\n\n",y[50,4] .+ k3[50,4] .* h)
-        print("\n\ny[50,4]\n\n",y[50,4])
-        print("\n\nk3\n\n",k3[50,4])
-        print("\n\nh\n\n",h)
-"""
-        #println("k4[:,4] .- k1[:,4] ", k4[:,4] .- k1[:,4])
-        #println("############")
-
-        #println(y[:,4]-.y[:,4] .- k1 .* h/2)
         y[:,:] = y[:,:] .+ (h/6) .* (k1 .+ 2 * k2 .+ 2 * k3 .+ k4)
         
     return y[:,:]#ghost(y[:,:])
@@ -217,11 +196,6 @@ end
 
 
 #6th order dissipation, added to 4th order original scheme
-"""function dissipation6(y,i,eps)
-        delta6=(y[i+3,:]-6*y[i+2,:]+15*y[i+1,:]-20*y[i,:]+15*y[i-1,:]-6*y[i-2,:]+y[i-3,:]);
-    return (-1)^3*eps*1/(dx)*delta6
-end"""
-
 function dissipation6(y,i,eps)
     if i==4
         delta6= (19*y[i,:]-142*y[i+1,:]+464*y[i+2,:]-866*y[i+3,:]+1010*y[i+4,:]-754*y[i+5,:]+352*y[i+6,:]-94*y[i+7,:]+11*y[i+8,:])/2;
@@ -244,7 +218,7 @@ function dissipation4(y,i,eps)
 end
 
 
-#2nd order  dissipation, added to 1st order scheme ##NEW##
+#2nd order  dissipation, added to 1st order scheme
 function dissipation2(y,i)
         delta2=(y[i+1,:]-2*y[i,:]+y[i-1,:]);
     return (-1)^1*epsilon*1/(dx)*delta2
@@ -276,36 +250,22 @@ int(x) = floor(Int, x)
 
 # Test Model RHSs for the bulk equations (3.6.16)
 
-
 function SFconstraint_beta(beta0,x1,time,funcs)
     
     psi = funcs[1]
     derpsi = funcs[2]
     
-    #println("psi(x1)[1]", psi(x1)[1])
 
     if x1<10^(-15)
         z = 0.0
     elseif abs.(x1 .- 1.0)<10^(-15)
         z = 0.0
     else
-        #z = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (psi(x1) .+ (x1 .- 1) .* x1 .* derpsi(x1)) .^2
         z = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (psi(x1) .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0
-        #z = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* ((x1 .- 1.0) .* x1 .* derpsi(x1)[1]) .^2.0
     end
 
-    #z=2.0 .* pi .* (1.0 .- x1) 
     return z
-    #return psi(x1)[1]
 
-    #return derpsi(x1)[1]
-end
-
-function new_constraint(f0,x1,time,funcs)
-    
-    z = sin(x1*20+time)
-
-    return z
 end
 
 
@@ -319,7 +279,6 @@ function SFconstraint_m(m0,x1,time,funcs)
     elseif abs.(x1 .- 1.0)<10^(-15)
         z = 2.0 .* pi .* (psi(x1)) .^ 2.0
     else
-        #z = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* m0) ./ x1 .^3.0 .* (psiarray[k] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0
         z = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* m0) ./ x1 .^3.0 .* (psi(x1) .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0
     end
     
@@ -334,8 +293,7 @@ function bulkSF(y,i,X)
     #psi,X
 
     dy=-1.0/2.0*exp(2.0*y[i,2])*(-(2*(X[i]-1)^3*y[i,3]*(X[i]*((X[i]-1)*Der(y,i,1,X)+X[i]*Der(y,i,2,X))+y[i,1]*(1+2*(X[i]-1)*X[i]*Der(y,i,2,X))))/X[i]^3 - (2*(X[i]-1)^4*(X[i]*((X[i]-1)*Der(y,i,1,X)+X[i]*Der(y,i,2,X))+y[i,1]*(1+2(X[i]-1)*X[i]*Der(y,i,2,X)))*y[i,4])/X[i]^2 - ((X[i]+2*(X[i]-1)*y[i,1])*Der(y,i,4,X))/X[i]) #- dissipation6(y,i,0.01)[4];
-    #dy=-1.0/2.0*exp(2.0*y[i,2])*((2.0*exp(2.0*(X[i]-y[i,3]+X[i]*y[i,3])*y[i,2]/X[i])*(X[i]-1.0)^2*(X[i]*((X[i]-1.0)*Der(y,i,1,X)+X[i]*Der(y,i,2,X))+y[i,1]*(1.0+2.0*(X[i]-1.0)*X[i]*Der(y,i,2,X))))/X[i]^2 - ((-1.0+X[i])^3*(X[i]+2.0*(X[i]-1.0)*y[i,1])*y[i,4])/X[i]^2 - ((1.0-X[i])^3*(1.0-2.0*(X[i]-1.0)^2*Der(y,i,1,X))*y[i,4])/X[i] - (2.0*(X[i]-1.0)^4*(X[i]+2.0*(X[i]-1.0)*y[i,1])*Der(y,i,2,X)*y[i,4])/X[i] - (Der(y,i,4,X)) - (2.0*(X[i]-1.0)*y[i,1]*Der(y,i,4,X))/X[i]) #- dissipation6(y,i,0.01)[4];
-
+    
     return dy
 end
 
@@ -510,63 +468,65 @@ function doublegrid(X)
 
 end
 
-using ProgressMeter
+#using ProgressMeter
+using Term.Progress
 function timeevolution(state_array,finaltime,dir,dt,run)
 
-    @showprogress for t in 1:finaltime
+    t=0.0
+    T_array = [0.0]
+    iter = 0
 
-        if isnan(state_array[L-3,4])
-            explode = true
-            println("boom at t=", t*dt)
-            timestep = t
-            break
-        end
-        
+    while t<=finaltime#@TRACKS
+
+        iter = iter + 1
+
+        #update time increment
+        global dt = update_dt(initX,state_array[:,1],state_array[:,2],dx,ginit)
+        t = t + dt
+        println("iteration ", iter, " dt is ", dt, ", time of iteration is ", t)
+    
+        T_array = vcat(T_array,t)
+
         #X = update_grid(state_array[:,:],T,t)
         
-        X=initX#initX #state_array[:,5]
+        X=initX #state_array[:,5]
         X1=X[4:L-3]
     
         #update ghost points
         state_array=boundarySF(state_array,X)
        
         #evolve psi,x
-        state_array[:,:] = rungekutta4molstep(SF_RHS,state_array[:,:],T,t,0,X) #evolve psi,x
+        state_array[:,:] = rungekutta4molstep(SF_RHS,state_array[:,:],T_array,iter,X) #evolve psi,x
         #global state_array=ghost(state_array)
     
         
         #calculate psi from psi,x
-        #spl_derpsi = scipyinterpolate.splrep(initX[4:L-3], state_array[4:L-3,4],k=4)#old
         derpsi_func = Spline1D(X[4:L-3],state_array[4:L-3,4],k=4)#new
         psi0=0
-        #SFconstraint_psi(psi0,x) = scipyinterpolate.splev(x, spl_derpsi)#old
         SFconstraint_psi(psi0,x) = derpsi_func(x)#new
         
         state_array[4:L-3,3] = rungekutta4(SFconstraint_psi,psi0,X[4:L-3])
         #global state_array=ghost(state_array);
     
-        #spl_psi = scipyinterpolate.splrep(initX[4:L-3], state_array[4:L-3,3],k=4)#old
-        #psi_func(x) = scipyinterpolate.splev(x, spl_psi) #old
         psi_func = Spline1D(initX[4:L-3], state_array[4:L-3,3],k=4)#new
-        #derpsi_func(x) = scipyinterpolate.splev(x, spl_derpsi) #old
     
         funcs = [psi_func derpsi_func]
         
         #evolve beta
-        state_array[4:L-3,2]=rk4wrapper(SFconstraint_beta,beta0,X1,T[t+1],funcs)
+        state_array[4:L-3,2]=rk4wrapper(SFconstraint_beta,beta0,X1,t,funcs)
         #global state_array=ghost(state_array)
         
         #evolve m
-        state_array[4:L-3,1]=rk4wrapper(SFconstraint_m,m0,X1,T[t+1],funcs)
+        state_array[4:L-3,1]=rk4wrapper(SFconstraint_m,m0,X1,t,funcs)
         #global state_array=ghost(state_array)
         
         #CSV.write(dir*"/time_step$k.csv", Tables.table(transpose(Matrix(state_array))), writeheader=false)
         run=int(run)
         """if t%10==0
-            #CSV.write(dir*"/run$run/time_step$t.csv", Tables.table(state_array), writeheader=false)
-            CSV.write(dir*"/time_step$t.csv", Tables.table(state_array), writeheader=false)
+            #CSV.write(dir*"/run$run/time_step$iter.csv", Tables.table(state_array), writeheader=false)
+            CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
         end"""
-        CSV.write(dir*"/time_step$t.csv", Tables.table(state_array), writeheader=false)
+        CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
 
         #threshold for apparent black hole formation
         global monitor_ratio = zeros(L)
@@ -577,20 +537,27 @@ function timeevolution(state_array,finaltime,dir,dt,run)
                 global criticality = true
                 println("Supercritical evolution! At timestep ", t*dt)
                 println("i = ", i, " t = ", t, " monitor ratio = ", monitor_ratio[i])
-                global timestep = t
+                global timestep = iter
             end
         end
         if criticality == true
             break
         end
         
+        if isnan(state_array[L-3,4])
+            explode = true
+            println("boom at time=", t)
+            timestep = iter
+            break
+        end
 
-        global timestep = t
+        global timestep = iter
+        
     end
-
+    
     global evol_stats = [criticality A sigma r0 timestep explode run]
 
-    return evol_stats
+    return T_array
     #CSV.write("/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA/parameters.csv", Tables.table(evol_stats), writeheader=true,header=["criticality", "A", "sigma", "r0", "timestep", "explode", "run"],append=true);
 
 end    
