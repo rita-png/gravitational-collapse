@@ -362,21 +362,24 @@ function boundarySF(y,X)
 end
 
 
-function RHS(y0,x1,time,funcs)
+function RHS(y0,x1,time,func)
     
     z=zeros(length(y0))
-    psi = funcs[1]
-    derpsi = funcs[2]
+    derpsi = func
+    z[3] = derpsi(x1)
 
     if x1<10^(-15) #left
         z[1] = 0.0;
         z[2] = 0.0;
     elseif abs.(x1 .- 1.0)<10^(-15) #right
-        z[1] = 2.0 .* pi .* (psi(x1)) .^ 2.0
+        #z[1] = 2.0 .* pi .* (psi(x1)) .^ 2.0
+        z[1] = 2.0 .* pi .* (y0[3]) .^ 2.0
         z[2] = 0.0
     else #right
-        z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (psi(x1) .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;
-        z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (psi(x1) .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0;
+        #z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (psi(x1) .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;
+        z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;
+        #z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (psi(x1) .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0;
+        z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0;
     end
 
 
@@ -530,31 +533,27 @@ function timeevolution(state_array,finaltime,dir,dt,run)
         state_array[:,:] = rungekutta4molstep(SF_RHS,state_array[:,:],T_array,iter,X) #evolve psi,x
         #global state_array=ghost(state_array)
     
-        
+        #old
+"""        
         #calculate psi from psi,x
         derpsi_func = Spline1D(X[4:L-3],state_array[4:L-3,4],k=4)#new
         psi0=0
-        SFconstraint_psi(psi0,x) = derpsi_func(x)#new
         
-        state_array[4:L-3,3] = rungekutta4(SFconstraint_psi,psi0,X[4:L-3])
+
+        SFconstraint_psi(psi0,x,t,funcs) = derpsi_func(x)#new
+        state_array[4:L-3,3] = rk4wrapper(SFconstraint_psi,psi0,X[4:L-3],t,derpsi_func)
+        
+
         #global state_array=ghost(state_array);
     
         psi_func = Spline1D(initX[4:L-3], state_array[4:L-3,3],k=4)#new
     
-        funcs = [psi_func derpsi_func]
+        funcs = [psi_func derpsi_func]"""
         
-        #old
-        """#evolve beta
-        state_array[4:L-3,2]=rk4wrapper(SFconstraint_beta,beta0,X1,t,funcs)
-        #global state_array=ghost(state_array)
-        
-        #evolve m
-        state_array[4:L-3,1]=rk4wrapper(SFconstraint_m,m0,X1,t,funcs)
-        #global state_array=ghost(state_array)"""
-
         #new
-        y00=[0 0]
-        state_array[4:L-3,1:2] = n_rk4wrapper(RHS,y00,X1,t,funcs) #evolve m and beta together
+        y0=[0 0 0]
+        state_array[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X1,t,derpsi_func) #evolve m and beta together
+        
 
         #CSV.write(dir*"/time_step$k.csv", Tables.table(transpose(Matrix(state_array))), writeheader=false)
         run=int(run)
