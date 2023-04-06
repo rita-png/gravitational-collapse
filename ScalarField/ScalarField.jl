@@ -397,9 +397,9 @@ function SF_RHS(data,t,X)
     # update interpolation of psi,x
     derpsi_func = Spline1D(X[4:L-3],data[4:L-3,4],k=4)#new
     
-    
+    #old
     # rk4wrapper to update psi data
-    psi0=0
+    """psi0=0
     SFconstraint_psi(psi0,x) = derpsi_func(x)#new
     data[4:L-3,3] = rungekutta4(SFconstraint_psi,psi0,X[4:L-3])#new
     data = ghost(data)
@@ -420,13 +420,11 @@ function SF_RHS(data,t,X)
     m0=0
     data[4:L-3,1]=rk4wrapper(SFconstraint_m,m0,X[4:L-3],t,funcs)
     data = ghost(data)
-    #global state_array[:,1] = data[:,1]
+    #global state_array[:,1] = data[:,1]"""
 
-
- 
-    #psi another RHS. but do it later
-
-
+    #new
+    y0=[0 0 0]
+    state_array[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X[4:L-3],t,derpsi_func)
 
 
 """
@@ -533,27 +531,10 @@ function timeevolution(state_array,finaltime,dir,dt,run)
         state_array[:,:] = rungekutta4molstep(SF_RHS,state_array[:,:],T_array,iter,X) #evolve psi,x
         #global state_array=ghost(state_array)
     
-        #old
-"""        
-        #calculate psi from psi,x
-        derpsi_func = Spline1D(X[4:L-3],state_array[4:L-3,4],k=4)#new
-        psi0=0
-        
-
-        SFconstraint_psi(psi0,x,t,funcs) = derpsi_func(x)#new
-        state_array[4:L-3,3] = rk4wrapper(SFconstraint_psi,psi0,X[4:L-3],t,derpsi_func)
-        
-
-        #global state_array=ghost(state_array);
-    
-        psi_func = Spline1D(initX[4:L-3], state_array[4:L-3,3],k=4)#new
-    
-        funcs = [psi_func derpsi_func]"""
-        
-        #new
+        #evolve m and beta together, new
         y0=[0 0 0]
-        state_array[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X1,t,derpsi_func) #evolve m and beta together
-        
+        state_array[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X1,t,derpsi_func)
+
 
         #CSV.write(dir*"/time_step$k.csv", Tables.table(transpose(Matrix(state_array))), writeheader=false)
         run=int(run)
