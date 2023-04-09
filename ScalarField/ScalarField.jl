@@ -397,31 +397,7 @@ function SF_RHS(data,t,X)
     # update interpolation of psi,x
     derpsi_func = Spline1D(X[4:L-3],data[4:L-3,4],k=4)#new
     
-    #old
-    # rk4wrapper to update psi data
-    """psi0=0
-    SFconstraint_psi(psi0,x) = derpsi_func(x)#new
-    data[4:L-3,3] = rungekutta4(SFconstraint_psi,psi0,X[4:L-3])#new
-    data = ghost(data)
-    #global state_array[:,3] = data[:,3]
-
-    # update interpolation of psi
-    psi_func = Spline1D(X[4:L-3], data[4:L-3,3],  k=4)#new
-
-    funcs = [psi_func derpsi_func]
-
-    # rk4wrapper to update beta data
-    beta0=0
-    data[4:L-3,2] = rk4wrapper(SFconstraint_beta,beta0,X[4:L-3],t,funcs)
-    data = ghost(data)
-    #global state_array[:,2] = data[:,2]
-
-    # rk4wrapper to update m data
-    m0=0
-    data[4:L-3,1]=rk4wrapper(SFconstraint_m,m0,X[4:L-3],t,funcs)
-    data = ghost(data)
-    #global state_array[:,1] = data[:,1]"""
-
+    # update m, beta and psi data
     #new
     y0=[0 0 0]
     state_array[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X[4:L-3],t,derpsi_func)
@@ -506,6 +482,7 @@ function timeevolution(state_array,finaltime,dir,dt,run)
 
     t=0.0
     T_array = [0.0]
+    T_interp = [0.0]
     iter = 0
 
     while t<=finaltime#@TRACK
@@ -513,10 +490,12 @@ function timeevolution(state_array,finaltime,dir,dt,run)
         iter = iter + 1
 
         #update time increment
-        #global dt = update_dt(initX,state_array[:,1],state_array[:,2],dx,ginit)
+        global dt = update_dt(initX,state_array[:,1],state_array[:,2],dx,ginit)
         t = t + dt
-        println("iteration ", iter, " dt is ", dt, ", time of iteration is ", t)
-    
+        if iter%10==0
+            println("iteration ", iter, " dt is ", dt, ", time of iteration is ", t)
+        end
+
         T_array = vcat(T_array,t)
 
         #X = update_grid(state_array[:,:],T,t)
@@ -536,12 +515,14 @@ function timeevolution(state_array,finaltime,dir,dt,run)
         state_array[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X1,t,derpsi_func)
 
 
-        #CSV.write(dir*"/time_step$k.csv", Tables.table(transpose(Matrix(state_array))), writeheader=false)
+        #CSV.write(dir*"/res$res/time_step$iter.csv", Tables.table(transpose(Matrix(state_array))), writeheader=false)
         run=int(run)
         if iter%10==0
             #CSV.write(dir*"/run$run/time_step$iter.csv", Tables.table(state_array), writeheader=false)
-            CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
+            CSV.write(dir*"/res$res/time_step$iter.csv", Tables.table(state_array), writeheader=false)
+            T_interp = vcat(T_interp,t)
         end
+        
         
 
         #threshold for apparent black hole formation
@@ -573,7 +554,7 @@ function timeevolution(state_array,finaltime,dir,dt,run)
     
     global evol_stats = [criticality A sigma r0 timestep explode run]
 
-    return T_array
-    #CSV.write("/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA/parameters.csv", Tables.table(evol_stats), writeheader=true,header=["criticality", "A", "sigma", "r0", "timestep", "explode", "run"],append=true);
+    return T_interp
+    #CSV.write(dir*"/parameters.csv", Tables.table(evol_stats), writeheader=true,header=["criticality", "A", "sigma", "r0", "timestep", "explode", "run"],append=true);
 
 end    
