@@ -70,7 +70,7 @@ function update_dt(X, m, beta,dx,ginit)
 
     g=dt_scale(X,m,beta,dx)
    
-    return  dx*sqrt(ginit/g)
+    return  dx*(ginit/g)^(1/4)
 end
 
 function find_origin(X)
@@ -400,7 +400,7 @@ function SF_RHS(data,t,X)
     # update m, beta and psi data
     #new
     y0=[0 0 0]
-    state_array[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X[4:L-3],t,derpsi_func)
+    data[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X[4:L-3],t,derpsi_func)
 
 
 """
@@ -478,7 +478,7 @@ end
 
 #using ProgressMeter
 using Term.Progress
-function timeevolution(state_array,finaltime,dir,dt,run)
+function timeevolution(state_array,finaltime,dir,run)
 
     t=0.0
     T_array = [0.0]
@@ -490,7 +490,7 @@ function timeevolution(state_array,finaltime,dir,dt,run)
         iter = iter + 1
 
         #update time increment
-        global dt = update_dt(initX,state_array[:,1],state_array[:,2],dx,ginit)
+        #global dt = update_dt(initX,state_array[:,1],state_array[:,2],dx,ginit)
         t = t + dt
         if iter%10==0
             println("iteration ", iter, " dt is ", dt, ", time of iteration is ", t)
@@ -510,16 +510,18 @@ function timeevolution(state_array,finaltime,dir,dt,run)
         state_array[:,:] = rungekutta4molstep(SF_RHS,state_array[:,:],T_array,iter,X) #evolve psi,x
         #global state_array=ghost(state_array)
     
+        # update interpolation of psi,x
+        derpsi_func = Spline1D(X[4:L-3],state_array[4:L-3,4],k=4)#new
+
         #evolve m and beta together, new
         y0=[0 0 0]
         state_array[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X1,t,derpsi_func)
 
 
-        #CSV.write(dir*"/res$res/time_step$iter.csv", Tables.table(transpose(Matrix(state_array))), writeheader=false)
         run=int(run)
         if iter%10==0
             #CSV.write(dir*"/run$run/time_step$iter.csv", Tables.table(state_array), writeheader=false)
-            CSV.write(dir*"/res$res/time_step$iter.csv", Tables.table(state_array), writeheader=false)
+            CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
             T_interp = vcat(T_interp,t)
         end
         
@@ -532,9 +534,9 @@ function timeevolution(state_array,finaltime,dir,dt,run)
             global monitor_ratio[i] = 2*state_array[i,1]/initX[i]*(1-initX[i])
             if monitor_ratio[i]>1.0
                 global criticality = true
-                println("Supercritical evolution! At timestep ", t*dt)
+                println("Supercritical evolution! At time ", t)
                 println("Gridpoint = ", i, " t = ", t, " monitor ratio = ", monitor_ratio[i])
-                global timestep = iter
+                global time = t
             end
         end
         if criticality == true
@@ -548,13 +550,12 @@ function timeevolution(state_array,finaltime,dir,dt,run)
             break
         end
 
-        global timestep = iter
+        global time = t
         
     end
     
-    global evol_stats = [criticality A sigma r0 timestep explode run]
+    global evol_stats = [criticality A sigma r0 time explode run]
 
-    return T_interp
-    #CSV.write(dir*"/parameters.csv", Tables.table(evol_stats), writeheader=true,header=["criticality", "A", "sigma", "r0", "timestep", "explode", "run"],append=true);
+    return evol_stats, T_interp
 
 end    
