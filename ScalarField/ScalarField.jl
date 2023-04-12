@@ -68,9 +68,17 @@ end
 
 function update_dt(X, m, beta,dx,ginit)
 
-    g=dt_scale(X,m,beta,dx)
-   
-    return  dx*(ginit/g)^(1/4)
+    monitor_ratio = zeros(L)
+    g=ginit
+
+    for i in 1:L
+        monitor_ratio[i] = 2*state_array[i,1]/initX[i]*(1-initX[i])
+        if monitor_ratio[i]>0.55
+            g=dt_scale(X,m,beta,dx)
+        end
+    end
+
+    return  dx*sqrt(ginit/g)
 end
 
 function find_origin(X)
@@ -490,7 +498,7 @@ function timeevolution(state_array,finaltime,dir,run)
         iter = iter + 1
 
         #update time increment
-        #global dt = update_dt(initX,state_array[:,1],state_array[:,2],dx,ginit)
+        global dt = update_dt(initX,state_array[:,1],state_array[:,2],dx,ginit)
         t = t + dt
         if iter%10==0
             println("iteration ", iter, " dt is ", dt, ", time of iteration is ", t)
@@ -544,9 +552,9 @@ function timeevolution(state_array,finaltime,dir,run)
         end
         
         if isnan(state_array[L-3,4])
-            explode = true
+            global explode = true
             println("boom at time=", t)
-            timestep = iter
+            global timestep = iter
             break
         end
 

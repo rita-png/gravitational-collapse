@@ -8,8 +8,8 @@
 using CSV, Tables, DataFrames, ProgressBars, Plots
 
 
-global low_bound = 0.100
-global high_bound = 0.126
+global low_bound = 0.04
+global high_bound = 0.1
 global run = 1
 global runmax = 20
 
@@ -40,11 +40,11 @@ while(run <= runmax)
         push!(plt_A_crit, A)
         push!(plt_x2, run)
     end
-    println("\nA = ",df[run+1, :A], " sigma = ", df[run+1, :sigma], " r0 = ", df[run+1, :r0], " Final timestep = ", df[run+1, :timestep], " explode = ", df[run+1, :explode])
+    println("\nA = ",df[run+1, :A], " sigma = ", df[run+1, :sigma], " r0 = ", df[run+1, :r0], " Final time = ", df[run+1, :time], " explode = ", df[run+1, :explode])
 
     #println(df[1, :explode])
     if (df[run+1, :explode]) == 1.0
-        println("Found a NaN at timestep ",df[run+1, :timestep])
+        println("Found a NaN at time ",df[run+1, :time])
     end
     
     if (df[run+1, :criticality]) == 1.0
