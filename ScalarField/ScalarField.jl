@@ -97,32 +97,7 @@ function find_origin(X)
     return origin_i
 end
 
-# Updating Grid
-function update_grid(data,T,k)
-    
-    dx = data[2,5]-data[1,5]
 
-    #evolve grid
-    data = rungekutta4molstep(Grid_RHS,data,T,k,data[:,5]) #evolve X
-    #data=ghost(data)
-    
-    X = data[:,5]
-
-    
-
-    return X
-"""
-    new_grid=[-3.0*dx, -2.0*dx, -dx]
-
-    for i in X
-        if i>=0 && i<=1
-            new_grid = vcat(new_grid,i) #append
-        end
-    end
-    new_grid = vcat(new_grid,[1.0+dx, 1.0+2.0*dx, 1.0+3.0*dx]) #append
-    
-    return new_grid"""
-end
     
 #Building initial data with a Runge-Kutta integrator for the constraint
 
@@ -468,21 +443,6 @@ function Grid_RHS(y,t,X)
     return dy
 end
 
-function doublegrid(X)
-    new_grid=[X[1]]
-
-    L = length(X)
-
-    for i in 1:(L-1)
-        h = X[i+1]-X[i]
-        
-        new_grid = vcat(new_grid, X[i]+h/2)
-        new_grid = vcat(new_grid, X[i+1])
-    end
-
-    return new_grid
-
-end
 
 #using ProgressMeter
 using Term.Progress
@@ -525,7 +485,7 @@ function timeevolution(state_array,finaltime,dir,run)
         y0=[0 0 0]
         state_array[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X1,t,derpsi_func)
 
-
+        
         run=int(run)
         if iter%10==0
             #CSV.write(dir*"/run$run/time_step$iter.csv", Tables.table(state_array), writeheader=false)
@@ -538,15 +498,18 @@ function timeevolution(state_array,finaltime,dir,run)
         #threshold for apparent black hole formation
         global monitor_ratio = zeros(L)
         
-        for i in 1:L
+        for i in 4:L-3
             global monitor_ratio[i] = 2*state_array[i,1]/initX[i]*(1-initX[i])
-            if monitor_ratio[i]>1.0
+            if monitor_ratio[i]>0.6
                 global criticality = true
                 println("Supercritical evolution! At time ", t)
                 println("Gridpoint = ", i, " t = ", t, " monitor ratio = ", monitor_ratio[i])
                 global time = t
             end
         end
+
+        CSV.write(dir*"/monitor_ratio$iter.csv", Tables.table(monitor_ratio), writeheader=false)
+
         if criticality == true
             break
         end
