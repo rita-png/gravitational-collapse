@@ -83,9 +83,9 @@ end
 
 function find_origin(X)
 
-    origin_i=Int64
+    #origin_i=Int64
     L=length(X)
-    #origin_i = 4
+    origin_i = 4
     for i in 1:L
         if X[i] >= 0
             origin_i = i
@@ -94,7 +94,7 @@ function find_origin(X)
     end
     #println("\nOrigin of the grid is at t = ", t, " is i = ", origin_i, "\n")
 
-    return origin_i
+    return origin_i::Int64#floor(Int,origin_i)
 end
 
 # Updating Grid
@@ -110,29 +110,30 @@ function update_grid(data,T,k)
 
     #evolve grid
     data = rungekutta4molstep(Grid_RHS,data,T,k,data[:,5]) #evolve X here
+    data = ghost(data)
 
     #update X
     X = data[:,5]
+    ori = find_origin(X)
+
+    
+    #repopulate grid
+    if ori>length(X)/2
+        println("GRID DUPLICATED!")
+        X=doublegrid(X)
+        global initX = doublegrid(initX)
+        ori = find_origin(X)
+    end
+
 
     #update m, beta, psi and psi,x data on initial grid
-    data[:,1]=m_func(initX)
-    data[:,2]=beta_func(initX)
-    data[:,3]=psi_func(initX)
-    data[:,4]=derpsi_func(initX)
+    data[ori:L-3,1]=m_func(initX[ori:L-3])
+    data[ori:L-3,2]=beta_func(initX[ori:L-3])
+    data[ori:L-3,3]=psi_func(initX[ori:L-3])
+    data[ori:L-3,4]=derpsi_func(initX[ori:L-3])
 
-    return X,data[:,1:4]
-"""
-    dx = data[2,5]-data[1,5]
-    new_grid=[-3.0*dx, -2.0*dx, -dx]
+    return X,data[ori:L-3,1:4]
 
-    for i in X
-        if i>=0 && i<=1
-            new_grid = vcat(new_grid,i) #append
-        end
-    end
-    new_grid = vcat(new_grid,[1.0+dx, 1.0+2.0*dx, 1.0+3.0*dx]) #append
-    
-    return new_grid"""
 end
     
 #Building initial data with a Runge-Kutta integrator for the constraint
@@ -223,9 +224,9 @@ function ghost(y)
     y[1,1:4]=extrapolate_in(y[2,1:4], y[3,1:4], y[4,1:4], y[5,1:4])
 
     #outer boundary extrapolation
-    y[L-2,1:4]=extrapolate_out(y[L-6,1:4], y[L-5,1:4], y[L-4,1:4], y[L-3,1:4])
-    y[L-1,1:4]=extrapolate_out(y[L-5,1:4], y[L-4,1:4], y[L-3,1:4], y[L-2,1:4])
-    y[L,1:4]=extrapolate_out(y[L-4,1:4], y[L-3,1:4], y[L-2,1:4], y[L-1,1:4])
+    y[L-2,1:5]=extrapolate_out(y[L-6,1:5], y[L-5,1:5], y[L-4,1:5], y[L-3,1:5])
+    y[L-1,1:5]=extrapolate_out(y[L-5,1:5], y[L-4,1:5], y[L-3,1:5], y[L-2,1:5])
+    y[L,1:5]=extrapolate_out(y[L-4,1:5], y[L-3,1:5], y[L-2,1:5], y[L-1,1:5])
    
 
     return y
@@ -405,7 +406,7 @@ function SF_RHS(data,t,X)
     # update m, beta and psi data
     #new
     y0=[0 0 0]
-    data[4:L-3,1:3] = n_rk4wrapper(RHS,y0,initX1,t,funcs)#*dxtilde/dx = 1!!!??aqui
+    data[ori:L-3,1:3] = n_rk4wrapper(RHS,y0,initX[ori:L-3],t,funcs)#*dxtilde/dx = 1!!!??aqui
 
 
     for i in ori:L-3
@@ -488,28 +489,22 @@ function timeevolution(state_array,finaltime,dir,dt,run)
         iter = iter + 1
 
         #update time increment
-        #global dt = update_dt(state_array[:,5],state_array[:,1],state_array[:,2],dx,ginit)
+        global dt = update_dt(state_array[:,5],state_array[:,1],state_array[:,2],dx,ginit)
         t = t + dt
-        if iter%10==0
+        """if iter%10==0
             println("iteration ", iter, " dt is ", dt, ", time of iteration is ", t)
-        end
+        end"""
 
         T_array = vcat(T_array,t)
 
         #update grid
-        X,state_array[:,1:4] = update_grid(state_array[:,:],T_array,iter)
+        X,aux = update_grid(state_array[:,:],T_array,iter)
+        ori=find_origin(X)
+        state_array[ori:L-3,1:4]=aux[:,1:4]
         state_array[:,5]=X
 
-        #X=initX #state_array[:,5]
-        ori=find_origin(X)
-        X1=X[ori:L-3]
-
-        #repopulate grid
-        """if ori>L/3
-            X=doublegrid(X)
-            state_array[:,5]
-        end"""
         
+        X1=X[ori:L-3]
         
         #evolve psi,x
         state_array[:,:] = rungekutta4molstep(SF_RHS,state_array[:,:],T_array,iter,X) #evolve psi,x using data on initX grid
@@ -522,16 +517,16 @@ function timeevolution(state_array,finaltime,dir,dt,run)
 
         #evolve m and beta together, new
         y0=[0 0 0]
-        state_array[4:L-3,1:3] = n_rk4wrapper(RHS,y0,initX1,t,funcs)
+        state_array[ori:L-3,1:3] = n_rk4wrapper(RHS,y0,initX[ori:L-3],t,funcs)
 
 
-        CSV.write(dir*"/res$res/time_step$iter.csv", Tables.table(state_array), writeheader=false)
-        """run=int(run)
+        #CSV.write(dir*"/res$res/time_step$iter.csv", Tables.table(state_array), writeheader=false)
+        run=int(run)
         if iter%10==0
             #CSV.write(dir*"/run$run/time_step$iter.csv", Tables.table(state_array), writeheader=false)
             CSV.write(dir*"/res$res/time_step$iter.csv", Tables.table(state_array), writeheader=false)
             T_interp = vcat(T_interp,t)
-        end"""
+        end
         
         
 
@@ -542,11 +537,12 @@ function timeevolution(state_array,finaltime,dir,dt,run)
             global monitor_ratio[i] = 2*state_array[i,1]/X[i]*(1-X[i])
             if monitor_ratio[i]>1.0
                 global criticality = true
-                println("Supercritical evolution! At timestep ", t*dt)
+                println("Supercritical evolution! At time ", t)
                 println("Gridpoint = ", i, " t = ", t, " monitor ratio = ", monitor_ratio[i])
-                global timestep = iter
+                global time = t
             end
         end
+        
         if criticality == true
             break
         end
@@ -554,17 +550,16 @@ function timeevolution(state_array,finaltime,dir,dt,run)
         if isnan(state_array[L-3,4])
             global explode = true
             println("boom at time=", t)
-            global timestep = iter
+            global time = t
             break
         end
 
-        global timestep = iter
+        global time = t
         
     end
     
-    global evol_stats = [criticality A sigma r0 timestep explode run]
+    global evol_stats = [criticality A sigma r0 time explode run]
 
-    return T_interp
-    #CSV.write(dir*"/parameters.csv", Tables.table(evol_stats), writeheader=true,header=["criticality", "A", "sigma", "r0", "timestep", "explode", "run"],append=true);
-
+    return evol_stats,T_interp
+   
 end    
