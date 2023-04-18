@@ -60,7 +60,7 @@ function dt_scale(X, m, beta,dx)
     g = []
     ori=find_origin(X)
     for i in (ori:(L-4))
-        g = vcat(g,exp(2*beta[i])*m[i])
+        g = vcat(g,abs(exp(2*beta[i])*m[i]))
     end
     
     return  maximum(g)
@@ -71,14 +71,14 @@ function update_dt(X, m, beta,dx,ginit)
     monitor_ratio = zeros(L)
     g=ginit
 
-    for i in 1:L
+    for i in 3:L-4
         monitor_ratio[i] = 2*state_array[i,1]/initX[i]*(1-initX[i])
-        if monitor_ratio[i]>0.55
+        if monitor_ratio[i]>0.40
             g=dt_scale(X,m,beta,dx)
         end
     end
 
-    return  dx*sqrt(ginit/g)
+    return  dx*(ginit/g)^(1)
 end
 
 function find_origin(X)
@@ -97,7 +97,22 @@ function find_origin(X)
     return origin_i
 end
 
+# Updating Grid
+function update_grid(data,T,k)
+    
+    dx = data[2,5]-data[1,5]
 
+    #evolve grid
+    data = rungekutta4molstep(Grid_RHS,data,T,k,data[:,5]) #evolve X
+    #data=ghost(data)
+    
+    X = data[:,5]
+
+    
+
+    return X
+
+end
     
 #Building initial data with a Runge-Kutta integrator for the constraint
 
@@ -128,17 +143,16 @@ function rungekutta4molstep(f,y00,T,w::Int64,X)
         #print("\n\nh = ", h, " \n")
         #h = dt; # only for equally spaced grid in time and space, otherwise (T[w+1] - T[w])
         k1 = f(y[:,:], T[w],X)
-        #k1=ghost(k1)
-        k1=boundarySF(k1,X)
+        k1=ghost(k1)
         k2 = f(y[:,:] .+ k1 .* h/2, T[w] + h/2,X)
-        k2=boundarySF(k2,X)
+        k2=ghost(k2)
         k3 = f(y[:,:] .+ k2 .* h/2, T[w] + h/2,X)
-        k3=boundarySF(k3,X)
+        k3=ghost(k3)
         k4 = f(y[:,:] .+ k3 .* h, T[w] + h,X)
-        k4=boundarySF(k4,X)
+        k4=ghost(k4)
         y[:,:] = y[:,:] .+ (h/6) .* (k1 .+ 2 * k2 .+ 2 * k3 .+ k4)
         
-    return y[:,:]#ghost(y[:,:])
+    return ghost(y[:,:])
 end
 
 
@@ -189,7 +203,6 @@ function ghost(y)
     y[L-1,1:4]=extrapolate_out(y[L-5,1:4], y[L-4,1:4], y[L-3,1:4], y[L-2,1:4])
     y[L,1:4]=extrapolate_out(y[L-4,1:4], y[L-3,1:4], y[L-2,1:4], y[L-1,1:4])
    
-
     return y
 end
 
@@ -202,6 +215,12 @@ function dissipation6(y,i,eps)
         delta6= (11*y[i-1,:]-80*y[i,:]+254*y[i+1,:]-460*y[i+2,:]+520*y[i+3,:]-376*y[i+4,:]+170*y[i+5,:]-44*y[i+6,:]+5*y[i+7,:])/2;
     elseif i==6
         delta6= (5*y[i-2,:]-34*y[i-1,:]+100*y[i,:]-166*y[i+1,:]+170*y[i+2,:]-110*y[i+3,:]+44*y[i+4,:]-10*y[i+5,:]+y[i+6,:])/2;
+    elseif i==L-3
+        delta6= (19*y[i,:]-142*y[i-1,:]+464*y[i-2,:]-866*y[i-3,:]+1010*y[i-4,:]-754*y[i-5,:]+352*y[i-6,:]-94*y[i-7,:]+11*y[i-8,:])/2;
+    elseif i==L-4
+        delta6= (11*y[i+1,:]-80*y[i,:]+254*y[i-1,:]-460*y[i-2,:]+520*y[i-3,:]-376*y[i-4,:]+170*y[i-5,:]-44*y[i-6,:]+5*y[i-7,:])/2;
+    elseif i==L-5
+        delta6= (5*y[i+2,:]-34*y[i+1,:]+100*y[i,:]-166*y[i-1,:]+170*y[i-2,:]-110*y[i-3,:]+44*y[i-4,:]-10*y[i-5,:]+y[i-6,:])/2;
     else
         delta6=(y[i+3,:]-6*y[i+2,:]+15*y[i+1,:]-20*y[i,:]+15*y[i-1,:]-6*y[i-2,:]+y[i-3,:]);
     end
@@ -223,9 +242,6 @@ function dissipation2(y,i)
     return (-1)^1*epsilon*1/(dx)*delta2
 end
 
-# Discretization of derivatives
-#Der(y,i,k,X)=(-y[i+2,k]+8*y[i+1,k]-8*y[i-1,k]+y[i-2,k])/(12*(X[i+1]-X[i])); #4th order
-#DDer(y,i,k,X)=(-y[i+2,k]+16*y[i+1,k]-30*y[i,k]+16*y[i-1,k]-y[i-2,k])/(12*(X[i+1]-X[i])^2); #4th order
 
 # Finite difference approximation
 function Der(y,i,k,X)
@@ -234,6 +250,10 @@ function Der(y,i,k,X)
         z = (-27*y[i,k]+58*y[i+1,k]-56*y[i+2,k]+36*y[i+3,k]-13*y[i+4,k]+2*y[i+5,k])/(12*(X[i+1]-X[i]))
     elseif i==5 # left boundary TEM2
         z = (-2*y[i-1,k]-15*y[i,k]+28*y[i+1,k]-16*y[i+2,k]+6*y[i+3,k]-y[i+4,k])/(12*(X[i+1]-X[i]))
+    """elseif i==L-3 # right boundary TEM
+        z = (-27*y[i,k]+58*y[i-1,k]-56*y[i-2,k]+36*y[i-3,k]-13*y[i-4,k]+2*y[i-5,k])/(12*(X[i+1]-X[i]))
+    elseif i==L-4 # right boundary TEM
+        z = (-2*y[i+1,k]-15*y[i,k]+28*y[i-1,k]-16*y[i-2,k]+6*y[i-3,k]-y[i-4,k])/(12*(X[i+1]-X[i]))"""
     else # central
         z = (-y[i+2,k]+8*y[i+1,k]-8*y[i-1,k]+y[i-2,k])/(12*(X[i+1]-X[i]))
     
@@ -247,51 +267,12 @@ end
 int(x) = floor(Int, x)
 
 
-# Test Model RHSs for the bulk equations (3.6.16)
-
-function SFconstraint_beta(beta0,x1,time,funcs)
-    
-    psi = funcs[1]
-    derpsi = funcs[2]
-    
-
-    if x1<10^(-15)
-        z = 0.0
-    elseif abs.(x1 .- 1.0)<10^(-15)
-        z = 0.0
-    else
-        z = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (psi(x1) .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0
-    end
-
-    return z
-
-end
-
-
-function SFconstraint_m(m0,x1,time,funcs)
-
-    psi = funcs[1]
-    derpsi = funcs[2]
-
-    if x1<10^(-15)
-        z = 0
-    elseif abs.(x1 .- 1.0)<10^(-15)
-        z = 2.0 .* pi .* (psi(x1)) .^ 2.0
-    else
-        z = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* m0) ./ x1 .^3.0 .* (psi(x1) .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0
-    end
-    
-    return z
-end
-
-
 
 function bulkSF(y,i,X)
     
     
-    #psi,X
-
-    dy=-1.0/2.0*exp(2.0*y[i,2])*(-(2*(X[i]-1)^3*y[i,3]*(X[i]*((X[i]-1)*Der(y,i,1,X)+X[i]*Der(y,i,2,X))+y[i,1]*(1+2*(X[i]-1)*X[i]*Der(y,i,2,X))))/X[i]^3 - (2*(X[i]-1)^4*(X[i]*((X[i]-1)*Der(y,i,1,X)+X[i]*Der(y,i,2,X))+y[i,1]*(1+2(X[i]-1)*X[i]*Der(y,i,2,X)))*y[i,4])/X[i]^2 - ((X[i]+2*(X[i]-1)*y[i,1])*Der(y,i,4,X))/X[i]) #- dissipation6(y,i,0.01)[4];
+    #psi,x
+    dy=-1.0/2.0*exp(2.0*y[i,2])*(-(2*(X[i]-1)^3*y[i,3]*(X[i]*((X[i]-1)*Der(y,i,1,X)+X[i]*Der(y,i,2,X))+y[i,1]*(1+2*(X[i]-1)*X[i]*Der(y,i,2,X))))/X[i]^3 - (2*(X[i]-1)^4*(X[i]*((X[i]-1)*Der(y,i,1,X)+X[i]*Der(y,i,2,X))+y[i,1]*(1+2(X[i]-1)*X[i]*Der(y,i,2,X)))*y[i,4])/X[i]^2 - ((X[i]+2*(X[i]-1)*y[i,1])*Der(y,i,4,X))/X[i])
     
     return dy
 end
@@ -301,41 +282,23 @@ end
 function boundarySF(y,X)
 
     L=length(state_array[:,1])
-
-    dxx=X[L-2]-X[L-3]
-
+    
     #m even
-    y[3,1]=y[5,1];
-    y[2,1]=y[6,1];
-    y[1,1]=extrapolate_in(y[2,1], y[3,1], y[4,1], y[5,1]);
-
     y[L-2,1]=y[L-4,1]+dxx/8*pi*(y[L-3,3])^2;
     y[L-1,1]=y[L-5,1]-dxx*pi*(y[L-3,3])^2;
     y[L,1]=extrapolate_out(y[L-4,1], y[L-3,1], y[L-2,1], y[L-1,1]);
 
     #beta even
-    y[3,2]=y[5,2];
-    y[2,2]=y[6,2];
-    y[1,2]=extrapolate_in(y[2,2], y[3,2], y[4,2], y[5,2]);
-
     y[L-2,2]=y[L-4,2];
     y[L-1,2]=y[L-5,2];
     y[L,2]=extrapolate_out(y[L-4,2], y[L-3,2], y[L-2,2], y[L-1,2]);
     
     #psi odd
-    y[3,3]=-y[5,3];
-    y[2,3]=-y[6,3];
-    y[1,3]=-y[7,3];
-
     y[L-2,3]=extrapolate_out(y[L-6,3],y[L-5,3], y[L-4,3], y[L-3,3])
     y[L-1,3]=extrapolate_out(y[L-5,3],y[L-4,3], y[L-3,3], y[L-2,3])
     y[L,3]=extrapolate_out(y[L-4,3], y[L-3,3], y[L-2,3], y[L-1,3]);
 
     #psi,x even
-    y[3,4]=y[5,4];
-    y[2,4]=y[6,4];
-    y[1,4]=y[7,4];
-
     y[L-2,4]=extrapolate_out(y[L-6,4],y[L-5,4], y[L-4,4], y[L-3,4])
     y[L-1,4]=extrapolate_out(y[L-5,4],y[L-4,4], y[L-3,4], y[L-2,4])
     y[L,4]=extrapolate_out(y[L-4,4], y[L-3,4], y[L-2,4], y[L-1,4])
@@ -384,41 +347,24 @@ function SF_RHS(data,t,X)
     #new
     y0=[0 0 0]
     data[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X[4:L-3],t,derpsi_func)
-
-
-"""
-    #identify 1st positive gridpoint X[i]
-    origin_i = 4
-    for i in 1:L
-        if X[i] >= 0
-            origin_i = i
-            break
-        end
-    end
-    println("\nOrigin of the grid is at t = ", t, " is i = ", origin_i, "\n")
-   """
+    data=ghost(data)
 
     for i in 4:L-3 #ORI
         if X[i]<10^(-15) #left
-            dy[i,4]= +1/2*Der(data,i,4,X)-dissipation6(data,i,0.035)[4];
+            dy[i,4]= +1.0/2.0*Der(data,i,4,X) - dissipation6(data,i,epsilon(dt,dx))[4];
 
         elseif X[i] < (1-10^(-15)) #bulk
-            dy[i,4]=bulkSF(data,i,X) - dissipation6(data,i,0.035)[4];
+            dy[i,4]=bulkSF(data,i,X) - dissipation6(data,i,epsilon(dt,dx))[4];
 
         else #right
-            dy[i,4]=bulkSF(data,i,X) - dissipation6(data,i,0.035)[4];
+            dy[i,4]= 0.0#1.0/2.0*exp(2*data[i,2])*Der(data,i,4,X) - dissipation6(data,i,epsilon(dt,dx))[4];
+            #println("ola right bound")
         end
     end
     
     
-    
-    #outer boundary
-    #dy[L-3,4]=extrapolate_out(dy[L-7,4], dy[L-6,4], dy[L-5,4], dy[L-4,4])#1.0/2.0*exp(2.0*y[L-3,2])* Der(y,L-3,4)
-    #dy[L-2,4]=extrapolate_out(dy[L-6,4], dy[L-5,4], dy[L-4,4], dy[L-3,4])#1.0/2.0*exp(2.0*y[L-3,2])* Der(y,L-2,4)
-    #dy[L-1,4]=extrapolate_out(dy[L-5,4], dy[L-4,4], dy[L-3,4], dy[L-2,4])
-    #dy[L,4]=extrapolate_out(dy[L-4,4], dy[L-3,4], dy[L-2,4], dy[L-1,4])
   
-
+    dy=ghost(dy)
     return dy
 
 end
@@ -439,10 +385,25 @@ function Grid_RHS(y,t,X)
         end
     end
     
-
+    dy=ghost(dy)
     return dy
 end
 
+function doublegrid(X)
+    new_grid=[X[1]]
+
+    L = length(X)
+
+    for i in 1:(L-1)
+        h = X[i+1]-X[i]
+        
+        new_grid = vcat(new_grid, X[i]+h/2)
+        new_grid = vcat(new_grid, X[i+1])
+    end
+
+    return new_grid
+
+end
 
 #using ProgressMeter
 using Term.Progress
@@ -470,13 +431,10 @@ function timeevolution(state_array,finaltime,dir,run)
         
         X=initX #state_array[:,5]
         X1=X[4:L-3]
-    
-        #update ghost points
-        state_array=boundarySF(state_array,X)
        
         #evolve psi,x
         state_array[:,:] = rungekutta4molstep(SF_RHS,state_array[:,:],T_array,iter,X) #evolve psi,x
-        #global state_array=ghost(state_array)
+        state_array=ghost(state_array)
     
         # update interpolation of psi,x
         derpsi_func = Spline1D(X[4:L-3],state_array[4:L-3,4],k=4)#new
@@ -484,8 +442,8 @@ function timeevolution(state_array,finaltime,dir,run)
         #evolve m and beta together, new
         y0=[0 0 0]
         state_array[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X1,t,derpsi_func)
+        state_array=ghost(state_array)
 
-        
         run=int(run)
         if iter%10==0
             #CSV.write(dir*"/run$run/time_step$iter.csv", Tables.table(state_array), writeheader=false)
@@ -500,7 +458,7 @@ function timeevolution(state_array,finaltime,dir,run)
         
         for i in 4:L-3
             global monitor_ratio[i] = 2*state_array[i,1]/initX[i]*(1-initX[i])
-            if monitor_ratio[i]>0.6
+            if monitor_ratio[i]>1
                 global criticality = true
                 println("Supercritical evolution! At time ", t)
                 println("Gridpoint = ", i, " t = ", t, " monitor ratio = ", monitor_ratio[i])
@@ -508,7 +466,11 @@ function timeevolution(state_array,finaltime,dir,run)
             end
         end
 
-        CSV.write(dir*"/monitor_ratio$iter.csv", Tables.table(monitor_ratio), writeheader=false)
+        if iter%10==0
+            
+            CSV.write(dir*"/monitor_ratio$iter.csv", Tables.table(monitor_ratio), writeheader=false)
+            
+        end
 
         if criticality == true
             break
@@ -530,3 +492,9 @@ function timeevolution(state_array,finaltime,dir,run)
     return evol_stats, T_interp
 
 end    
+
+function epsilon(dt,dx)
+    #minimum([dx/dt*(1/2)^(2*3), 10])
+    #println("dissipation epsilon is ", (dx/dt*(1/2)^(2*3)))
+    return (dx/dt*(1/2)^(2*3))
+end
