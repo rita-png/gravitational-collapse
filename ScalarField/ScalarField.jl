@@ -178,7 +178,7 @@ function n_rk4wrapper(f,y0,x,u,spl_funcs) # u depicts T array, or M!!
     y = zeros(L,n)
     y[1,:] = y0;
     for i in 1:L-1
-        h = x[2] .- x[1]
+        h = x[2] .- x[1] # x[i+1] .- x[i]
         k1 = f(y[i,:], x[i],u,spl_funcs)
         k2 = f(y[i,:] .+ k1 * h/2, x[i] .+ h/2,u,spl_funcs)
         k3 = f(y[i,:] .+ k2 * h/2, x[i] .+ h/2,u,spl_funcs)
@@ -215,12 +215,12 @@ function dissipation6(y,i,eps)
         delta6= (11*y[i-1,:]-80*y[i,:]+254*y[i+1,:]-460*y[i+2,:]+520*y[i+3,:]-376*y[i+4,:]+170*y[i+5,:]-44*y[i+6,:]+5*y[i+7,:])/2;
     elseif i==6
         delta6= (5*y[i-2,:]-34*y[i-1,:]+100*y[i,:]-166*y[i+1,:]+170*y[i+2,:]-110*y[i+3,:]+44*y[i+4,:]-10*y[i+5,:]+y[i+6,:])/2;
-    elseif i==L-3
+    """elseif i==L-3
         delta6= (19*y[i,:]-142*y[i-1,:]+464*y[i-2,:]-866*y[i-3,:]+1010*y[i-4,:]-754*y[i-5,:]+352*y[i-6,:]-94*y[i-7,:]+11*y[i-8,:])/2;
     elseif i==L-4
         delta6= (11*y[i+1,:]-80*y[i,:]+254*y[i-1,:]-460*y[i-2,:]+520*y[i-3,:]-376*y[i-4,:]+170*y[i-5,:]-44*y[i-6,:]+5*y[i-7,:])/2;
     elseif i==L-5
-        delta6= (5*y[i+2,:]-34*y[i+1,:]+100*y[i,:]-166*y[i-1,:]+170*y[i-2,:]-110*y[i-3,:]+44*y[i-4,:]-10*y[i-5,:]+y[i-6,:])/2;
+        delta6= (5*y[i+2,:]-34*y[i+1,:]+100*y[i,:]-166*y[i-1,:]+170*y[i-2,:]-110*y[i-3,:]+44*y[i-4,:]-10*y[i-5,:]+y[i-6,:])/2;"""
     else
         delta6=(y[i+3,:]-6*y[i+2,:]+15*y[i+1,:]-20*y[i,:]+15*y[i-1,:]-6*y[i-2,:]+y[i-3,:]);
     end
@@ -319,13 +319,13 @@ function RHS(y0,x1,time,func)
         z[2] = 0.0;
     elseif abs.(x1 .- 1.0)<10^(-15) #right
         #z[1] = 2.0 .* pi .* (psi(x1)) .^ 2.0
-        z[1] = 2.0 .* pi .* (y0[3]) .^ 2.0
-        z[2] = 0.0
+        z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;#2.0 .* pi .* (y0[3]) .^ 2.0
+        z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3] .* 0 .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0;#0.0
     else #right
         #z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (psi(x1) .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;
         z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;
         #z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (psi(x1) .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0;
-        z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0;
+        z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3] .* 0 .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0;
     end
 
 
@@ -345,20 +345,19 @@ function SF_RHS(data,t,X)
     
     # update m, beta and psi data
     #new
-    y0=[0 0 0]
+    y0=[0.0 0.0 0.0]
     data[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X[4:L-3],t,derpsi_func)
     data=ghost(data)
 
     for i in 4:L-3 #ORI
         if X[i]<10^(-15) #left
-            dy[i,4]= +1.0/2.0*Der(data,i,4,X) - dissipation6(data,i,epsilon(dt,dx))[4];
+            dy[i,4]= +1.0/2.0*Der(data,i,4,X) - dissipation6(data,i,0.04)[4];
 
         elseif X[i] < (1-10^(-15)) #bulk
-            dy[i,4]=bulkSF(data,i,X) - dissipation6(data,i,epsilon(dt,dx))[4];
+            dy[i,4]=bulkSF(data,i,X) - dissipation6(data,i,0.04)[4]#epsilon(dt,dx))[4];
 
         else #right
-            dy[i,4]= 0.0#1.0/2.0*exp(2*data[i,2])*Der(data,i,4,X) - dissipation6(data,i,epsilon(dt,dx))[4];
-            #println("ola right bound")
+            dy[i,4]= bulkSF(data,i,X) - dissipation6(data,i,0.04)[4]#1.0/2.0*exp(2*data[i,2])*Der(data,i,4,X) - dissipation6(data,i,epsilon(dt,dx))[4];#0.0
         end
     end
     
@@ -419,8 +418,8 @@ function timeevolution(state_array,finaltime,dir,run)
         iter = iter + 1
 
         #update time increment
-        global dt = update_dt(initX,state_array[:,1],state_array[:,2],dx,ginit)
-        t = t + dt
+        #global dt = update_dt(initX,state_array[:,1],state_array[:,2],dx,ginit)
+        t = round(t + dt,digits=5)
         if iter%10==0
             println("iteration ", iter, " dt is ", dt, ", time of iteration is ", t)
         end
@@ -440,17 +439,17 @@ function timeevolution(state_array,finaltime,dir,run)
         derpsi_func = Spline1D(X[4:L-3],state_array[4:L-3,4],k=4)#new
 
         #evolve m and beta together, new
-        y0=[0 0 0]
+        y0=[0.0 0.0 0.0]
         state_array[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X1,t,derpsi_func)
         state_array=ghost(state_array)
 
         run=int(run)
-        if iter%10==0
+        """if iter%10==0
             #CSV.write(dir*"/run$run/time_step$iter.csv", Tables.table(state_array), writeheader=false)
             CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
             T_interp = vcat(T_interp,t)
-        end
-        
+        end"""
+        CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
         
 
         #threshold for apparent black hole formation
@@ -466,11 +465,11 @@ function timeevolution(state_array,finaltime,dir,run)
             end
         end
 
-        if iter%10==0
+        """if iter%10==0
             
             CSV.write(dir*"/monitor_ratio$iter.csv", Tables.table(monitor_ratio), writeheader=false)
             
-        end
+        end"""
 
         if criticality == true
             break
