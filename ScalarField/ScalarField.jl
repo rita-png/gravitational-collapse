@@ -53,6 +53,15 @@ function extrapolate_in(y0,y1,y2,y3)
     return -y3 + 4*y2 - 6*y1 + 4*y0
 end
 
+
+"""function extrapolate_in(y2,y3)
+    return y2 + (y2-y3)
+end
+
+function extrapolate_out(y1,y2)
+    return y2 + (y2-y1)
+end"""
+
 # Calculating dt
 function dt_scale(X, m, beta,dx)
 
@@ -172,21 +181,23 @@ function rk4wrapper(f,y0,x,u,spl_funcs) # u depicts T array, or M!!
     return y
 end
 
-function n_rk4wrapper(f,y0,x,u,spl_funcs) # u depicts T array, or M!!
+function n_rk4wrapper(f,y0,x,u,spl_funcs,data) # u depicts T array, or M!!
     L = length(x)
     n = length(y0)
     y = zeros(L,n)
     y[1,:] = y0;
     for i in 1:L-1
         h = x[2] .- x[1] # x[i+1] .- x[i]
-        k1 = f(y[i,:], x[i],u,spl_funcs)
-        k2 = f(y[i,:] .+ k1 * h/2, x[i] .+ h/2,u,spl_funcs)
-        k3 = f(y[i,:] .+ k2 * h/2, x[i] .+ h/2,u,spl_funcs)
-        k4 = f(y[i,:] .+ k3 * h, x[i] .+ h,u,spl_funcs)
+        k1 = f(y[i,:], x[i],u,spl_funcs,i,data)
+        k2 = f(y[i,:] .+ k1 * h/2, x[i] .+ h/2,u,spl_funcs,i,data)
+        k3 = f(y[i,:] .+ k2 * h/2, x[i] .+ h/2,u,spl_funcs,i,data)
+        k4 = f(y[i,:] .+ k3 * h, x[i] .+ h,u,spl_funcs,i,data)
         y[i+1,:] = y[i,:] .+ (h/6) * (k1 .+ 2*k2 .+ 2*k3 .+ k4)
     end
     return y[:,:]
 end
+
+
 
 #ghosts
 
@@ -206,6 +217,24 @@ function ghost(y)
     return y
 end
 
+"""function ghost(y)
+    L=length(y[:,1])
+    
+    #inner boundary extrapolation
+    y[3,:]=extrapolate_in(y[4,:], y[3,:])
+    y[2,:]=extrapolate_in(y[3,:], y[4,:])
+    y[1,:]=extrapolate_in(y[2,:], y[3,:])
+
+    #outer boundary extrapolation
+    y[L-2,:]=extrapolate_out(y[L-4,:], y[L-3,:])
+    y[L-1,:]=extrapolate_out(y[L-3,:], y[L-2,:])
+    y[L,:]=extrapolate_out(y[L-2,:], y[L-1,:])
+
+   
+
+    return y
+end
+"""
 
 #6th order dissipation, added to 4th order original scheme
 function dissipation6(y,i,eps)
@@ -246,9 +275,9 @@ end
 # Finite difference approximation
 function Der(y,i,k,X)
 
-    if i==4 # left boundary TEM1
+    if i==4 # left boundary LOP2, TEM
         z = (-27*y[i,k]+58*y[i+1,k]-56*y[i+2,k]+36*y[i+3,k]-13*y[i+4,k]+2*y[i+5,k])/(12*(X[i+1]-X[i]))
-    elseif i==5 # left boundary TEM2
+    elseif i==5 # left boundary LOP1, TEM
         z = (-2*y[i-1,k]-15*y[i,k]+28*y[i+1,k]-16*y[i+2,k]+6*y[i+3,k]-y[i+4,k])/(12*(X[i+1]-X[i]))
     """elseif i==L-3 # right boundary TEM
         z = (-27*y[i,k]+58*y[i-1,k]-56*y[i-2,k]+36*y[i-3,k]-13*y[i-4,k]+2*y[i-5,k])/(12*(X[i+1]-X[i]))
@@ -263,6 +292,36 @@ function Der(y,i,k,X)
     return z
 end
 
+# Finite difference approximation
+function DDer(y,i,k,X)
+
+    if i==4 # left boundary LOP2, TEM
+        z = (15/4*y[i,k]-77/6*y[i+1,k]+107/6*y[i+2,k]-13*y[i+3,k]+61/12*y[i+4,k]-5/6*y[i+5,k])/((X[i+1]-X[i]))
+        #z = (54*y[i+6,k]-208*y[i+5,k]+349*y[i+4,k]-336*y[i+3,k]+196*y[i+2,k]-64*y[i+1,k]+9*y[i,k])/(12*(X[i+1]-X[i])) #THIS NEEDS TO BE FIXED
+    elseif i==5 # left boundary LOP1, TEM
+        z = (-y[i+5,k]+7*y[i+4,k]-21*y[i+3,k]+34*y[i+2,k]-19*y[i+1,k]-9*y[i,k]+9*y[i-1,k])/(12*(X[i+1]-X[i]))
+    else # central
+        z = (-y[i+2,k]+16*y[i+1,k]-30*y[i,k]+16*y[i-1,k]-y[i-2,k])/(12*(X[i+1]-X[i]))
+    
+
+    end
+    
+    return z
+end
+
+function DDer_array(y,k,X)
+
+    aux=zeros(L-6)
+    i=1
+    j=4
+    for xx in X[4:L-3]
+        aux[i] = DDer(y,j,k,X)
+        i=i+1
+        j=j+1
+    end
+    
+    return aux
+end
 
 int(x) = floor(Int, x)
 
@@ -307,13 +366,44 @@ function boundarySF(y,X)
     return y
 end
 
+"""function psi_RHS(y0,x1,time,func,i,data)
+    
+    derpsi = func
 
-function RHS(y0,x1,time,func)
+
+    if i>4
+        z = derpsi(x1)
+    else
+        DDphi=DDer(data,4,4,initX)
+        data[:,4]=DDphi
+        DDDDphi=DDer(data,4,4,initX)
+        z = data[4,4] + 3*DDphi*x1^2/(3*2) + 5*DDDDphi*x1^4/(5*4*3*2)
+        println("z = ", z)
+    end
+    
+    return z
+end"""
+#EXACTLY THE SAME POINTS MUST BE CALCULATED THE SAME WAY
+function RHS(y0,x1,time,func,i,data)
     
     z=zeros(length(y0))
     derpsi = func
-    z[3] = derpsi(x1)
 
+    #psi
+    if i>4
+        z[3] = derpsi(x1)
+    else
+        DDphi=DDer(data,4,4,initX)
+
+        auxdata=zeros(L,4)
+        auxdata[4:L-3,4]=DDer_array(state_array,4,initX)        
+        DDDDphi=DDer(auxdata,4,4,initX)
+        
+        z[3] = data[4,4] + 3*DDer(data,4,4,initX)*x1^2/(3*2) + 5*DDDDphi*x1^4/(5*4*3*2)
+        #println("z = ", z)
+    end
+
+    #m and beta
     if x1<10^(-15) #left
         z[1] = 0.0;
         z[2] = 0.0;
