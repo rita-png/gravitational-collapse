@@ -25,7 +25,7 @@ function init_gaussian_der(x,r0,sigma,A)
     else
         z=zeros(n);
         for i in 1:n
-            if i<n-4 #avoid NaN for x=1, otherwise, it's 0
+            if i<n-3 #avoid NaN for x=1, otherwise, it's 0
                 #z[i] = 2*A * x[i]/(1-x[i])^3 * exp(-((x[i]/(1-x[i])-r0)/sigma)^2) * (1 - x[i]/(1-x[i]) * (x[i]/(1-x[i]) - r0) / sigma^2)
                 z[i]=A * exp(-((x[i]/(1-x[i])-r0)/sigma)^2) * (3 * x[i]^2 / (1-x[i]) ^4 - (x[i]/(1-x[i]))^3 * (2*(x[i]-r0*(-x[i]+1)))/(sigma^2*(1-x[i])^3))
             end
@@ -125,16 +125,16 @@ end
     
 #Building initial data with a Runge-Kutta integrator for the constraint
 
-function rungekutta4(f,y0,T)
+function rungekutta4(f,y0,T,func)
     n = length(T)
     y = zeros(n)
     y[1] = y0;
     for i in 1:n-1
         h = T[2] .- T[1]
-        k1 = f(y[i], T[i])
-        k2 = f(y[i] .+ k1 * h/2, T[i] .+ h/2)
-        k3 = f(y[i] .+ k2 * h/2, T[i] .+ h/2)
-        k4 = f(y[i] .+ k3 * h, T[i] .+ h)
+        k1 = f(y[i], T[i],func)
+        k2 = f(y[i] .+ k1 * h/2, T[i] .+ h/2,func)
+        k3 = f(y[i] .+ k2 * h/2, T[i] .+ h/2,func)
+        k4 = f(y[i] .+ k3 * h, T[i] .+ h,func)
         y[i+1] = y[i] .+ (h/6) * (k1 .+ 2*k2 .+ 2*k3 .+ k4)
 
     end
@@ -171,7 +171,7 @@ function rk4wrapper(f,y0,x,u,spl_funcs) # u depicts T array, or M!!
     y = zeros(n)
     y[1] = y0;
     for i in 1:n-1
-        h = x[2] .- x[1]
+        h = x[i+1] .- x[i]
         k1 = f(y[i], x[i],u,spl_funcs)
         k2 = f(y[i] .+ k1 * h/2, x[i] .+ h/2,u,spl_funcs)
         k3 = f(y[i] .+ k2 * h/2, x[i] .+ h/2,u,spl_funcs)
@@ -187,7 +187,7 @@ function n_rk4wrapper(f,y0,x,u,spl_funcs,data) # u depicts T array, or M!!
     y = zeros(L,n)
     y[1,:] = y0;
     for i in 1:L-1
-        h = x[2] .- x[1] # x[i+1] .- x[i]
+        h = x[i+1] .- x[i]
         k1 = f(y[i,:], x[i],u,spl_funcs,i,data)
         k2 = f(y[i,:] .+ k1 * h/2, x[i] .+ h/2,u,spl_funcs,i,data)
         k3 = f(y[i,:] .+ k2 * h/2, x[i] .+ h/2,u,spl_funcs,i,data)
@@ -315,17 +315,53 @@ function DDer_array(y,k,X)
     i=1
     j=4
     for xx in X[4:L-3]
-        aux[i] = DDer(y,j,k,X)
+        aux[i] = Der(y,j,k,X)
+        i=i+1
+        j=j+1
+    end
+
+    auxdata=zeros(L,4)
+    auxdata[4:L-3,k]=aux[:]
+    aux2=zeros(L-6)
+    i=1
+    j=4
+    for xx in X[4:L-3]
+        aux2[i] = Der(auxdata,j,k,X)
         i=i+1
         j=j+1
     end
     
-    return aux
+    return aux2
 end
 
 int(x) = floor(Int, x)
 
+function chebishev(N)
 
+    X=zeros(N)
+    
+    for i in 1:N
+        X[i]=1/2+1/2*cos((2*i-1)*pi/(2*N))
+    end
+
+    return sort(X)
+end
+
+function chebishev_cut(X)
+
+    N=length(X)
+
+    new_grid=zeros(int(N/4))
+    
+
+    new_grid[1:int(N/4)] = X[1:int(N/4)]
+    new_grid=vcat(new_grid, X[int(N/4):2:int(3*N/4)])
+    new_grid=vcat(new_grid, X[int(3*N/4):int(N)])
+    
+    #deleteat!(A, 2)
+
+    return new_grid
+end
 
 function bulkSF(y,i,X)
     
@@ -366,42 +402,40 @@ function boundarySF(y,X)
     return y
 end
 
-"""function psi_RHS(y0,x1,time,func,i,data)
+function psi_RHS(y0,x1,func)
     
     derpsi = func
-
-
-    if i>4
-        z = derpsi(x1)
-    else
-        DDphi=DDer(data,4,4,initX)
-        data[:,4]=DDphi
-        DDDDphi=DDer(data,4,4,initX)
-        z = data[4,4] + 3*DDphi*x1^2/(3*2) + 5*DDDDphi*x1^4/(5*4*3*2)
-        println("z = ", z)
-    end
+    z = derpsi(x1)
+ 
     
     return z
-end"""
+end
+
 #EXACTLY THE SAME POINTS MUST BE CALCULATED THE SAME WAY
 function RHS(y0,x1,time,func,i,data)
     
     z=zeros(length(y0))
     derpsi = func
 
-    #psi
-    if i>4
-        z[3] = derpsi(x1)
-    else
-        DDphi=DDer(data,4,4,initX)
+    z[3]=derpsi(x1)
 
-        auxdata=zeros(L,4)
-        auxdata[4:L-3,4]=DDer_array(state_array,4,initX)        
-        DDDDphi=DDer(auxdata,4,4,initX)
+    """#psi
+    if x1>0.01#i>(5*m-1)
+        z[3] = derpsi(x1)
+        #println("ola, x1= ", x1)
+    else
         
-        z[3] = data[4,4] + 3*DDer(data,4,4,initX)*x1^2/(3*2) + 5*DDDDphi*x1^4/(5*4*3*2)
+        auxdata=zeros(L,4)
+        auxdata[4:L-3,4]=DDer_array(state_array,4,initX)
+        D3phi = auxdata[1]
+
+        auxdata2=zeros(L,4)
+        auxdata2[4:L-3,4]=DDer_array(auxdata,4,initX)
+        D5phi = auxdata2[1]
+
+        z[3] = data[4,4] + 3*D3phi*x1^2/(3*2) + 5*D5phi*x1^4/(5*4*3*2)
         #println("z = ", z)
-    end
+    end"""
 
     #m and beta
     if x1<10^(-15) #left
@@ -436,7 +470,7 @@ function SF_RHS(data,t,X)
     # update m, beta and psi data
     #new
     y0=[0.0 0.0 0.0]
-    data[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X[4:L-3],t,derpsi_func)
+    data[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X[4:L-3],t,derpsi_func,data[:,:])
     data=ghost(data)
 
     for i in 4:L-3 #ORI
@@ -510,9 +544,10 @@ function timeevolution(state_array,finaltime,dir,run)
         #update time increment
         #global dt = update_dt(initX,state_array[:,1],state_array[:,2],dx,ginit)
         t = round(t + dt,digits=5)
-        if iter%10==0
+        """if iter%10==0
             println("iteration ", iter, " dt is ", dt, ", time of iteration is ", t)
-        end
+        end"""
+        println("iteration ", iter, " dt is ", dt, ", time of iteration is ", t)
 
         T_array = vcat(T_array,t)
 
@@ -530,7 +565,7 @@ function timeevolution(state_array,finaltime,dir,run)
 
         #evolve m and beta together, new
         y0=[0.0 0.0 0.0]
-        state_array[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X1,t,derpsi_func)
+        state_array[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X1,t,derpsi_func,state_array[:,:])
         state_array=ghost(state_array)
 
         run=int(run)
