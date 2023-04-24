@@ -130,7 +130,7 @@ function rungekutta4(f,y0,T,func)
     y = zeros(n)
     y[1] = y0;
     for i in 1:n-1
-        h = T[2] .- T[1]
+        h = T[i+1] .- T[i]
         k1 = f(y[i], T[i],func)
         k2 = f(y[i] .+ k1 * h/2, T[i] .+ h/2,func)
         k3 = f(y[i] .+ k2 * h/2, T[i] .+ h/2,func)
@@ -341,13 +341,17 @@ function chebishev(N)
     X=zeros(N)
     
     for i in 1:N
-        X[i]=1/2+1/2*cos((2*i-1)*pi/(2*N))
+        if i==1
+            X[i]=0.0
+        else
+            X[i]=1/2+1/2*cos((2*i-1)*pi/(2*N))
+        end
     end
 
     return sort(X)
 end
 
-function chebishev_cut(X)
+"""function chebishev_cut(X)
 
     N=length(X)
 
@@ -361,7 +365,7 @@ function chebishev_cut(X)
     #deleteat!(A, 2)
 
     return new_grid
-end
+end"""
 
 function bulkSF(y,i,X)
     
@@ -419,12 +423,12 @@ function RHS(y0,x1,time,func,i,data)
 
     z[3]=derpsi(x1)
 
-    """#psi
-    if x1>0.01#i>(5*m-1)
+    #psi
+    """if i>4
         z[3] = derpsi(x1)
-        #println("ola, x1= ", x1)
-    else
         
+    else
+        #println("ola, x1= ", x1)
         auxdata=zeros(L,4)
         auxdata[4:L-3,4]=DDer_array(state_array,4,initX)
         D3phi = auxdata[1]
@@ -442,14 +446,16 @@ function RHS(y0,x1,time,func,i,data)
         z[1] = 0.0;
         z[2] = 0.0;
     elseif abs.(x1 .- 1.0)<10^(-15) #right
-        #z[1] = 2.0 .* pi .* (psi(x1)) .^ 2.0
-        z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;#2.0 .* pi .* (y0[3]) .^ 2.0
-        z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0;#0.0
+        #z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;#2.0 .* pi .* (y0[3]) .^ 2.0
+        z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0;#2.0 .* pi .* (y0[3]) .^ 2.0
+        #z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0;#0.0
+        z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0;#0.0
     else #right
-        #z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (psi(x1) .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;
-        z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;
-        #z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (psi(x1) .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0;
-        z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0;
+        #z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;
+        #z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0;
+        z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0;
+        z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0;
+        
     end
 
 
