@@ -279,10 +279,10 @@ function Der(y,i,k,X)
         z = (-27*y[i,k]+58*y[i+1,k]-56*y[i+2,k]+36*y[i+3,k]-13*y[i+4,k]+2*y[i+5,k])/(12*(X[i+1]-X[i]))
     elseif i==5 # left boundary LOP1, TEM
         z = (-2*y[i-1,k]-15*y[i,k]+28*y[i+1,k]-16*y[i+2,k]+6*y[i+3,k]-y[i+4,k])/(12*(X[i+1]-X[i]))
-    """elseif i==L-3 # right boundary TEM
-        z = (-27*y[i,k]+58*y[i-1,k]-56*y[i-2,k]+36*y[i-3,k]-13*y[i-4,k]+2*y[i-5,k])/(12*(X[i+1]-X[i]))
+    elseif i==L-3 # right boundary TEM
+        z = (-27*y[i,k]+58*y[i-1,k]-56*y[i-2,k]+36*y[i-3,k]-13*y[i-4,k]+2*y[i-5,k])/(12*(X[i]-X[i-1]))
     elseif i==L-4 # right boundary TEM
-        z = (-2*y[i+1,k]-15*y[i,k]+28*y[i-1,k]-16*y[i-2,k]+6*y[i-3,k]-y[i-4,k])/(12*(X[i+1]-X[i]))"""
+        z = (-2*y[i+1,k]-15*y[i,k]+28*y[i-1,k]-16*y[i-2,k]+6*y[i-3,k]-y[i-4,k])/(12*(X[i+1]-X[i]))
     else # central
         z = (-y[i+2,k]+8*y[i+1,k]-8*y[i-1,k]+y[i-2,k])/(12*(X[i+1]-X[i]))
     
@@ -336,42 +336,53 @@ end
 
 int(x) = floor(Int, x)
 
-function chebishev(N)
+function chebyshev(N)
 
     X=zeros(N)
     
     for i in 1:N
-        if i==1
+        X[i]=1/2+1/2*cos((2*i-1)*pi/(2*N))
+        """if i==1
             X[i]=0.0
         else
             X[i]=1/2+1/2*cos((2*i-1)*pi/(2*N))
-        end
+        end"""
     end
 
     return sort(X)
 end
 
-"""function chebishev_cut(X)
+function chebyshev_weigth(X)
+    w=ones(length(X))
+    len=length(X)
+    for i in 1:len
+            
+        w[i]=w[i]=1/2+1/2*abs(cos((i-1)*pi/(len)))#1/2+1/2*(cos(1/2*(i-1)*pi/(len)))
 
+    end
+    return w
+end
+function chebyshev_cut(X)
     N=length(X)
-
     new_grid=zeros(int(N/4))
     
-
     new_grid[1:int(N/4)] = X[1:int(N/4)]
-    new_grid=vcat(new_grid, X[int(N/4):2:int(3*N/4)])
-    new_grid=vcat(new_grid, X[int(3*N/4):int(N)])
+    new_grid=vcat(new_grid, X[int(N/4):4:int(3*N/4)])
+    new_grid=vcat(new_grid, X[int(3*N/4):2:int(N)])
     
     #deleteat!(A, 2)
-
     return new_grid
-end"""
+end
+function bulkSF(y,i,X,der_funcs)
+    
+    der_m = der_funcs[i-3,1]#derivative(spl_funcs[1],X[i])
+    der_beta = der_funcs[i-3,2] #derivative(spl_funcs[2],X[i])
+    dder_psi = der_funcs[i-3,3] #derivative(spl_funcs[3],X[i])
 
-function bulkSF(y,i,X)
-    
-    
     #psi,x
-    dy=-1.0/2.0*exp(2.0*y[i,2])*(-(2*(X[i]-1)^3*y[i,3]*(X[i]*((X[i]-1)*Der(y,i,1,X)+X[i]*Der(y,i,2,X))+y[i,1]*(1+2*(X[i]-1)*X[i]*Der(y,i,2,X))))/X[i]^3 - (2*(X[i]-1)^4*(X[i]*((X[i]-1)*Der(y,i,1,X)+X[i]*Der(y,i,2,X))+y[i,1]*(1+2(X[i]-1)*X[i]*Der(y,i,2,X)))*y[i,4])/X[i]^2 - ((X[i]+2*(X[i]-1)*y[i,1])*Der(y,i,4,X))/X[i])
+    #dy=-1.0/2.0*exp(2.0*y[i,2])*(-(2*(X[i]-1)^3*y[i,3]*(X[i]*((X[i]-1)*Der(y,i,1,X)+X[i]*Der(y,i,2,X))+y[i,1]*(1+2*(X[i]-1)*X[i]*Der(y,i,2,X))))/X[i]^3 - (2*(X[i]-1)^4*(X[i]*((X[i]-1)*Der(y,i,1,X)+X[i]*Der(y,i,2,X))+y[i,1]*(1+2(X[i]-1)*X[i]*Der(y,i,2,X)))*y[i,4])/X[i]^2 - ((X[i]+2*(X[i]-1)*y[i,1])*Der(y,i,4,X))/X[i])
+
+    dy=-1.0/2.0*exp(2.0*y[i,2])*(-(2*(X[i]-1)^3*y[i,3]*(X[i]*((X[i]-1)*der_m+X[i]*der_beta)+y[i,1]*(1+2*(X[i]-1)*X[i]*der_beta)))/X[i]^3 - (2*(X[i]-1)^4*(X[i]*((X[i]-1)*der_m+X[i]*der_beta)+y[i,1]*(1+2(X[i]-1)*X[i]*der_beta))*y[i,4])/X[i]^2 - ((X[i]+2*(X[i]-1)*y[i,1])*dder_psi)/X[i])
     
     return dy
 end
@@ -445,6 +456,7 @@ function RHS(y0,x1,time,func,i,data)
     if x1<10^(-15) #left
         z[1] = 0.0;
         z[2] = 0.0;
+        #println("hey RHS func")
     elseif abs.(x1 .- 1.0)<10^(-15) #right
         #z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;#2.0 .* pi .* (y0[3]) .^ 2.0
         z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0;#2.0 .* pi .* (y0[3]) .^ 2.0
@@ -471,29 +483,36 @@ function SF_RHS(data,t,X)
     dy=zeros((L,length(data[1,:])));
 
     # update interpolation of psi,x
-    derpsi_func = Spline1D(X[4:L-3],data[4:L-3,4],k=4)#new
+    derpsi_func = Spline1D(X[4:L-3],data[4:L-3,4],k=4)
     
     # update m, beta and psi data
-    #new
     y0=[0.0 0.0 0.0]
     data[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X[4:L-3],t,derpsi_func,data[:,:])
-    data=ghost(data)
+    #data=ghost(data)
 
+    ###NEW###
+    m_func = Spline1D(X[4:L-3],data[4:L-3,1],k=4)
+    beta_func = Spline1D(X[4:L-3],data[4:L-3,2],k=4)
+    der_funcs=[derivative(m_func,X[4:L-3]) derivative(beta_func,X[4:L-3]) derivative(derpsi_func,X[4:L-3])]
+    ###NEW###
     for i in 4:L-3 #ORI
         if X[i]<10^(-15) #left
-            dy[i,4]= +1.0/2.0*Der(data,i,4,X) - dissipation6(data,i,0.04)[4];
+            #println("hey SF_RHS func")
+            #dy[i,4]= +1.0/2.0*Der(data,i,4,X) - dissipation6(data,i,0.035)[4];
+            dy[i,4]= +1.0/2.0*derivative(derpsi_func,X[i]) - dissipation6(data,i,0.0015)[4];
 
         elseif X[i] < (1-10^(-15)) #bulk
-            dy[i,4]=bulkSF(data,i,X) - dissipation6(data,i,0.04)[4]#epsilon(dt,dx))[4];
+            dy[i,4]=bulkSF(data,i,X,der_funcs) - dissipation6(data,i,0.0015)[4]#epsilon(dt,dx))[4];
 
         else #right
-            dy[i,4]= bulkSF(data,i,X) - dissipation6(data,i,0.04)[4]#1.0/2.0*exp(2*data[i,2])*Der(data,i,4,X) - dissipation6(data,i,epsilon(dt,dx))[4];#0.0
+            dy[i,4]= bulkSF(data,i,X,der_funcs) - dissipation6(data,i,0.0015)[4]
+            #0.0#1.0/2.0*exp(2*data[i,2])*derivative(derpsi_func,X[i])#bulkSF(data,i,X,der_funcs) #- dissipation6(data,i,0.035)[4]#1.0/2.0*exp(2*data[i,2])*Der(data,i,4,X) - dissipation6(data,i,epsilon(dt,dx))[4];#0.0
         end
     end
     
     
   
-    dy=ghost(dy)
+    #dy=ghost(dy)
     return dy
 
 end
@@ -543,7 +562,7 @@ function timeevolution(state_array,finaltime,dir,run)
     T_interp = [0.0]
     iter = 0
 
-    while t<=finaltime#@TRACK
+    while t<finaltime#@TRACK
 
         iter = iter + 1
 
@@ -575,12 +594,12 @@ function timeevolution(state_array,finaltime,dir,run)
         state_array=ghost(state_array)
 
         run=int(run)
-        """if iter%10==0
+        if iter%10==0
             #CSV.write(dir*"/run$run/time_step$iter.csv", Tables.table(state_array), writeheader=false)
             CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
             T_interp = vcat(T_interp,t)
-        end"""
-        CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
+        end
+        #CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
         
 
         #threshold for apparent black hole formation
@@ -623,8 +642,13 @@ function timeevolution(state_array,finaltime,dir,run)
 
 end    
 
-function epsilon(dt,dx)
+function epsilon(X,i,dt,dx)
     #minimum([dx/dt*(1/2)^(2*3), 10])
     #println("dissipation epsilon is ", (dx/dt*(1/2)^(2*3)))
-    return (dx/dt*(1/2)^(2*3))
+    if i != L-3
+        dx=X[i+1]-X[i]
+    elseif i==L-3
+        dx = X[i]-X[i-1]
+    end
+    return (dx/dt*(1/2)^(2*3+1))
 end
