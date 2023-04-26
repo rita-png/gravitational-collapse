@@ -188,10 +188,10 @@ function n_rk4wrapper(f,y0,x,u,spl_funcs,data) # u depicts T array, or M!!
     y[1,:] = y0;
     for i in 1:L-1
         h = x[i+1] .- x[i]
-        k1 = f(y[i,:], x[i],u,spl_funcs,i,data)
-        k2 = f(y[i,:] .+ k1 * h/2, x[i] .+ h/2,u,spl_funcs,i,data)
-        k3 = f(y[i,:] .+ k2 * h/2, x[i] .+ h/2,u,spl_funcs,i,data)
-        k4 = f(y[i,:] .+ k3 * h, x[i] .+ h,u,spl_funcs,i,data)
+        k1 = f(y[i,:], x[i],u,spl_funcs,i,data,false)
+        k2 = f(y[i,:] .+ k1 * h/2, x[i] .+ h/2,u,spl_funcs,i,data,true)
+        k3 = f(y[i,:] .+ k2 * h/2, x[i] .+ h/2,u,spl_funcs,i,data,true)
+        k4 = f(y[i,:] .+ k3 * h, x[i] .+ h,u,spl_funcs,i,data,false)
         y[i+1,:] = y[i,:] .+ (h/6) * (k1 .+ 2*k2 .+ 2*k3 .+ k4)
     end
     return y[:,:]
@@ -427,30 +427,35 @@ function psi_RHS(y0,x1,func)
 end
 
 #EXACTLY THE SAME POINTS MUST BE CALCULATED THE SAME WAY
-function RHS(y0,x1,time,func,i,data)
+function RHS(y0,x1,time,func,i,data, midstep)
     
     z=zeros(length(y0))
     derpsi = func
 
     z[3]=derpsi(x1)
 
-    #psi
-    """if i>4
+    
+    #psi so para impares maybe h/2, ver se D5 converge...
+    if i>4#x1>0.02
         z[3] = derpsi(x1)
         
+    #elseif midstep==true
     else
         #println("ola, x1= ", x1)
         auxdata=zeros(L,4)
         auxdata[4:L-3,4]=DDer_array(state_array,4,initX)
-        D3phi = auxdata[1]
+        
 
+        D3phi = auxdata[4,4]
+  
         auxdata2=zeros(L,4)
         auxdata2[4:L-3,4]=DDer_array(auxdata,4,initX)
-        D5phi = auxdata2[1]
+        D5phi = auxdata2[4,4]
 
         z[3] = data[4,4] + 3*D3phi*x1^2/(3*2) + 5*D5phi*x1^4/(5*4*3*2)
-        #println("z = ", z)
-    end"""
+
+
+    end
 
     #m and beta
     if x1<10^(-15) #left
@@ -458,19 +463,20 @@ function RHS(y0,x1,time,func,i,data)
         z[2] = 0.0;
         #println("hey RHS func")
     elseif abs.(x1 .- 1.0)<10^(-15) #right
-        #z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;#2.0 .* pi .* (y0[3]) .^ 2.0
-        z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0;#2.0 .* pi .* (y0[3]) .^ 2.0
-        #z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0;#0.0
-        z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0;#0.0
+        z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;#2.0 .* pi .* (y0[3]) .^ 2.0
+        #z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0;#2.0 .* pi .* (y0[3]) .^ 2.0
+        z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0;#0.0
+        #z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0;#0.0
     else #right
-        #z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;
-        #z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0;
-        z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0;
-        z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0;
+        z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;
+        z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0;
+        #z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0;
+        #z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0;
         
     end
-
-
+    #println("   ")
+    #println("z[:] ", z[:])
+    #println("   ")
     return z[:]
 end
 
