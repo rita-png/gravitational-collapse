@@ -166,16 +166,16 @@ end
 
 
 
-function rk4wrapper(f,y0,x,u,spl_funcs) # u depicts T array, or M!!
+function rk4wrapper(f,y0,x,u,spl_funcs,data) # u depicts T array, or M!!
     n = length(x)
     y = zeros(n)
     y[1] = y0;
     for i in 1:n-1
         h = x[i+1] .- x[i]
-        k1 = f(y[i], x[i],u,spl_funcs)
-        k2 = f(y[i] .+ k1 * h/2, x[i] .+ h/2,u,spl_funcs)
-        k3 = f(y[i] .+ k2 * h/2, x[i] .+ h/2,u,spl_funcs)
-        k4 = f(y[i] .+ k3 * h, x[i] .+ h,u,spl_funcs)
+        k1 = f(y[i], x[i],u,spl_funcs,i,data)
+        k2 = f(y[i] .+ k1 * h/2, x[i] .+ h/2,u,spl_funcs,i,data)
+        k3 = f(y[i] .+ k2 * h/2, x[i] .+ h/2,u,spl_funcs,i,data)
+        k4 = f(y[i] .+ k3 * h, x[i] .+ h,u,spl_funcs,i,data)
         y[i+1] = y[i] .+ (h/6) * (k1 .+ 2*k2 .+ 2*k3 .+ k4)
     end
     return y
@@ -188,15 +188,39 @@ function n_rk4wrapper(f,y0,x,u,spl_funcs,data) # u depicts T array, or M!!
     y[1,:] = y0;
     for i in 1:L-1
         h = x[i+1] .- x[i]
-        k1 = f(y[i,:], x[i],u,spl_funcs,i,data,false)
-        k2 = f(y[i,:] .+ k1 * h/2, x[i] .+ h/2,u,spl_funcs,i,data,true)
-        k3 = f(y[i,:] .+ k2 * h/2, x[i] .+ h/2,u,spl_funcs,i,data,true)
-        k4 = f(y[i,:] .+ k3 * h, x[i] .+ h,u,spl_funcs,i,data,false)
+        k1 = f(y[i,:], x[i],u,spl_funcs,i,data)
+        k2 = f(y[i,:] .+ k1 * h/2, x[i] .+ h/2,u,spl_funcs,i,data)
+        k3 = f(y[i,:] .+ k2 * h/2, x[i] .+ h/2,u,spl_funcs,i,data)
+        k4 = f(y[i,:] .+ k3 * h, x[i] .+ h,u,spl_funcs,i,data)
         y[i+1,:] = y[i,:] .+ (h/6) * (k1 .+ 2*k2 .+ 2*k3 .+ k4)
     end
     return y[:,:]
 end
 
+function integrator(X,data,derpsi_func)
+
+    L=length(X)
+    ori=find_origin(X)
+
+    integral = zeros(L)
+    for i in ori:L-3
+
+        if i == 4
+            integral[i] = 0.0
+        elseif i == 5
+            h = X[i]-X[i-1]
+            integral[i] = h * (55/24*derpsi_func(X[i])-59/24*derpsi_func(X[i+1])+37/24*derpsi_func(X[i+2])-9/24*derpsi_func(X[i+3]))
+        elseif i == 6
+            h = X[i] - X[i-2]
+            integral[i] = h * (55/24*derpsi_func(X[i])-59/24*derpsi_func(X[i+1])+37/24*derpsi_func(X[i+2])-9/24*derpsi_func(X[i+3]))
+        elseif i == 7
+            h = X[i] - X[i-3]
+            integral[i] = h * (55/24*derpsi_func(X[i])-59/24*derpsi_func(X[i+1])+37/24*derpsi_func(X[i+2])-9/24*derpsi_func(X[i+3]))
+        else
+            h = X[i]-X[i-1]
+            integral[i] = integral[i-1] + h * (55/24*derpsi_func(X[i-1]) - 59/24*derpsi_func(X[i-2]) + 37/24*derpsi_func(X[i-3]) - 9/24*derpsi_func(X[i-4]))
+    return integral
+end
 
 
 #ghosts
@@ -244,12 +268,12 @@ function dissipation6(y,i,eps)
         delta6= (11*y[i-1,:]-80*y[i,:]+254*y[i+1,:]-460*y[i+2,:]+520*y[i+3,:]-376*y[i+4,:]+170*y[i+5,:]-44*y[i+6,:]+5*y[i+7,:])/2;
     elseif i==6
         delta6= (5*y[i-2,:]-34*y[i-1,:]+100*y[i,:]-166*y[i+1,:]+170*y[i+2,:]-110*y[i+3,:]+44*y[i+4,:]-10*y[i+5,:]+y[i+6,:])/2;
-    """elseif i==L-3
+    elseif i==L-3
         delta6= (19*y[i,:]-142*y[i-1,:]+464*y[i-2,:]-866*y[i-3,:]+1010*y[i-4,:]-754*y[i-5,:]+352*y[i-6,:]-94*y[i-7,:]+11*y[i-8,:])/2;
     elseif i==L-4
         delta6= (11*y[i+1,:]-80*y[i,:]+254*y[i-1,:]-460*y[i-2,:]+520*y[i-3,:]-376*y[i-4,:]+170*y[i-5,:]-44*y[i-6,:]+5*y[i-7,:])/2;
     elseif i==L-5
-        delta6= (5*y[i+2,:]-34*y[i+1,:]+100*y[i,:]-166*y[i-1,:]+170*y[i-2,:]-110*y[i-3,:]+44*y[i-4,:]-10*y[i-5,:]+y[i-6,:])/2;"""
+        delta6= (5*y[i+2,:]-34*y[i+1,:]+100*y[i,:]-166*y[i-1,:]+170*y[i-2,:]-110*y[i-3,:]+44*y[i-4,:]-10*y[i-5,:]+y[i-6,:])/2;
     else
         delta6=(y[i+3,:]-6*y[i+2,:]+15*y[i+1,:]-20*y[i,:]+15*y[i-1,:]-6*y[i-2,:]+y[i-3,:]);
     end
@@ -341,12 +365,12 @@ function chebyshev(N)
     X=zeros(N)
     
     for i in 1:N
-        X[i]=1/2+1/2*cos((2*i-1)*pi/(2*N))
-        """if i==1
+        #X[i]=1/2+1/2*cos((2*i-1)*pi/(2*N))
+        if i==1
             X[i]=0.0
         else
             X[i]=1/2+1/2*cos((2*i-1)*pi/(2*N))
-        end"""
+        end
     end
 
     return sort(X)
@@ -417,17 +441,9 @@ function boundarySF(y,X)
     return y
 end
 
-function psi_RHS(y0,x1,func)
-    
-    derpsi = func
-    z = derpsi(x1)
- 
-    
-    return z
-end
 
 #EXACTLY THE SAME POINTS MUST BE CALCULATED THE SAME WAY
-function RHS(y0,x1,time,func,i,data, midstep)
+function RHS(y0,x1,time,func,i,data)
     
     z=zeros(length(y0))
     derpsi = func
@@ -435,9 +451,61 @@ function RHS(y0,x1,time,func,i,data, midstep)
     z[3]=derpsi(x1)
 
     
-    #psi so para impares maybe h/2, ver se D5 converge...
-    if i>4#x1>0.02
+    #taylor
+    """if i>4#x1>0.02
         z[3] = derpsi(x1)
+        
+    #elseif midstep==true
+    else
+        auxdata=zeros(L,4)
+        auxdata[4:L-3,4]=DDer_array(state_array,4,initX)
+        
+
+        D3phi = auxdata[4,4]
+  
+        auxdata2=zeros(L,4)
+        auxdata2[4:L-3,4]=DDer_array(auxdata,4,initX)
+        D5phi = auxdata2[4,4]
+
+        z[3] = data[4,4] + 3*D3phi*x1^2/(3*2) + 5*D5phi*x1^4/(5*4*3*2)
+
+
+    end"""
+
+    #m and beta
+    if x1<10^(-15) #left
+        z[1] = 0.0;
+        z[2] = 0.0;
+    elseif abs.(x1 .- 1.0)<10^(-15) #right
+        z[1] = 0.0#2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;#2.0 .* pi .* (y0[3]) .^ 2.0
+        #z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0;#2.0 .* pi .* (y0[3]) .^ 2.0
+        z[2] = 0.0#2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0;#0.0
+        #z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0;#0.0
+
+        
+    else #bulk
+        z[1] = 0.0#2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;
+        z[2] = 0.0#2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0;
+        #z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0;
+        #z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0;
+        
+    end
+    #println("   ")
+    #println("z[:] ", z[:])
+    #println("   ")
+    return z[:]
+end
+
+"""function psiRHS(y0,x1,time,func,i,data)
+    
+    derpsi = func
+
+    z=derpsi(x1)
+
+    
+    #taylor
+    if i>4#x1>0.02
+        z = derpsi(x1)
         
     #elseif midstep==true
     else
@@ -452,35 +520,41 @@ function RHS(y0,x1,time,func,i,data, midstep)
         auxdata2[4:L-3,4]=DDer_array(auxdata,4,initX)
         D5phi = auxdata2[4,4]
 
-        z[3] = data[4,4] + 3*D3phi*x1^2/(3*2) + 5*D5phi*x1^4/(5*4*3*2)
+        z = data[4,4] + 3*D3phi*x1^2/(3*2) + 5*D5phi*x1^4/(5*4*3*2)
 
 
     end
 
+    return z
+end
+
+function mbetaRHS(y0,x1,time,func,i,data)
+    
+    z=zeros(length(y0))
+    derpsi = func[2]
+    psi = func[1]
+
+
+    
     #m and beta
     if x1<10^(-15) #left
         z[1] = 0.0;
         z[2] = 0.0;
-        #println("hey RHS func")
     elseif abs.(x1 .- 1.0)<10^(-15) #right
-        z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;#2.0 .* pi .* (y0[3]) .^ 2.0
+        z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (psi(x1) .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;#2.0 .* pi .* (y0[3]) .^ 2.0
         #z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0;#2.0 .* pi .* (y0[3]) .^ 2.0
-        z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0;#0.0
+        z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (psi(x1)  .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0;#0.0
         #z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0;#0.0
     else #right
-        z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;
-        z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0;
+        z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (psi(x1) .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;
+        z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (psi(x1)  .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0;
         #z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0;
         #z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0;
         
     end
-    #println("   ")
-    #println("z[:] ", z[:])
-    #println("   ")
-    return z[:]
-end
 
-
+    return z
+end"""
 # Defining the function in the RHS of the evolution equation system
 
 function SF_RHS(data,t,X)
@@ -496,6 +570,18 @@ function SF_RHS(data,t,X)
     data[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X[4:L-3],t,derpsi_func,data[:,:])
     #data=ghost(data)
 
+    
+    """data[4:L-3,3] = rk4wrapper(psiRHS,0,X[4:L-3],t,derpsi_func,data[:,:])
+
+    psi_func = Spline1D(X[4:L-3],data[4:L-3,3],k=4)
+    funcs = [psi_func derpsi_func]
+    
+    y0=[0.0 0.0]
+    data[4:L-3,1:2] = n_rk4wrapper(mbetaRHS,y0,X[4:L-3],t,funcs,data[:,:])
+    """
+
+    #data=ghost(data)
+
     ###NEW###
     m_func = Spline1D(X[4:L-3],data[4:L-3,1],k=4)
     beta_func = Spline1D(X[4:L-3],data[4:L-3,2],k=4)
@@ -504,14 +590,14 @@ function SF_RHS(data,t,X)
     for i in 4:L-3 #ORI
         if X[i]<10^(-15) #left
             #println("hey SF_RHS func")
-            #dy[i,4]= +1.0/2.0*Der(data,i,4,X) - dissipation6(data,i,0.035)[4];
-            dy[i,4]= +1.0/2.0*derivative(derpsi_func,X[i]) - dissipation6(data,i,0.0015)[4];
+            dy[i,4]= +1.0/2.0*Der(data,i,4,X) - dissipation6(data,i,0.0035)[4];
+            #dy[i,4]= +1.0/2.0*derivative(derpsi_func,X[i]) #- dissipation6(data,i,0.0015)[4];
 
         elseif X[i] < (1-10^(-15)) #bulk
-            dy[i,4]=bulkSF(data,i,X,der_funcs) - dissipation6(data,i,0.0015)[4]#epsilon(dt,dx))[4];
+            dy[i,4]=bulkSF(data,i,X,der_funcs) - dissipation6(data,i,0.0035)[4]#epsilon(dt,dx))[4];
 
         else #right
-            dy[i,4]= bulkSF(data,i,X,der_funcs) - dissipation6(data,i,0.0015)[4]
+            dy[i,4]= bulkSF(data,i,X,der_funcs) - dissipation6(data,i,0.0035)[4]
             #0.0#1.0/2.0*exp(2*data[i,2])*derivative(derpsi_func,X[i])#bulkSF(data,i,X,der_funcs) #- dissipation6(data,i,0.035)[4]#1.0/2.0*exp(2*data[i,2])*Der(data,i,4,X) - dissipation6(data,i,epsilon(dt,dx))[4];#0.0
         end
     end
@@ -575,10 +661,10 @@ function timeevolution(state_array,finaltime,dir,run)
         #update time increment
         #global dt = update_dt(initX,state_array[:,1],state_array[:,2],dx,ginit)
         t = round(t + dt,digits=5)
-        """if iter%10==0
+        if iter%10==0
             println("iteration ", iter, " dt is ", dt, ", time of iteration is ", t)
-        end"""
-        println("iteration ", iter, " dt is ", dt, ", time of iteration is ", t)
+        end
+        #println("iteration ", iter, " dt is ", dt, ", time of iteration is ", t)
 
         T_array = vcat(T_array,t)
 
@@ -598,6 +684,16 @@ function timeevolution(state_array,finaltime,dir,run)
         y0=[0.0 0.0 0.0]
         state_array[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X1,t,derpsi_func,state_array[:,:])
         state_array=ghost(state_array)
+        
+        """
+        state_array[4:L-3,3] = rk4wrapper(psiRHS,0,X[4:L-3],t,derpsi_func,state_array[:,:])
+
+        psi_func = Spline1D(X[4:L-3],state_array[4:L-3,3],k=4)
+        funcs = [psi_func derpsi_func]
+        
+        y0=[0.0 0.0]
+        state_array[4:L-3,1:2] = n_rk4wrapper(mbetaRHS,y0,X[4:L-3],t,funcs,state_array[:,:])
+        """
 
         run=int(run)
         if iter%10==0
