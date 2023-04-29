@@ -112,7 +112,7 @@ function update_grid(data,T,k)
     dx = data[2,5]-data[1,5]
 
     #evolve grid
-    data = rungekutta4molstep(Grid_RHS,data,T,k,data[:,5]) #evolve X
+    data = twod_rungekutta4molstep(Grid_RHS,data,T,k,data[:,5]) #evolve X
     #data=ghost(data)
     
     X = data[:,5]
@@ -164,6 +164,20 @@ function rungekutta4molstep(f,y00,T,w::Int64,X)
     return ghost(y[:,:])
 end
 
+function twod_rungekutta4molstep(f,y00,T,w::Int64,X)
+    y = y00;
+    X=collect(X)
+        h = T[w+1]-T[w]
+        #print("\n\nh = ", h, " \n")
+        #h = dt; # only for equally spaced grid in time and space, otherwise (T[w+1] - T[w])
+        k1 = f(y[:,:], T[w],X)
+        k1=ghost(k1)
+        k2 = f(y[:,:] .+ k1 .* h, T[w] + h,X)
+        k2=ghost(k2)
+        y[:,:] = y[:,:] .+ (h/2) .* (k1 .+ k2)
+        
+    return ghost(y[:,:])
+end
 
 
 function rk4wrapper(f,y0,x,u,spl_funcs,data) # u depicts T array, or M!!
@@ -197,28 +211,61 @@ function n_rk4wrapper(f,y0,x,u,spl_funcs,data) # u depicts T array, or M!!
     return y[:,:]
 end
 
-function integrator(X,data,derpsi_func)
+function twod_n_rk4wrapper(f,y0,x,u,spl_funcs,data) # u depicts T array, or M!!
+    L = length(x)
+    n = length(y0)
+    y = zeros(L,n)
+    y[1,:] = y0;
+    for i in 1:L-1
+        h = x[i+1] .- x[i]
+        k1 = f(y[i,:], x[i],u,spl_funcs,i,data)
+        k2 = f(y[i,:] .+ k1 * h, x[i] .+ h,u,spl_funcs,i,data)
+        y[i+1,:] = y[i,:] .+ (h/2) * (k1 .+ k2)
+    end
+    return y[:,:]
+end
+
+function integrator(X,derpsi_func,data)
 
     L=length(X)
     ori=find_origin(X)
 
     integral = zeros(L)
+
+    #taylor
+    auxdata=zeros(L,4)
+    auxdata[4:L-3,4]=DDer_array(state_array,4,initX)
+    
+    D3phi = auxdata[4,4]
+
+    auxdata2=zeros(L,4)
+    auxdata2[4:L-3,4]=DDer_array(auxdata,4,initX)
+    D5phi = auxdata2[4,4]
+    
+
+
     for i in ori:L-3
 
         if i == 4
             integral[i] = 0.0
         elseif i == 5
             h = X[i]-X[i-1]
-            integral[i] = h * (55/24*derpsi_func(X[i])-59/24*derpsi_func(X[i+1])+37/24*derpsi_func(X[i+2])-9/24*derpsi_func(X[i+3]))
+            #integral[i] = h * (55/24*derpsi_func(X[i])-59/24*derpsi_func(X[i+1])+37/24*derpsi_func(X[i+2])-9/24*derpsi_func(X[i+3]))
+            integral[i] = data[4,4] + 3*D3phi*X[i]^2/(3*2) + 5*D5phi*X[i]^4/(5*4*3*2)
         elseif i == 6
             h = X[i] - X[i-2]
-            integral[i] = h * (55/24*derpsi_func(X[i])-59/24*derpsi_func(X[i+1])+37/24*derpsi_func(X[i+2])-9/24*derpsi_func(X[i+3]))
+            #integral[i] = h * (55/24*derpsi_func(X[i])-59/24*derpsi_func(X[i+1])+37/24*derpsi_func(X[i+2])-9/24*derpsi_func(X[i+3]))
+            integral[i] = data[4,4] + 3*D3phi*X[i]^2/(3*2) + 5*D5phi*X[i]^4/(5*4*3*2)
         elseif i == 7
             h = X[i] - X[i-3]
-            integral[i] = h * (55/24*derpsi_func(X[i])-59/24*derpsi_func(X[i+1])+37/24*derpsi_func(X[i+2])-9/24*derpsi_func(X[i+3]))
+            integral[i] = data[4,4] + 3*D3phi*X[i]^2/(3*2) + 5*D5phi*X[i]^4/(5*4*3*2)
+            #integral[i] = h * (55/24*derpsi_func(X[i])-59/24*derpsi_func(X[i+1])+37/24*derpsi_func(X[i+2])-9/24*derpsi_func(X[i+3]))
         else
             h = X[i]-X[i-1]
             integral[i] = integral[i-1] + h * (55/24*derpsi_func(X[i-1]) - 59/24*derpsi_func(X[i-2]) + 37/24*derpsi_func(X[i-3]) - 9/24*derpsi_func(X[i-4]))
+        end
+    end
+
     return integral
 end
 
@@ -477,15 +524,15 @@ function RHS(y0,x1,time,func,i,data)
         z[1] = 0.0;
         z[2] = 0.0;
     elseif abs.(x1 .- 1.0)<10^(-15) #right
-        z[1] = 0.0#2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;#2.0 .* pi .* (y0[3]) .^ 2.0
+        z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;#2.0 .* pi .* (y0[3]) .^ 2.0
         #z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0;#2.0 .* pi .* (y0[3]) .^ 2.0
-        z[2] = 0.0#2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0;#0.0
+        z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0;#0.0
         #z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0;#0.0
 
         
     else #bulk
-        z[1] = 0.0#2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;
-        z[2] = 0.0#2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0;
+        z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;
+        z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0;
         #z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0;
         #z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0;
         
@@ -567,7 +614,7 @@ function SF_RHS(data,t,X)
     
     # update m, beta and psi data
     y0=[0.0 0.0 0.0]
-    data[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X[4:L-3],t,derpsi_func,data[:,:])
+    data[4:L-3,1:3] = twod_n_rk4wrapper(RHS,y0,X[4:L-3],t,derpsi_func,data[:,:])
     #data=ghost(data)
 
     
@@ -674,7 +721,7 @@ function timeevolution(state_array,finaltime,dir,run)
         X1=X[4:L-3]
        
         #evolve psi,x
-        state_array[:,:] = rungekutta4molstep(SF_RHS,state_array[:,:],T_array,iter,X) #evolve psi,x
+        state_array[:,:] = twod_rungekutta4molstep(SF_RHS,state_array[:,:],T_array,iter,X) #evolve psi,x
         state_array=ghost(state_array)
     
         # update interpolation of psi,x
@@ -682,7 +729,7 @@ function timeevolution(state_array,finaltime,dir,run)
 
         #evolve m and beta together, new
         y0=[0.0 0.0 0.0]
-        state_array[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X1,t,derpsi_func,state_array[:,:])
+        state_array[4:L-3,1:3] = twod_n_rk4wrapper(RHS,y0,X1,t,derpsi_func,state_array[:,:])
         state_array=ghost(state_array)
         
         """
