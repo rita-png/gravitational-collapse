@@ -513,7 +513,6 @@ function RHS(y0,x1,time,func,i,data)
 
     z[3]=derpsi(x1)
 
-    
     #taylor
     """if i>4#x1>0.02
         z[3] = derpsi(x1)
@@ -562,7 +561,7 @@ end
 ##AUX
 function RHS(y0,x1,time,func,i,data,auxdata,midstep)
 
-
+    
     z=zeros(length(y0))
     derpsi = func
 
