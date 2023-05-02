@@ -444,16 +444,16 @@ function chebyshev_cut(X)
     #deleteat!(A, 2)
     return new_grid
 end
-function bulkSF(y,i,X,der_funcs)
+function bulkSF(y,i,X)
     
-    der_m = der_funcs[i-3,1]#derivative(spl_funcs[1],X[i])
-    der_beta = der_funcs[i-3,2] #derivative(spl_funcs[2],X[i])
-    dder_psi = der_funcs[i-3,3] #derivative(spl_funcs[3],X[i])
+    #der_m = der_funcs[i-3,1]#derivative(spl_funcs[1],X[i])
+    #der_beta = der_funcs[i-3,2] #derivative(spl_funcs[2],X[i])
+    #dder_psi = der_funcs[i-3,3] #derivative(spl_funcs[3],X[i])
 
     #psi,x
-    #dy=-1.0/2.0*exp(2.0*y[i,2])*(-(2*(X[i]-1)^3*y[i,3]*(X[i]*((X[i]-1)*Der(y,i,1,X)+X[i]*Der(y,i,2,X))+y[i,1]*(1+2*(X[i]-1)*X[i]*Der(y,i,2,X))))/X[i]^3 - (2*(X[i]-1)^4*(X[i]*((X[i]-1)*Der(y,i,1,X)+X[i]*Der(y,i,2,X))+y[i,1]*(1+2(X[i]-1)*X[i]*Der(y,i,2,X)))*y[i,4])/X[i]^2 - ((X[i]+2*(X[i]-1)*y[i,1])*Der(y,i,4,X))/X[i])
+    dy=-1.0/2.0*exp(2.0*y[i,2])*(-(2*(X[i]-1)^3*y[i,3]*(X[i]*((X[i]-1)*Der(y,i,1,X)+X[i]*Der(y,i,2,X))+y[i,1]*(1+2*(X[i]-1)*X[i]*Der(y,i,2,X))))/X[i]^3 - (2*(X[i]-1)^4*(X[i]*((X[i]-1)*Der(y,i,1,X)+X[i]*Der(y,i,2,X))+y[i,1]*(1+2(X[i]-1)*X[i]*Der(y,i,2,X)))*y[i,4])/X[i]^2 - ((X[i]+2*(X[i]-1)*y[i,1])*Der(y,i,4,X))/X[i])
 
-    dy=-1.0/2.0*exp(2.0*y[i,2])*(-(2*(X[i]-1)^3*y[i,3]*(X[i]*((X[i]-1)*der_m+X[i]*der_beta)+y[i,1]*(1+2*(X[i]-1)*X[i]*der_beta)))/X[i]^3 - (2*(X[i]-1)^4*(X[i]*((X[i]-1)*der_m+X[i]*der_beta)+y[i,1]*(1+2(X[i]-1)*X[i]*der_beta))*y[i,4])/X[i]^2 - ((X[i]+2*(X[i]-1)*y[i,1])*dder_psi)/X[i])
+    #dy=-1.0/2.0*exp(2.0*y[i,2])*(-(2*(X[i]-1)^3*y[i,3]*(X[i]*((X[i]-1)*der_m+X[i]*der_beta)+y[i,1]*(1+2*(X[i]-1)*X[i]*der_beta)))/X[i]^3 - (2*(X[i]-1)^4*(X[i]*((X[i]-1)*der_m+X[i]*der_beta)+y[i,1]*(1+2(X[i]-1)*X[i]*der_beta))*y[i,4])/X[i]^2 - ((X[i]+2*(X[i]-1)*y[i,1])*dder_psi)/X[i])
     
     return dy
 end
@@ -630,21 +630,21 @@ function SF_RHS(data,t,X)
     #data=ghost(data)
 
     ###NEW###
-    m_func = Spline1D(X[4:L-3],data[4:L-3,1],k=4)
-    beta_func = Spline1D(X[4:L-3],data[4:L-3,2],k=4)
-    der_funcs=[derivative(m_func,X[4:L-3]) derivative(beta_func,X[4:L-3]) derivative(derpsi_func,X[4:L-3])]
+    #m_func = Spline1D(X[4:L-3],data[4:L-3,1],k=4)
+    #beta_func = Spline1D(X[4:L-3],data[4:L-3,2],k=4)
+    #der_funcs=[derivative(m_func,X[4:L-3]) derivative(beta_func,X[4:L-3]) derivative(derpsi_func,X[4:L-3])]
     ###NEW###
     for i in 4:L-3 #ORI
         if X[i]<10^(-15) #left
             #println("hey SF_RHS func")
-            dy[i,4]= +1.0/2.0*Der(data,i,4,X) - dissipation6(data,i,0.007)[4];
+            dy[i,4]= +1.0/2.0*Der(data,i,4,X) - dissipation4(data,i,0.14)[4];
             #dy[i,4]= +1.0/2.0*derivative(derpsi_func,X[i]) #- dissipation6(data,i,0.0015)[4];
 
         elseif X[i] < (1-10^(-15)) #bulk
-            dy[i,4]=bulkSF(data,i,X,der_funcs) - dissipation6(data,i,0.007)[4]#epsilon(dt,dx))[4];
+            dy[i,4]=bulkSF(data,i,X) - dissipation6(data,i,0.14)[4]#epsilon(dt,dx))[4];
 
         else #right
-            dy[i,4]= bulkSF(data,i,X,der_funcs) - dissipation6(data,i,0.007)[4]
+            dy[i,4]= bulkSF(data,i,X) - dissipation6(data,i,0.14)[4]
             #0.0#1.0/2.0*exp(2*data[i,2])*derivative(derpsi_func,X[i])#bulkSF(data,i,X,der_funcs) #- dissipation6(data,i,0.035)[4]#1.0/2.0*exp(2*data[i,2])*Der(data,i,4,X) - dissipation6(data,i,epsilon(dt,dx))[4];#0.0
         end
     end
@@ -744,12 +744,12 @@ function timeevolution(state_array,finaltime,dir,run)
         """
 
         run=int(run)
-        if iter%10==0
+        """if iter%10==0
             #CSV.write(dir*"/run$run/time_step$iter.csv", Tables.table(state_array), writeheader=false)
             CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
             T_interp = vcat(T_interp,t)
-        end
-        #CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
+        end"""
+        CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
         
 
         #threshold for apparent black hole formation
@@ -757,9 +757,9 @@ function timeevolution(state_array,finaltime,dir,run)
         
         for i in 4:L-3
             global monitor_ratio[i] = 2*state_array[i,1]/initX[i]*(1-initX[i])
-            if monitor_ratio[i]>1
+            if monitor_ratio[i]>0.995
                 global criticality = true
-                println("Supercritical evolution! At time ", t)
+                println("Supercritical evolution! At time ", t, ", iteration = ", iter)
                 println("Gridpoint = ", i, " t = ", t, " monitor ratio = ", monitor_ratio[i])
                 global time = t
             end
