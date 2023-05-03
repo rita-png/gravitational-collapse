@@ -82,12 +82,12 @@ function update_dt(X, m, beta,dx,ginit)
 
     for i in 3:L-4
         monitor_ratio[i] = 2*state_array[i,1]/initX[i]*(1-initX[i])
-        if monitor_ratio[i]>0.40
+        if monitor_ratio[i]>0.30
             g=dt_scale(X,m,beta,dx)
         end
     end
 
-    return  dx*(ginit/g)^(0.65)
+    return  dx*(ginit/g)^(1)
 end
 
 function find_origin(X)
@@ -112,7 +112,7 @@ function update_grid(data,T,k)
     dx = data[2,5]-data[1,5]
 
     #evolve grid
-    data = rungekutta4molstep(Grid_RHS,data,T,k,data[:,5]) #evolve X
+    data = twod_rungekutta4molstep(Grid_RHS,data,T,k,data[:,5]) #evolve X
     #data=ghost(data)
     
     X = data[:,5]
@@ -206,22 +206,6 @@ function n_rk4wrapper(f,y0,x,u,spl_funcs,data) # u depicts T array, or M!!
         k2 = f(y[i,:] .+ k1 * h/2, x[i] .+ h/2,u,spl_funcs,i,data)
         k3 = f(y[i,:] .+ k2 * h/2, x[i] .+ h/2,u,spl_funcs,i,data)
         k4 = f(y[i,:] .+ k3 * h, x[i] .+ h,u,spl_funcs,i,data)
-        y[i+1,:] = y[i,:] .+ (h/6) * (k1 .+ 2*k2 .+ 2*k3 .+ k4)
-    end
-    return y[:,:]
-end
-##AUX
-function n_rk4wrapper(f,y0,x,u,spl_funcs,data,auxdata) # u depicts T array, or M!!
-    L = length(x)
-    n = length(y0)
-    y = zeros(L,n)
-    y[1,:] = y0;
-    for i in 1:L-1
-        h = x[i+1] .- x[i]
-        k1 = f(y[i,:], x[i],u,spl_funcs,i,data,auxdata,false)
-        k2 = f(y[i,:] .+ k1 * h/2, x[i] .+ h/2,u,spl_funcs,i,data,auxdata,true)
-        k3 = f(y[i,:] .+ k2 * h/2, x[i] .+ h/2,u,spl_funcs,i,data,auxdata,true)
-        k4 = f(y[i,:] .+ k3 * h, x[i] .+ h,u,spl_funcs,i,data,auxdata,false)
         y[i+1,:] = y[i,:] .+ (h/6) * (k1 .+ 2*k2 .+ 2*k3 .+ k4)
     end
     return y[:,:]
@@ -513,6 +497,7 @@ function RHS(y0,x1,time,func,i,data)
 
     z[3]=derpsi(x1)
 
+    
     #taylor
     """if i>4#x1>0.02
         z[3] = derpsi(x1)
@@ -555,45 +540,6 @@ function RHS(y0,x1,time,func,i,data)
     #println("   ")
     #println("z[:] ", z[:])
     #println("   ")
-    return z[:]
-end
-
-##AUX
-function RHS(y0,x1,time,func,i,data,auxdata,midstep)
-
-    
-    z=zeros(length(y0))
-    derpsi = func
-
-    z[3]=derpsi(x1)
-
-    aux=auxdata[4:length(auxdata)-3]
-
-    if i <= 4 & midstep==true
-        z[3]=aux[2*i,4]
-        y0[3]=aux[2*i-1,3]#this was auxdata, wrong!!
-    elseif i<= 4 & midstep==false
-        z[3]=aux[2*i-1,4]
-        y0[3]=aux[2*i-1,3]
-    end
-    
-    #z3 =0 and y3 no not good
-    #z3 and y3=0 good
-    #y3=0 and z3 no not good
-
-    #m and beta
-    if x1<10^(-15) #left
-        z[1] = 0.0;
-        z[2] = 0.0;
-    elseif abs.(x1 .- 1.0)<10^(-15) #right
-        z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0;#2.0 .* pi .* (y0[3]) .^ 2.0
-        z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0;#0.0
-    else #bulk
-        z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0;
-        z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0;
-        
-    end
-
     return z[:]
 end
 
@@ -668,7 +614,7 @@ function SF_RHS(data,t,X)
     
     # update m, beta and psi data
     y0=[0.0 0.0 0.0]
-    data[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X[4:L-3],t,derpsi_func,data[:,:])
+    data[4:L-3,1:3] = twod_n_rk4wrapper(RHS,y0,X[4:L-3],t,derpsi_func,data[:,:])
     #data=ghost(data)
 
     
@@ -691,14 +637,14 @@ function SF_RHS(data,t,X)
     for i in 4:L-3 #ORI
         if X[i]<10^(-15) #left
             #println("hey SF_RHS func")
-            dy[i,4]= +1.0/2.0*Der(data,i,4,X) - dissipation6(data,i,epsilon(dt,dx))[4];
+            dy[i,4]= +1.0/2.0*Der(data,i,4,X) - dissipation4(data,i,0.312)[4];
             #dy[i,4]= +1.0/2.0*derivative(derpsi_func,X[i]) #- dissipation6(data,i,0.0015)[4];
 
         elseif X[i] < (1-10^(-15)) #bulk
-            dy[i,4]=bulkSF(data,i,X) - dissipation6(data,i,epsilon(dt,dx))[4]#epsilon(dt,dx))[4];
+            dy[i,4]=bulkSF(data,i,X) - dissipation4(data,i,0.312)[4]#epsilon(dt,dx))[4];
 
         else #right
-            dy[i,4]= 1.0/2.0*exp(2*data[i,2])*Der(data,i,4,X) - dissipation6(data,i,epsilon(dt,dx))[4]
+            dy[i,4]= bulkSF(data,i,X) - dissipation4(data,i,0.312)[4]
             #0.0#1.0/2.0*exp(2*data[i,2])*derivative(derpsi_func,X[i])#bulkSF(data,i,X,der_funcs) #- dissipation6(data,i,0.035)[4]#1.0/2.0*exp(2*data[i,2])*Der(data,i,4,X) - dissipation6(data,i,epsilon(dt,dx))[4];#0.0
         end
     end
@@ -748,7 +694,7 @@ end
 
 #using ProgressMeter
 using Term.Progress
-function timeevolution(state_array,finaltime,dir,run,auxstate_array)
+function timeevolution(state_array,finaltime,dir,run)
 
     t=0.0
     T_array = [0.0]
@@ -760,10 +706,9 @@ function timeevolution(state_array,finaltime,dir,run,auxstate_array)
         iter = iter + 1
 
         #update time increment
-        """if iter%10==0
-            global dt = update_dt(initX,state_array[:,1],state_array[:,2],dx,ginit)
-        end"""
-        t = t + dt #round(t + dt,digits=5)
+        #global dt = update_dt(initX,state_array[:,1],state_array[:,2],dx,ginit)
+        
+        t = t + dt
         if iter%10==0
             println("iteration ", iter, " dt is ", dt, ", time of iteration is ", t)
         end
@@ -777,22 +722,15 @@ function timeevolution(state_array,finaltime,dir,run,auxstate_array)
         X1=X[4:L-3]
        
         #evolve psi,x
-        state_array[:,:] = rungekutta4molstep(SF_RHS,state_array[:,:],T_array,iter,X) #evolve psi,x
+        state_array[:,:] = twod_rungekutta4molstep(SF_RHS,state_array[:,:],T_array,iter,X) #evolve psi,x
         state_array=ghost(state_array)
-
-        #AUX
-        auxX=auxinitX
-        auxX1=auxX[4:L-3]
-        auxstate_array[:,:] = rungekutta4molstep(SF_RHS,auxstate_array[:,:],T_array,iter,auxX) #evolve psi,x
-        auxstate_array=ghost(auxstate_array)
     
         # update interpolation of psi,x
-        derpsi_func = Spline1D(X[4:L-3],state_array[4:L-3,4],k=4)
-        auxderpsi_func = Spline1D(auxX[4:auxL-3],auxstate_array[4:auxL-3,4],k=4)#new
+        derpsi_func = Spline1D(X[4:L-3],state_array[4:L-3,4],k=4)#new
 
         #evolve m and beta together, new
         y0=[0.0 0.0 0.0]
-        state_array[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X1,t,derpsi_func,state_array[:,:],auxstate_array[:,:])
+        state_array[4:L-3,1:3] = twod_n_rk4wrapper(RHS,y0,X1,t,derpsi_func,state_array[:,:])
         state_array=ghost(state_array)
         
         """
@@ -806,12 +744,12 @@ function timeevolution(state_array,finaltime,dir,run,auxstate_array)
         """
 
         run=int(run)
-        """if iter%10==0
+        if iter%10==0||iter>15000
             #CSV.write(dir*"/run$run/time_step$iter.csv", Tables.table(state_array), writeheader=false)
             CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
             T_interp = vcat(T_interp,t)
-        end"""
-        CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
+        end
+        #CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
         
 
         #threshold for apparent black hole formation
@@ -819,10 +757,10 @@ function timeevolution(state_array,finaltime,dir,run,auxstate_array)
         
         for i in 4:L-3
             global monitor_ratio[i] = 2*state_array[i,1]/initX[i]*(1-initX[i])
-            if monitor_ratio[i]>0.99
+            if monitor_ratio[i]>0.995
                 global criticality = true
-                println("Supercritical evolution! At time ", t)
-                println("X[i] = ", X[i], ", gridpoint = ", i, " t = ", t, " monitor ratio = ", monitor_ratio[i])
+                println("Supercritical evolution! At time ", t, ", iteration = ", iter)
+                println("Gridpoint = ", i, " t = ", t, " monitor ratio = ", monitor_ratio[i])
                 global time = t
             end
         end
@@ -866,8 +804,14 @@ function epsilon(X,i,dt,dx)
 end
 
 function epsilon(dt,dx)
-    z=minimum([dx/dt*(1/2)^(2*3), 10])
+    #minimum([dx/dt*(1/2)^(2*3), 10])
     #println("dissipation epsilon is ", (dx/dt*(1/2)^(2*3)))
     
-    return z
+    return (dx/dt*(1/2)^(2*3+1))
+end
+
+function twod_epsilon(dt,dx)
+
+    
+    return (dx/dt*(1/2)^(2*2+1))
 end
