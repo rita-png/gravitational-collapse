@@ -87,7 +87,7 @@ function update_dt(X, m, beta,dx,ginit)
         end
     end
 
-    return  dx*(ginit/g)^(1)
+    return  dx*(ginit/g)^(0.65)
 end
 
 function find_origin(X)
@@ -691,14 +691,14 @@ function SF_RHS(data,t,X)
     for i in 4:L-3 #ORI
         if X[i]<10^(-15) #left
             #println("hey SF_RHS func")
-            dy[i,4]= +1.0/2.0*Der(data,i,4,X) - dissipation6(data,i,0.0035)[4];
+            dy[i,4]= +1.0/2.0*Der(data,i,4,X) - dissipation6(data,i,epsilon(dt,dx))[4];
             #dy[i,4]= +1.0/2.0*derivative(derpsi_func,X[i]) #- dissipation6(data,i,0.0015)[4];
 
         elseif X[i] < (1-10^(-15)) #bulk
-            dy[i,4]=bulkSF(data,i,X) - dissipation6(data,i,0.0035)[4]#epsilon(dt,dx))[4];
+            dy[i,4]=bulkSF(data,i,X) - dissipation6(data,i,epsilon(dt,dx))[4]#epsilon(dt,dx))[4];
 
         else #right
-            dy[i,4]= bulkSF(data,i,X) - dissipation6(data,i,0.0035)[4]
+            dy[i,4]= 1.0/2.0*exp(2*data[i,2])*Der(data,i,4,X) - dissipation6(data,i,epsilon(dt,dx))[4]
             #0.0#1.0/2.0*exp(2*data[i,2])*derivative(derpsi_func,X[i])#bulkSF(data,i,X,der_funcs) #- dissipation6(data,i,0.035)[4]#1.0/2.0*exp(2*data[i,2])*Der(data,i,4,X) - dissipation6(data,i,epsilon(dt,dx))[4];#0.0
         end
     end
@@ -760,8 +760,10 @@ function timeevolution(state_array,finaltime,dir,run,auxstate_array)
         iter = iter + 1
 
         #update time increment
-        #global dt = update_dt(initX,state_array[:,1],state_array[:,2],dx,ginit)
-        t = round(t + dt,digits=5)
+        """if iter%10==0
+            global dt = update_dt(initX,state_array[:,1],state_array[:,2],dx,ginit)
+        end"""
+        t = t + dt #round(t + dt,digits=5)
         if iter%10==0
             println("iteration ", iter, " dt is ", dt, ", time of iteration is ", t)
         end
@@ -804,12 +806,12 @@ function timeevolution(state_array,finaltime,dir,run,auxstate_array)
         """
 
         run=int(run)
-        if iter%10==0
+        """if iter%10==0
             #CSV.write(dir*"/run$run/time_step$iter.csv", Tables.table(state_array), writeheader=false)
             CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
             T_interp = vcat(T_interp,t)
-        end
-        #CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
+        end"""
+        CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
         
 
         #threshold for apparent black hole formation
@@ -817,10 +819,10 @@ function timeevolution(state_array,finaltime,dir,run,auxstate_array)
         
         for i in 4:L-3
             global monitor_ratio[i] = 2*state_array[i,1]/initX[i]*(1-initX[i])
-            if monitor_ratio[i]>1
+            if monitor_ratio[i]>0.99
                 global criticality = true
                 println("Supercritical evolution! At time ", t)
-                println("Gridpoint = ", i, " t = ", t, " monitor ratio = ", monitor_ratio[i])
+                println("X[i] = ", X[i], ", gridpoint = ", i, " t = ", t, " monitor ratio = ", monitor_ratio[i])
                 global time = t
             end
         end
@@ -861,4 +863,11 @@ function epsilon(X,i,dt,dx)
         dx = X[i]-X[i-1]
     end
     return (dx/dt*(1/2)^(2*3+1))
+end
+
+function epsilon(dt,dx)
+    z=minimum([dx/dt*(1/2)^(2*3), 10])
+    #println("dissipation epsilon is ", (dx/dt*(1/2)^(2*3)))
+    
+    return z
 end
