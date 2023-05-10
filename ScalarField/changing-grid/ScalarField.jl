@@ -203,7 +203,7 @@ function n_rk4wrapper(f,y0,x,u,spl_funcs) # u depicts T array, or M!!
 
     
     for i in 1:L-1
-        h = x[2] .- x[1]
+        h = x[i+1] .- x[i]
         k1 = f(y[i,:], x[i],u,spl_funcs)
         k2 = f(y[i,:] .+ k1 * h/2, x[i] .+ h/2,u,spl_funcs)
         k3 = f(y[i,:] .+ k2 * h/2, x[i] .+ h/2,u,spl_funcs)
@@ -411,7 +411,7 @@ function SF_RHS(data,t,X)
 
     for i in ori:L-3
         if X[i]<10^(-15) #left
-            dy[i,4]= +1/2*Der(data,i,4,initX) - null_ingoing(data,i,X)*Der(data,i,4,initX)/(Der(X,i,initX)) - dissipation6(data,i,0.035)[4]; Der(X,i,initX)
+            dy[i,4]= +1/2*Der(data,i,4,initX) - null_ingoing(data,i,X)*Der(data,i,4,initX)/(Der(X,i,initX)) - dissipation6(data,i,0.035)[4]; #WRONG: This RHS should be evaluated at x tilde
 
         elseif X[i] < (1-10^(-15)) #bulk
             dy[i,4]=bulkSF(data,i,initX) - null_ingoing(data,i,X)*Der(data,i,4,initX)/(Der(X,i,initX)) - dissipation6(data,i,0.035)[4];
@@ -432,7 +432,7 @@ function Grid_RHS(y,t,X)
     dy=zeros((L,length(y[1,:])));
 
     for i in 4:(L-3)
-        if X[i]<10^(-7) && X[i]>-10^(-7) #around origin
+        if X[i]<10^(-15) && X[i]>-10^(-15) #around origin
 
             dy[i,5]=-1.0/2.0*exp(2.0*y[i,2]);
 
@@ -489,11 +489,11 @@ function timeevolution(state_array,finaltime,dir,dt,run)
         iter = iter + 1
 
         #update time increment
-        global dt = update_dt(state_array[:,5],state_array[:,1],state_array[:,2],dx,ginit)
-        t = t + dt
-        """if iter%10==0
+        #global dt = update_dt(state_array[:,5],state_array[:,1],state_array[:,2],dx,ginit)
+        t = t + round(dt,digits=5)
+        if iter%10==0
             println("iteration ", iter, " dt is ", dt, ", time of iteration is ", t)
-        end"""
+        end
 
         T_array = vcat(T_array,t)
 
@@ -520,13 +520,13 @@ function timeevolution(state_array,finaltime,dir,dt,run)
         state_array[ori:L-3,1:3] = n_rk4wrapper(RHS,y0,initX[ori:L-3],t,funcs)
 
 
-        #CSV.write(dir*"/res$res/time_step$iter.csv", Tables.table(state_array), writeheader=false)
+        CSV.write(dir*"/res$res/time_step$iter.csv", Tables.table(state_array), writeheader=false)
         run=int(run)
-        if iter%10==0
+        """if iter%10==0
             #CSV.write(dir*"/run$run/time_step$iter.csv", Tables.table(state_array), writeheader=false)
             CSV.write(dir*"/res$res/time_step$iter.csv", Tables.table(state_array), writeheader=false)
             T_interp = vcat(T_interp,t)
-        end
+        end"""
         
         
 
