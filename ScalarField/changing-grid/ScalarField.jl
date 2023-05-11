@@ -390,6 +390,20 @@ function null_ingoing(y,i,X)
     return z
 end
 
+
+function leftboundary(data,funcs)
+    xtilde_func=Spline1D(initX1,data[4:L-3,5]);
+    xtilde_func(0)
+    
+    auxX=vcat(xtilde_func(0),X[ori]);
+
+    y0=[0 0 0]
+    auxdata=zeros(2,3)
+    auxdata[:,1:3] = n_rk4wrapper(RHS,y0,aux,t,funcs)
+    return auxdata[2,1:3]
+end
+
+
 # Defining the function in the RHS of the evolution equation system
 
 function SF_RHS(data,t,X)
@@ -402,22 +416,31 @@ function SF_RHS(data,t,X)
     derpsi_func = Spline1D(X[ori:L-3],data[ori:L-3,4],k=4)#new
     dergrid_func=der_grid(X)
     funcs=[derpsi_func dergrid_func]
+
+    ##
+    xtilde_func=Spline1D(initX1,data[4:L-3,5]);
+    xtilde_func(0)
     
+    auxX=vcat(xtilde_func(0),X[ori:L-3]);
+    """println("  ")
+    println(auxX)"""
+    ##
+
+    #leftboundary(data,funcs)
     # update m, beta and psi data
-    #new
     y0=[0 0 0]
-    data[ori:L-3,1:3] = n_rk4wrapper(RHS,y0,initX[ori:L-3],t,funcs)#*dxtilde/dx = 1!!!??aqui
+    data[ori-1:L-3,1:3] = n_rk4wrapper(RHS,y0,auxX,t,funcs)
 
 
     for i in ori:L-3
         if X[i]<10^(-15) #left
-            dy[i,4]= +1/2*Der(data,i,4,initX) - null_ingoing(data,i,X)*Der(data,i,4,initX)/(Der(X,i,initX)) - dissipation6(data,i,0.035)[4]; #WRONG: This RHS should be evaluated at x tilde
+            dy[i,4]= +1/2*Der(data,i,4,X) - null_ingoing(data,i,X)*Der(data,i,4,initX)/(Der(X,i,initX)) - dissipation6(data,i,0.035)[4]; #This RHS is now evaluated at x tilde, not x
 
         elseif X[i] < (1-10^(-15)) #bulk
-            dy[i,4]=bulkSF(data,i,initX) - null_ingoing(data,i,X)*Der(data,i,4,initX)/(Der(X,i,initX)) - dissipation6(data,i,0.035)[4];
+            dy[i,4]=bulkSF(data,i,X) - null_ingoing(data,i,X)*Der(data,i,4,initX)/(Der(X,i,initX)) - dissipation6(data,i,0.035)[4];
 
         else #right
-            dy[i,4]=bulkSF(data,i,initX) - null_ingoing(data,i,X)*Der(data,i,4,initX)/(Der(X,i,initX)) - dissipation6(data,i,0.035)[4];
+            dy[i,4]=bulkSF(data,i,X) - null_ingoing(data,i,X)*Der(data,i,4,initX)/(Der(X,i,initX)) - dissipation6(data,i,0.035)[4];
         end
     end
 
@@ -514,11 +537,19 @@ function timeevolution(state_array,finaltime,dir,dt,run)
         derpsi_func = Spline1D(X[ori:L-3],state_array[ori:L-3,4],k=4)#new
         dergrid_func=der_grid(X)
         funcs=[derpsi_func dergrid_func]
+        
+        ##
+        """xtilde_func=Spline1D(initX1,state_array[4:L-3,5]);
+        xtilde_func(0)
 
-        #evolve m and beta together, new
+        auxX=vcat(xtilde_func(0),X[ori:L-3]);"""
+        
+        ##
+
+        # update m, beta and psi data
         y0=[0 0 0]
-        state_array[ori:L-3,1:3] = n_rk4wrapper(RHS,y0,initX[ori:L-3],t,funcs)
-
+        state_array[ori:L-3,1:3] = n_rk4wrapper(RHS,y0,X[ori:L-3],t,funcs)
+        
 
         CSV.write(dir*"/res$res/time_step$iter.csv", Tables.table(state_array), writeheader=false)
         run=int(run)
