@@ -34,6 +34,21 @@ function init_gaussian_der(x,r0,sigma,A)
     return z
 end
 
+function create_range(ori,stop,dx,N)
+
+    array = []
+    array = ori
+
+    x=ori
+    for i in 1:N
+        x = x+dx
+        array = vcat(array, x)
+        
+    end
+    return array
+
+end
+
 # Interpolation
 
 function interpolate(x,x1,x2,y1,y2)
