@@ -691,15 +691,15 @@ function SF_RHS(data,t,X)
     for i in 4:L-3 #ORI
         if X[i]<10^(-15) #left
             #println("hey SF_RHS func")
-            dy[i,4]= +1.0/2.0*Der(data,i,4,X) - dissipation6(data,i,0.015)[4];
+            dy[i,4]= +1.0/2.0*Der(data,i,4,X) #- dissipation6(data,i,0.03)[4];
             #dy[i,4]= +1.0/2.0*derivative(derpsi_func,X[i]) #- dissipation6(data,i,0.0015)[4];
 
         elseif X[i] < (1-10^(-15)) #bulk
-            dy[i,4]=bulkSF(data,i,X) - dissipation6(data,i,0.015)[4]#epsilon(dt,dx))[4];
+            dy[i,4]=bulkSF(data,i,X) #- dissipation6(data,i,0.03)[4]#epsilon(dt,dx))[4];
 
         else #right
             #dy[i,4]= 1.0/2.0*exp(2*data[i,2])*Der(data,i,4,X) - dissipation6(data,i,epsilon(dt,dx))[4]
-            dy[i,4]= bulkSF(data,i,X) - dissipation6(data,i,0.015)[4]
+            dy[i,4]= bulkSF(data,i,X) #- dissipation6(data,i,0.03)[4]
             #0.0#1.0/2.0*exp(2*data[i,2])*derivative(derpsi_func,X[i])#bulkSF(data,i,X,der_funcs) #- dissipation6(data,i,0.035)[4]#1.0/2.0*exp(2*data[i,2])*Der(data,i,4,X) - dissipation6(data,i,epsilon(dt,dx))[4];#0.0
         end
     end
@@ -764,7 +764,7 @@ function timeevolution(state_array,finaltime,dir,run,auxstate_array)
         """if iter%10==0
             global dt = update_dt(initX,state_array[:,1],state_array[:,2],dx,ginit)
         end"""
-        t = t + dt #round(t + dt,digits=5)
+        t = round(t + dt,digits=5) #t + dt
         if iter%10==0
             println("iteration ", iter, " dt is ", dt, ", time of iteration is ", t)
         end
@@ -826,6 +826,13 @@ function timeevolution(state_array,finaltime,dir,run,auxstate_array)
                 println("Supercritical evolution! At time ", t)
                 println("X[i] = ", X[i], ", gridpoint = ", i, " t = ", t, " monitor ratio = ", monitor_ratio[i])
                 global time = t
+            end
+        end
+
+        for i in 4:L-3
+            speed = (1-initX[i])^3*exp(2*state_array[i,2])*(2*state_array[i,1]/initX[i]-1/(1-initX[i]))/2
+            if speed >10
+                println("heyyyy speed is ", speed, " at time t= ", t, ", X[i] ", X[i])
             end
         end
 
