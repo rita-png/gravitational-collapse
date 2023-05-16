@@ -285,6 +285,14 @@ function integrator(X,derpsi_func,data)
     return integral
 end
 
+function print_muninn(io::IO, t, data)
+    #@assert length(xs) == length(data[:,1])
+    @printf io "\"Time = %.10e\n" t
+    for i in 1:length(data[:,1])
+        @printf io "% .10e % .10e % .10e % .10e % .10e\n" data[i,5] data[i,1] data[i,2] data[i,3] data[i,4]
+    end
+    println(io) # insert empty line to indicate end of data set
+end
 
 #ghosts
 
@@ -811,6 +819,12 @@ function timeevolution(state_array,finaltime,dir,run,auxstate_array)
         if iter%10==0
             #CSV.write(dir*"/run$run/time_step$iter.csv", Tables.table(state_array), writeheader=false)
             CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
+
+            #write muninn
+            open(dir*"/data.txt", "a") do file
+                print_muninn(file, t, state_array[:,1:5])
+            end
+
             T_interp = vcat(T_interp,t)
         end
         #CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
