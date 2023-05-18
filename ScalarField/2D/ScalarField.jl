@@ -97,12 +97,12 @@ function update_dt(X, m, beta,dx,ginit)
 
     for i in 3:L-4
         monitor_ratio[i] = 2*state_array[i,1]/initX[i]*(1-initX[i])
-        if monitor_ratio[i]>0.30
+        if monitor_ratio[i]>0.50
             g=dt_scale(X,m,beta,dx)
         end
     end
 
-    return  dx*(ginit/g)^(1)
+    return  dx*(ginit/g)^(1/2)
 end
 
 function find_origin(X)
@@ -284,6 +284,14 @@ function integrator(X,derpsi_func,data)
     return integral
 end
 
+function print_muninn(io::IO, t, data)
+    #@assert length(xs) == length(data[:,1])
+    @printf io "\"Time = %.10e\n" t
+    for i in 1:length(data[:,1])
+        @printf io "% .10e % .10e % .10e % .10e % .10e\n" data[i,5] data[i,1] data[i,2] data[i,3] data[i,4]
+    end
+    println(io) # insert empty line to indicate end of data set
+end
 
 #ghosts
 
@@ -346,7 +354,17 @@ end
 
 #4th order  dissipation, added to 2nd order original scheme
 function dissipation4(y,i,eps)
+    if i==4
+        delta4=(-13/6*y[i+5,:]+71/6*y[i+4,:]-77/3*y[i+3,:]+83/3*y[i+2,:]-89/6*y[i+1,:]+19/6*y[i,:])
+    elseif i==5
+        delta4=(-7/6*y[i+4,:]+41/6*y[i+3,:]-47/3*y[i+2,:]+53/3*y[i+1,:]-59/6*y[i,:]+13/6*y[i-1,:])
+    elseif i==L-3
+        delta4=(-13/6*y[i-5,:]+71/6*y[i-4,:]-77/3*y[i-3,:]+83/3*y[i-2,:]-89/6*y[i-1,:]+19/6*y[i,:])
+    elseif i==L-4
+        delta4=(-7/6*y[i-4,:]+41/6*y[i-3,:]-47/3*y[i-2,:]+53/3*y[i-1,:]-59/6*y[i,:]+13/6*y[i+1,:])
+    else
         delta4=(y[i+2,:]-4*y[i+1,:]+6*y[i,:]-4*y[i-1,:]+y[i-2,:]);
+    end
     return (-1)^2*eps*1/(dx)*delta4
 end
 
@@ -652,14 +670,14 @@ function SF_RHS(data,t,X)
     for i in 4:L-3 #ORI
         if X[i]<10^(-15) #left
             #println("hey SF_RHS func")
-            dy[i,4]= +1.0/2.0*Der(data,i,4,X) - dissipation4(data,i,0.0312)[4];
+            dy[i,4]= +1.0/2.0*Der(data,i,4,X) - dissipation4(data,i,0.212)[4];
             #dy[i,4]= +1.0/2.0*derivative(derpsi_func,X[i]) #- dissipation6(data,i,0.0015)[4];
 
         elseif X[i] < (1-10^(-15)) #bulk
-            dy[i,4]=bulkSF(data,i,X) - dissipation4(data,i,0.0312)[4]#epsilon(dt,dx))[4];
+            dy[i,4]=bulkSF(data,i,X) - dissipation4(data,i,0.212)[4]#epsilon(dt,dx))[4];
 
         else #right
-            dy[i,4]= bulkSF(data,i,X) - dissipation4(data,i,0.0312)[4]
+            dy[i,4]= bulkSF(data,i,X) - dissipation4(data,i,0.212)[4]
             #0.0#1.0/2.0*exp(2*data[i,2])*derivative(derpsi_func,X[i])#bulkSF(data,i,X,der_funcs) #- dissipation6(data,i,0.035)[4]#1.0/2.0*exp(2*data[i,2])*Der(data,i,4,X) - dissipation6(data,i,epsilon(dt,dx))[4];#0.0
         end
     end
@@ -725,7 +743,7 @@ function timeevolution(state_array,finaltime,dir,run)
         
         t = t + dt
         if iter%10==0
-            println("iteration ", iter, " dt is ", dt, ", time of iteration is ", t)
+            println("\n\niteration ", iter, " dt is ", dt, ", time of iteration is ", t)
         end
         #println("iteration ", iter, " dt is ", dt, ", time of iteration is ", t)
 
@@ -761,10 +779,15 @@ function timeevolution(state_array,finaltime,dir,run)
         run=int(run)
         if iter%10==0||iter>15000
             #CSV.write(dir*"/run$run/time_step$iter.csv", Tables.table(state_array), writeheader=false)
-            CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
+            #CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
+            
+            #write muninn
+            open(dir*"/data.txt", "a") do file
+                print_muninn(file, t, state_array[:,1:5])
+            end
             T_interp = vcat(T_interp,t)
         end
-        #CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
+        CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
         
 
         #threshold for apparent black hole formation
@@ -779,6 +802,8 @@ function timeevolution(state_array,finaltime,dir,run)
                 global time = t
             end
         end
+
+        speed_monitor(state_array)
 
         """if iter%10==0
             
@@ -829,4 +854,13 @@ function twod_epsilon(dt,dx)
 
     
     return (dx/dt*(1/2)^(2*2+1))
+end
+
+function speed_monitor(data)
+    for i in 4:L-3
+        speed = (1-initX[i])^3*exp(2*data[i,2])*(2*data[i,1]/initX[i]-1/(1-initX[i]))/2
+        if speed >10
+            println("Warning! Speed is ", speed, " at time t= ", t, ", X[i] = ", X[i])
+        end
+    end
 end
