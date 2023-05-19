@@ -285,6 +285,8 @@ function integrator(X,derpsi_func,data)
     return integral
 end
 
+
+
 function print_muninn(io::IO, t, data)
     #@assert length(xs) == length(data[:,1])
     @printf io "\"Time = %.10e\n" t
@@ -699,15 +701,15 @@ function SF_RHS(data,t,X)
     for i in 4:L-3 #ORI
         if X[i]<10^(-15) #left
             #println("hey SF_RHS func")
-            dy[i,4]= +1.0/2.0*Der(data,i,4,X) #- dissipation6(data,i,0.03)[4];
+            dy[i,4]= +1.0/2.0*Der(data,i,4,X) - dissipation6(data,i,0.003)[4];
             #dy[i,4]= +1.0/2.0*derivative(derpsi_func,X[i]) #- dissipation6(data,i,0.0015)[4];
 
         elseif X[i] < (1-10^(-15)) #bulk
-            dy[i,4]=bulkSF(data,i,X) #- dissipation6(data,i,0.03)[4]#epsilon(dt,dx))[4];
+            dy[i,4]=bulkSF(data,i,X) - dissipation6(data,i,0.003)[4]#epsilon(dt,dx))[4];
 
         else #right
             #dy[i,4]= 1.0/2.0*exp(2*data[i,2])*Der(data,i,4,X) - dissipation6(data,i,epsilon(dt,dx))[4]
-            dy[i,4]= bulkSF(data,i,X) #- dissipation6(data,i,0.03)[4]
+            dy[i,4]= bulkSF(data,i,X) - dissipation6(data,i,0.003)[4]
             #0.0#1.0/2.0*exp(2*data[i,2])*derivative(derpsi_func,X[i])#bulkSF(data,i,X,der_funcs) #- dissipation6(data,i,0.035)[4]#1.0/2.0*exp(2*data[i,2])*Der(data,i,4,X) - dissipation6(data,i,epsilon(dt,dx))[4];#0.0
         end
     end
@@ -843,12 +845,8 @@ function timeevolution(state_array,finaltime,dir,run,auxstate_array)
             end
         end
 
-        for i in 4:L-3
-            speed = (1-initX[i])^3*exp(2*state_array[i,2])*(2*state_array[i,1]/initX[i]-1/(1-initX[i]))/2
-            if speed >10
-                println("heyyyy speed is ", speed, " at time t= ", t, ", X[i] ", X[i])
-            end
-        end
+        speed_monitor(state_array)
+        
 
         """if iter%10==0
             
@@ -893,4 +891,13 @@ function epsilon(dt,dx)
     #println("dissipation epsilon is ", (dx/dt*(1/2)^(2*3)))
     
     return z
+end
+
+function speed_monitor(data)
+    for i in 4:L-3
+        speed = (1-initX[i])^3*exp(2*data[i,2])*(2*data[i,1]/initX[i]-1/(1-initX[i]))/2
+        if speed >10
+            println("Warning! Speed is ", speed, " at time t= ", t, ", X[i] = ", X[i])
+        end
+    end
 end
