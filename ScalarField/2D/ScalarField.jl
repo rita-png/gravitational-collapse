@@ -78,31 +78,31 @@ function extrapolate_out(y1,y2)
 end"""
 
 # Calculating dt
-function dt_scale(X, m, beta,dx)
+function speed(X, m, beta,dx)
 
     L = length(X)
     g = []
     ori=find_origin(X)
-    for i in (ori:(L-4))
-        g = vcat(g,abs(exp(2*beta[i])*m[i]))
+    for i in (ori+1:(L-4))
+        g = vcat(g,abs((1.0-X[i])^3.0*exp(2*beta[i])*(2*m[i]-X[i]/(1-X[i]))/(2*X[i])))
     end
     
     return  maximum(g)
 end
 
-function update_dt(X, m, beta,dx,ginit)
+function update_dt(X, m, beta,dt,ginit)
 
     monitor_ratio = zeros(L)
     g=ginit
 
-    for i in 3:L-4
-        monitor_ratio[i] = 2*state_array[i,1]/initX[i]*(1-initX[i])
-        if monitor_ratio[i]>0.50
-            g=dt_scale(X,m,beta,dx)
-        end
+    for i in 4:L-4
+        #monitor_ratio[i] = 2*state_array[i,1]/initX[i]*(1-initX[i])
+        #if monitor_ratio[i]>0.50
+        g=speed(X,m,beta,dx)
+        #end
     end
 
-    return  dx*(ginit/g)^(1/2)
+    return  dt*(ginit/g)
 end
 
 function find_origin(X)
@@ -353,7 +353,7 @@ end
 
 
 #4th order  dissipation, added to 2nd order original scheme
-function dissipation4(y,i,eps)
+function dissipation4(y,i,eps)#0.02
     if i==4
         delta4=(-13/6*y[i+5,:]+71/6*y[i+4,:]-77/3*y[i+3,:]+83/3*y[i+2,:]-89/6*y[i+1,:]+19/6*y[i,:])
     elseif i==5
@@ -636,6 +636,7 @@ function mbetaRHS(y0,x1,time,func,i,data)
     return z
 end"""
 # Defining the function in the RHS of the evolution equation system
+using Base.Threads
 
 function SF_RHS(data,t,X)
     
@@ -667,17 +668,20 @@ function SF_RHS(data,t,X)
     #beta_func = Spline1D(X[4:L-3],data[4:L-3,2],k=4)
     #der_funcs=[derivative(m_func,X[4:L-3]) derivative(beta_func,X[4:L-3]) derivative(derpsi_func,X[4:L-3])]
     ###NEW###
-    for i in 4:L-3 #ORI
+
+    
+
+    Threads.@threads for i in 4:L-3 #ORI
         if X[i]<10^(-15) #left
             #println("hey SF_RHS func")
-            dy[i,4]= +1.0/2.0*Der(data,i,4,X) - dissipation4(data,i,0.212)[4];
+            dy[i,4]= +1.0/2.0*Der(data,i,4,X) - dissipation4(data,i,0.02)[4];
             #dy[i,4]= +1.0/2.0*derivative(derpsi_func,X[i]) #- dissipation6(data,i,0.0015)[4];
 
         elseif X[i] < (1-10^(-15)) #bulk
-            dy[i,4]=bulkSF(data,i,X) - dissipation4(data,i,0.212)[4]#epsilon(dt,dx))[4];
+            dy[i,4]=bulkSF(data,i,X) - dissipation4(data,i,0.02)[4]#epsilon(dt,dx))[4];
 
         else #right
-            dy[i,4]= bulkSF(data,i,X) - dissipation4(data,i,0.212)[4]
+            dy[i,4]= bulkSF(data,i,X) - dissipation4(data,i,0.02)[4]
             #0.0#1.0/2.0*exp(2*data[i,2])*derivative(derpsi_func,X[i])#bulkSF(data,i,X,der_funcs) #- dissipation6(data,i,0.035)[4]#1.0/2.0*exp(2*data[i,2])*Der(data,i,4,X) - dissipation6(data,i,epsilon(dt,dx))[4];#0.0
         end
     end
@@ -739,7 +743,7 @@ function timeevolution(state_array,finaltime,dir,run)
         iter = iter + 1
 
         #update time increment
-        #global dt = update_dt(initX,state_array[:,1],state_array[:,2],dx,ginit)
+        global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)
         
         t = t + dt
         if iter%10==0
@@ -803,21 +807,21 @@ function timeevolution(state_array,finaltime,dir,run)
             end
         end
 
-        speed_monitor(state_array)
+        speed_monitor(state_array,t)
 
         """if iter%10==0
             
             CSV.write(dir*"/monitor_ratio$iter.csv", Tables.table(monitor_ratio), writeheader=false)
             
         end"""
-
+        CSV.write(dir*"/monitor_ratio$iter.csv", Tables.table(monitor_ratio), writeheader=false)
         if criticality == true
             break
         end
         
         if isnan(state_array[L-3,4])
             global explode = true
-            println("boom at time=", t)
+            println("boom at time=", t, " timestep = ", iter)
             global timestep = iter
             break
         end
@@ -856,11 +860,11 @@ function twod_epsilon(dt,dx)
     return (dx/dt*(1/2)^(2*2+1))
 end
 
-function speed_monitor(data)
+function speed_monitor(data,t)
     for i in 4:L-3
         speed = (1-initX[i])^3*exp(2*data[i,2])*(2*data[i,1]/initX[i]-1/(1-initX[i]))/2
         if speed >10
-            println("Warning! Speed is ", speed, " at time t= ", t, ", X[i] = ", X[i])
+            println("Warning! Speed is ", speed, " at time t= ", t, ", X[i] = ", initX[i])
         end
     end
 end
