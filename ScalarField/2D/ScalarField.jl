@@ -226,15 +226,15 @@ function n_rk4wrapper(f,y0,x,u,spl_funcs,data) # u depicts T array, or M!!
     return y[:,:]
 end
 
-function twod_n_rk4wrapper(f,y0,x,u,spl_funcs,data) # u depicts T array, or M!!
+function twod_n_rk4wrapper(f,y0,x,u,spl_funcs,data,coef) # u depicts T array, or M!!
     L = length(x)
     n = length(y0)
     y = zeros(L,n)
     y[1,:] = y0;
     for i in 1:L-1
         h = x[i+1] .- x[i]
-        k1 = f(y[i,:], x[i],u,spl_funcs,i,data)
-        k2 = f(y[i,:] .+ k1 * h, x[i] .+ h,u,spl_funcs,i,data)
+        k1 = f(y[i,:], x[i],u,spl_funcs,i,data,coef)
+        k2 = f(y[i,:] .+ k1 * h, x[i] .+ h,u,spl_funcs,i,data,coef)
         y[i+1,:] = y[i,:] .+ (h/2) * (k1 .+ k2)
     end
     return y[:,:]
@@ -523,14 +523,14 @@ end
 
 
 #EXACTLY THE SAME POINTS MUST BE CALCULATED THE SAME WAY
-function RHS(y0,x1,time,func,i,data)
+function RHS(y0,x1,time,func,i,data,coef)
     
-    z=zeros(length(y0))
+    #z=zeros(length(y0))
+    z=Array{Float128}(undef, length(y0))
     derpsi = func
 
-    z[3]=derpsi(x1)
-
-    
+    #z[3]=derpsi(x1)    
+    z[3]=evalInterval(Float128.([x1]),initX1,coef,3)[1];
     #taylor
     """if i>4#x1>0.02
         z[3] = derpsi(x1)
@@ -557,17 +557,17 @@ function RHS(y0,x1,time,func,i,data)
         z[1] = 0.0;
         z[2] = 0.0;
     elseif abs.(x1 .- 1.0)<10^(-15) #right
-        z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;#2.0 .* pi .* (y0[3]) .^ 2.0
-        #z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0;#2.0 .* pi .* (y0[3]) .^ 2.0
-        z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0;#0.0
-        #z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0;#0.0
+        #z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;#2.0 .* pi .* (y0[3]) .^ 2.0
+        z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0;#2.0 .* pi .* (y0[3]) .^ 2.0
+        #z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0;#0.0
+        z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0;#0.0
 
         
     else #bulk
-        z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;
-        z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0;
-        #z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0;
-        #z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0;
+        #z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;
+        #z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0;
+        z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0;
+        z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0;
         
     end
     #println("   ")
@@ -743,7 +743,7 @@ function timeevolution(state_array,finaltime,dir,run)
         iter = iter + 1
 
         #update time increment
-        global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)
+        #global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)
         
         t = t + dt
         if iter%10==0
@@ -799,7 +799,7 @@ function timeevolution(state_array,finaltime,dir,run)
         
         for i in 4:L-3
             global monitor_ratio[i] = 2*state_array[i,1]/initX[i]*(1-initX[i])
-            if monitor_ratio[i]>0.995
+            if monitor_ratio[i]>0.6
                 global criticality = true
                 println("Supercritical evolution! At time ", t, ", iteration = ", iter)
                 println("Gridpoint = ", i, " t = ", t, " monitor ratio = ", monitor_ratio[i])
