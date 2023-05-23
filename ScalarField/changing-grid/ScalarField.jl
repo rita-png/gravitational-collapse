@@ -162,7 +162,7 @@ function rungekutta4molstep(f,y00,T,w::Int64,X)
     y = y00;
     X=collect(X)
         h = T[w+1]-T[w]
-        #print("\n\nh = ", h, " \n")
+        """#print("\n\nh = ", h, " \n")
         #h = dt; # only for equally spaced grid in time and space, otherwise (T[w+1] - T[w])
         k1 = f(y[:,:], T[w],X)
         #k1=ghost(k1)
@@ -173,11 +173,16 @@ function rungekutta4molstep(f,y00,T,w::Int64,X)
         #k3=boundarySF(k3,X)
         k4 = f(y[:,:] .+ k3 .* h, T[w] + h,X)
         #k4=boundarySF(k4,X)
-        y[:,:] = y[:,:] .+ (h/6) .* (k1 .+ 2 * k2 .+ 2 * k3 .+ k4)
+        y[:,:] = y[:,:] .+ (h/6) .* (k1 .+ 2 * k2 .+ 2 * k3 .+ k4)"""
         
-    return y[:,:]#ghost(y[:,:])
+        k1 = f(y[:,:], T[w],X)
+        k1=ghost(k1)
+        k2 = f(y[:,:] .+ k1 .* h, T[w] + h,X)
+        k2=ghost(k2)
+        y[:,:] = y[:,:] .+ (h/2) .* (k1 .+ k2)
+        
+    return ghost(y[:,:])
 end
-
 
 
 function rk4wrapper(f,y0,x,u,spl_funcs) # u depicts T array, or M!!
@@ -202,16 +207,32 @@ function n_rk4wrapper(f,y0,x,u,spl_funcs) # u depicts T array, or M!!
     y[1,:] = y0;
 
     
-    for i in 1:L-1
+    """for i in 1:L-1
         h = x[i+1] .- x[i]
         k1 = f(y[i,:], x[i],u,spl_funcs)
         k2 = f(y[i,:] .+ k1 * h/2, x[i] .+ h/2,u,spl_funcs)
         k3 = f(y[i,:] .+ k2 * h/2, x[i] .+ h/2,u,spl_funcs)
         k4 = f(y[i,:] .+ k3 * h, x[i] .+ h,u,spl_funcs)
         y[i+1,:] = y[i,:] .+ (h/6) * (k1 .+ 2*k2 .+ 2*k3 .+ k4)
+    end"""
+    for i in 1:L-1
+        h = x[i+1] .- x[i]
+        k1 = f(y[i,:], x[i],u,spl_funcs)
+        k2 = f(y[i,:] .+ k1 * h, x[i] .+ h,u,spl_funcs)
+        y[i+1,:] = y[i,:] .+ (h/2) * (k1 .+ k2)
     end
     return y[:,:]
 end
+
+function print_muninn(io::IO, t, data)
+    #@assert length(xs) == length(data[:,1])
+    @printf io "\"Time = %.10e\n" t
+    for i in 1:length(data[:,1])
+        @printf io "% .10e % .10e % .10e % .10e % .10e\n" data[i,5] data[i,1] data[i,2] data[i,3] data[i,4]
+    end
+    println(io) # insert empty line to indicate end of data set
+end
+
 
 #ghosts
 
@@ -367,7 +388,14 @@ function RHS(y0,x1,time,func)
 
     z[3] = derpsi(x1)
 
-    if x1<10^(-15) #left
+    
+    if derpsi(x1)>10
+        println("  ")
+        println(derpsi(x1))
+        println("x1 isssssssss ",x1)
+    end#IF X1<0, extrapolate_in
+
+    if abs.(x1)<10^(-15) #origin
         z[1] = 0.0;
         z[2] = 0.0;
     elseif abs.(x1 .- 1.0)<10^(-15) #right
@@ -393,13 +421,17 @@ end
 
 function leftboundary(data,funcs)
     xtilde_func=Spline1D(initX1,data[4:L-3,5]);
-    xtilde_func(0)
+    #xtilde_func(0)
     
-    auxX=vcat(xtilde_func(0),X[ori]);
+    ori=find_origin(data[:,5])
+    auxX=vcat(xtilde_func(0),data[ori,5]);
 
+    println("auxX",auxX)
+    
     y0=[0 0 0]
     auxdata=zeros(2,3)
-    auxdata[:,1:3] = n_rk4wrapper(RHS,y0,aux,t,funcs)
+    auxdata[:,1:3] = n_rk4wrapper(RHS,y0,auxX,0,funcs)
+    println("auxdata[:,1:3]", auxdata[:,1:3])
     return auxdata[2,1:3]
 end
 
@@ -413,34 +445,35 @@ function SF_RHS(data,t,X)
     ori = find_origin(X)
 
     # update interpolation of psi,x
-    derpsi_func = Spline1D(X[ori:L-3],data[ori:L-3,4],k=4)#new
+    derpsi_func = Spline1D(X[ori:L-3],data[ori:L-3,4],k=4, bc="extrapolate")#new
     dergrid_func=der_grid(X)
     funcs=[derpsi_func dergrid_func]
 
     ##
-    xtilde_func=Spline1D(initX1,data[4:L-3,5]);
+    """xtilde_func=Spline1D(initX1,data[4:L-3,5]);
     xtilde_func(0)
     
-    auxX=vcat(xtilde_func(0),X[ori:L-3]);
+    auxX=vcat(xtilde_func(0),X[ori:L-3]);"""
     """println("  ")
     println(auxX)"""
     ##
 
-    #leftboundary(data,funcs)
+    #println(leftboundary(data,funcs))
     # update m, beta and psi data
     y0=[0 0 0]
-    data[ori-1:L-3,1:3] = n_rk4wrapper(RHS,y0,auxX,t,funcs)
+    #y0=[0.0000001 0.0000001 0.0000001]#leftboundary(data,funcs)
+    data[ori:L-3,1:3] = n_rk4wrapper(RHS,y0,X[ori:L-3],t,funcs)
 
 
     for i in ori:L-3
         if X[i]<10^(-15) #left
-            dy[i,4]= +1/2*Der(data,i,4,X) - null_ingoing(data,i,X)*Der(data,i,4,initX)/(Der(X,i,initX)) - dissipation6(data,i,0.035)[4]; #This RHS is now evaluated at x tilde, not x
+            dy[i,4]= +1/2*Der(data,i,4,X) - null_ingoing(data,i,X)*Der(data,i,4,initX)/(Der(X,i,initX)) - dissipation6(data,i,0.03)[4]; #This RHS is now evaluated at x tilde, not x
 
         elseif X[i] < (1-10^(-15)) #bulk
-            dy[i,4]=bulkSF(data,i,X) - null_ingoing(data,i,X)*Der(data,i,4,initX)/(Der(X,i,initX)) - dissipation6(data,i,0.035)[4];
+            dy[i,4]=bulkSF(data,i,X) - null_ingoing(data,i,X)*Der(data,i,4,initX)/(Der(X,i,initX)) - dissipation6(data,i,0.03)[4];
 
         else #right
-            dy[i,4]=bulkSF(data,i,X) - null_ingoing(data,i,X)*Der(data,i,4,initX)/(Der(X,i,initX)) - dissipation6(data,i,0.035)[4];
+            dy[i,4]=bulkSF(data,i,X) - null_ingoing(data,i,X)*Der(data,i,4,initX)/(Der(X,i,initX)) - dissipation6(data,i,0.03)[4];
         end
     end
 
@@ -492,7 +525,7 @@ function der_grid(X)
         aux = vcat(aux,Der(X,i,initX))
     end
     
-    dergrid_func = Spline1D(X[ori:L-3],aux,k=4)
+    dergrid_func = Spline1D(X[ori:L-3],aux,k=4, bc="extrapolate")
 
     return dergrid_func
 end
@@ -514,9 +547,10 @@ function timeevolution(state_array,finaltime,dir,dt,run)
         #update time increment
         #global dt = update_dt(state_array[:,5],state_array[:,1],state_array[:,2],dx,ginit)
         t = t + round(dt,digits=5)
-        if iter%10==0
+        """if iter%10==0
             println("iteration ", iter, " dt is ", dt, ", time of iteration is ", t)
-        end
+        end"""
+        println("iteration ", iter, " dt is ", dt, ", time of iteration is ", t)
 
         T_array = vcat(T_array,t)
 
@@ -534,11 +568,12 @@ function timeevolution(state_array,finaltime,dir,dt,run)
         #global state_array=ghost(state_array)
     
         # update interpolation of psi,x
-        derpsi_func = Spline1D(X[ori:L-3],state_array[ori:L-3,4],k=4)#new
-        dergrid_func=der_grid(X)
+        derpsi_func = Spline1D(X[ori:L-3],state_array[ori:L-3,4],k=4,bc="extrapolate")#new #OLAOLA
+        dergrid_func = der_grid(X)
         funcs=[derpsi_func dergrid_func]
         
         ##
+        #leftboundary(state_array,funcs)
         """xtilde_func=Spline1D(initX1,state_array[4:L-3,5]);
         xtilde_func(0)
 
@@ -548,7 +583,9 @@ function timeevolution(state_array,finaltime,dir,dt,run)
 
         # update m, beta and psi data
         y0=[0 0 0]
-        state_array[ori:L-3,1:3] = n_rk4wrapper(RHS,y0,X[ori:L-3],t,funcs)
+        #y0=leftboundary(state_array,funcs) THIS SHOULD BE UNCOMMENTED BUT IT CRASHES WHEN I UNCOMMENT IT
+        println("timestep ", leftboundary(state_array,funcs))
+        state_array[ori:L-3,1:3] = n_rk4wrapper(RHS,y0,X[ori:L-3],t,funcs) #OLAOLA
         
 
         CSV.write(dir*"/res$res/time_step$iter.csv", Tables.table(state_array), writeheader=false)
@@ -557,6 +594,11 @@ function timeevolution(state_array,finaltime,dir,dt,run)
             #CSV.write(dir*"/run$run/time_step$iter.csv", Tables.table(state_array), writeheader=false)
             CSV.write(dir*"/res$res/time_step$iter.csv", Tables.table(state_array), writeheader=false)
             T_interp = vcat(T_interp,t)
+
+            #write muninn
+            open(dir*"/res$res/data.txt", "a") do file
+                print_muninn(file, t, state_array[:,1:5])
+            end
         end"""
         
         
