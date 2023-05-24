@@ -101,12 +101,12 @@ end
 function update_grid(data,T,k)
     
     X=data[:,5]
-    ori = find_origin(X)
+    #ori = find_origin(X)
     
-    m_func = Spline1D(X[ori:L-3],data[ori:L-3,1],k=4)#new
-    beta_func = Spline1D(X[ori:L-3],data[ori:L-3,2],k=4)#new
-    psi_func = Spline1D(X[ori:L-3],data[ori:L-3,3],k=4)#new
-    derpsi_func = Spline1D(X[ori:L-3],data[ori:L-3,4],k=4)#new
+    m_func = Spline1D(X[4:L-3],data[4:L-3,1],k=4)#ori:L-3
+    beta_func = Spline1D(X[4:L-3],data[4:L-3,2],k=4)#ori:L-3
+    psi_func = Spline1D(X[4:L-3],data[4:L-3,3],k=4)#ori:L-3
+    derpsi_func = Spline1D(X[4:L-3],data[4:L-3,4],k=4)#ori:L-3
 
     #evolve grid
     data = rungekutta4molstep(Grid_RHS,data,T,k,data[:,5]) #evolve X here
@@ -118,21 +118,21 @@ function update_grid(data,T,k)
 
     
     #repopulate grid
-    if ori>length(X)/2
+    """if ori>length(X)/2
         println("GRID DUPLICATED!")
         X=doublegrid(X)
         global initX = doublegrid(initX)
         ori = find_origin(X)
-    end
+    end"""
 
 
-    #update m, beta, psi and psi,x data on initial grid
-    data[ori:L-3,1]=m_func(initX[ori:L-3])
-    data[ori:L-3,2]=beta_func(initX[ori:L-3])
-    data[ori:L-3,3]=psi_func(initX[ori:L-3])
-    data[ori:L-3,4]=derpsi_func(initX[ori:L-3])
+    #update m, beta, psi and psi,x data on new grid
+    data[4:L-3,1]=m_func(X[4:L-3]) #this was being evaluated in initX1, fixed
+    data[4:L-3,2]=beta_func(X[4:L-3])
+    data[4:L-3,3]=psi_func(X[4:L-3])
+    data[4:L-3,4]=derpsi_func(X[4:L-3])
 
-    return X,data[ori:L-3,1:4]
+    return X,data[4:L-3,1:4]
 
 end
     
@@ -258,12 +258,18 @@ end
 function dissipation6(y,i,eps)
 
     ori = find_origin(y[:,5])
-    if i==ori
+    if i==4 # i=ori
         delta6= (19*y[i,:]-142*y[i+1,:]+464*y[i+2,:]-866*y[i+3,:]+1010*y[i+4,:]-754*y[i+5,:]+352*y[i+6,:]-94*y[i+7,:]+11*y[i+8,:])/2;
-    elseif i==ori+1
+    elseif i==5 # i=ori+1
         delta6= (11*y[i-1,:]-80*y[i,:]+254*y[i+1,:]-460*y[i+2,:]+520*y[i+3,:]-376*y[i+4,:]+170*y[i+5,:]-44*y[i+6,:]+5*y[i+7,:])/2;
-    elseif i==ori+2
+    elseif i==6 # i=ori+2
         delta6= (5*y[i-2,:]-34*y[i-1,:]+100*y[i,:]-166*y[i+1,:]+170*y[i+2,:]-110*y[i+3,:]+44*y[i+4,:]-10*y[i+5,:]+y[i+6,:])/2;
+    elseif i==L-3
+        delta6= (19*y[i,:]-142*y[i-1,:]+464*y[i-2,:]-866*y[i-3,:]+1010*y[i-4,:]-754*y[i-5,:]+352*y[i-6,:]-94*y[i-7,:]+11*y[i-8,:])/2;
+    elseif i==L-4
+        delta6= (11*y[i+1,:]-80*y[i,:]+254*y[i-1,:]-460*y[i-2,:]+520*y[i-3,:]-376*y[i-4,:]+170*y[i-5,:]-44*y[i-6,:]+5*y[i-7,:])/2;
+    elseif i==L-5
+        delta6= (5*y[i+2,:]-34*y[i+1,:]+100*y[i,:]-166*y[i-1,:]+170*y[i-2,:]-110*y[i-3,:]+44*y[i-4,:]-10*y[i-5,:]+y[i-6,:])/2;
     else
         delta6=(y[i+3,:]-6*y[i+2,:]+15*y[i+1,:]-20*y[i,:]+15*y[i-1,:]-6*y[i-2,:]+y[i-3,:]);
     end
@@ -289,10 +295,14 @@ end
 # Finite difference approximation
 function Der(y,i,k,X)
     ori = find_origin(X)
-    if i==ori # left boundary TEM1
+    if i==4 # left boundary TEM1 # i=ori
         z = (-27*y[i,k]+58*y[i+1,k]-56*y[i+2,k]+36*y[i+3,k]-13*y[i+4,k]+2*y[i+5,k])/(12*(X[i+1]-X[i]))
-    elseif i==ori+1 # left boundary TEM2
+    elseif i==5 # left boundary TEM2 # i=ori+1
         z = (-2*y[i-1,k]-15*y[i,k]+28*y[i+1,k]-16*y[i+2,k]+6*y[i+3,k]-y[i+4,k])/(12*(X[i+1]-X[i]))
+    elseif i==L-3 # right boundary TEM
+        z = (-27*y[i,k]+58*y[i-1,k]-56*y[i-2,k]+36*y[i-3,k]-13*y[i-4,k]+2*y[i-5,k])/(12*(X[i]-X[i-1]))
+    elseif i==L-4 # right boundary TEM
+        z = (-2*y[i+1,k]-15*y[i,k]+28*y[i-1,k]-16*y[i-2,k]+6*y[i-3,k]-y[i-4,k])/(12*(X[i+1]-X[i]))
     else # central
         z = (-y[i+2,k]+8*y[i+1,k]-8*y[i-1,k]+y[i-2,k])/(12*(X[i+1]-X[i]))
     
@@ -388,19 +398,12 @@ function RHS(y0,x1,time,func)
 
     z[3] = derpsi(x1)
 
-    
-    if derpsi(x1)>10
-        println("  ")
-        println(derpsi(x1))
-        println("x1 isssssssss ",x1)
-    end#IF X1<0, extrapolate_in
-
     if abs.(x1)<10^(-15) #origin
         z[1] = 0.0;
         z[2] = 0.0;
-    elseif abs.(x1 .- 1.0)<10^(-15) #right
+    """elseif abs.(x1 .- 1.0)<10^(-15) #right
         z[1] = 2.0 .* pi .* (y0[3]) .^ 2.0 ./ der_grid(x1)
-        z[2] = 0.0
+        z[2] = 0.0"""
     else #right
         z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0 ./ der_grid(x1);
         z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0 ./ der_grid(x1);
@@ -445,7 +448,7 @@ function SF_RHS(data,t,X)
     ori = find_origin(X)
 
     # update interpolation of psi,x
-    derpsi_func = Spline1D(X[ori:L-3],data[ori:L-3,4],k=4, bc="extrapolate")#new
+    derpsi_func = Spline1D(X[4:L-3],data[4:L-3,4],k=4, bc="extrapolate") # ori:L-3
     dergrid_func=der_grid(X)
     funcs=[derpsi_func dergrid_func]
 
@@ -460,20 +463,20 @@ function SF_RHS(data,t,X)
 
     #println(leftboundary(data,funcs))
     # update m, beta and psi data
-    y0=[0 0 0]
+    y0=[0.0 0.0 0.0]
     #y0=[0.0000001 0.0000001 0.0000001]#leftboundary(data,funcs)
-    data[ori:L-3,1:3] = n_rk4wrapper(RHS,y0,X[ori:L-3],t,funcs)
+    data[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X[4:L-3],t,funcs) # ori:L-3
 
 
-    for i in ori:L-3
-        if X[i]<10^(-15) #left
-            dy[i,4]= +1/2*Der(data,i,4,X) - null_ingoing(data,i,X)*Der(data,i,4,initX)/(Der(X,i,initX)) - dissipation6(data,i,0.03)[4]; #This RHS is now evaluated at x tilde, not x
+    for i in 4:L-3 #ori:L-3
+        if X[i]<10^(-15) && X[i]>-10^(-15) #left
+            dy[i,4]= +1/2*Der(data,i,4,X) - null_ingoing(data,i,X)*Der(data,i,4,initX)/(Der(X,i,initX)) - dissipation6(data,i,0.003)[4]; #This RHS is now evaluated at x tilde, not x
 
         elseif X[i] < (1-10^(-15)) #bulk
-            dy[i,4]=bulkSF(data,i,X) - null_ingoing(data,i,X)*Der(data,i,4,initX)/(Der(X,i,initX)) - dissipation6(data,i,0.03)[4];
+            dy[i,4]=bulkSF(data,i,X) - null_ingoing(data,i,X)*Der(data,i,4,initX)/(Der(X,i,initX)) - dissipation6(data,i,0.003)[4]; #should be dissipation4
 
         else #right
-            dy[i,4]=bulkSF(data,i,X) - null_ingoing(data,i,X)*Der(data,i,4,initX)/(Der(X,i,initX)) - dissipation6(data,i,0.03)[4];
+            dy[i,4]=bulkSF(data,i,X) - null_ingoing(data,i,X)*Der(data,i,4,initX)/(Der(X,i,initX)) - dissipation6(data,i,0.003)[4];
         end
     end
 
@@ -490,10 +493,10 @@ function Grid_RHS(y,t,X)
     for i in 4:(L-3)
         if X[i]<10^(-15) && X[i]>-10^(-15) #around origin
 
-            dy[i,5]=-1.0/2.0*exp(2.0*y[i,2]);
+            dy[i,5]=-1.0/2.0*exp(2.0*y[i,2]) #- dissipation6(y,i,0.003)[5];
 
         else #bulk
-            dy[i,5]=-1.0/2.0*(1-X[i])^2*exp(2.0*y[i,2])*(1-2*y[i,1]*(1-X[i])/X[i]);#dissipation4
+            dy[i,5]=-1.0/2.0*(1-X[i])^2*exp(2.0*y[i,2])*(1-2*y[i,1]*(1-X[i])/X[i]) #- dissipation6(y,i,0.003)[5];#dissipation4
         end
     end
     return dy
@@ -519,13 +522,13 @@ end
 function der_grid(X)
 
     aux=[]
-    ori=find_origin(X)
+    #ori=find_origin(X)
 
-    for i in ori:L-3
+    for i in 4:L-3#ori:L-3
         aux = vcat(aux,Der(X,i,initX))
     end
     
-    dergrid_func = Spline1D(X[ori:L-3],aux,k=4, bc="extrapolate")
+    dergrid_func = Spline1D(X[4:L-3],aux,k=4, bc="extrapolate")#ori:L-3
 
     return dergrid_func
 end
@@ -557,35 +560,31 @@ function timeevolution(state_array,finaltime,dir,dt,run)
         #update grid
         X,aux = update_grid(state_array[:,:],T_array,iter)
         ori=find_origin(X)
-        state_array[ori:L-3,1:4]=aux[:,1:4]
+        state_array[4:L-3,1:4]=aux[:,1:4]#this was being evaluated on initX1, fixed to evaluate on new grid
         state_array[:,5]=X
-
+        if iter>22
+            println("X is ", X)
+        end
         
-        X1=X[ori:L-3]
+        #X1=X[ori:L-3]
         
         #evolve psi,x
         state_array[:,:] = rungekutta4molstep(SF_RHS,state_array[:,:],T_array,iter,X) #evolve psi,x using data on initX grid
         #global state_array=ghost(state_array)
     
         # update interpolation of psi,x
-        derpsi_func = Spline1D(X[ori:L-3],state_array[ori:L-3,4],k=4,bc="extrapolate")#new #OLAOLA
+        derpsi_func = Spline1D(X[4:L-3],state_array[4:L-3,4],k=4,bc="extrapolate") # ori:L-3
         dergrid_func = der_grid(X)
         funcs=[derpsi_func dergrid_func]
         
         ##
-        #leftboundary(state_array,funcs)
-        """xtilde_func=Spline1D(initX1,state_array[4:L-3,5]);
-        xtilde_func(0)
 
-        auxX=vcat(xtilde_func(0),X[ori:L-3]);"""
-        
-        ##
 
         # update m, beta and psi data
-        y0=[0 0 0]
+        y0=[0.0 0.0 0.0]
         #y0=leftboundary(state_array,funcs) THIS SHOULD BE UNCOMMENTED BUT IT CRASHES WHEN I UNCOMMENT IT
-        println("timestep ", leftboundary(state_array,funcs))
-        state_array[ori:L-3,1:3] = n_rk4wrapper(RHS,y0,X[ori:L-3],t,funcs) #OLAOLA
+        #println("timestep ", leftboundary(state_array,funcs))
+        state_array[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X[4:L-3],t,funcs) # ori:L-3
         
 
         CSV.write(dir*"/res$res/time_step$iter.csv", Tables.table(state_array), writeheader=false)
