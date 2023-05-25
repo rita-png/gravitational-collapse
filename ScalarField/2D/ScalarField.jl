@@ -81,28 +81,34 @@ end"""
 function speed(X, m, beta,dx)
 
     L = length(X)
-    g = []
-    ori=find_origin(X)
-    for i in (ori+1:(L-4))
-        g = vcat(g,abs((1.0-X[i])^3.0*exp(2*beta[i])*(2*m[i]-X[i]/(1-X[i]))/(2*X[i])))
-    end
     
-    return  maximum(g)
+    ori=find_origin(X)
+
+    g = zeros(int(L-5-ori))
+    g=abs.((1.0 .- initX[ori+1:L-4]) .^ 3.0 .* exp.(2 .* state_array[ori+1:L-4,2]) .* (2 .* state_array[ori+1:L-4,1] .- initX[ori+1:L-4] ./ (1 .- initX[ori+1:L-4])) ./ (2 .* initX[ori+1:L-4]))
+    
+    """for i in (ori+1:(L-4))
+        g = vcat(g,abs((1.0-X[i])^3.0*exp(2*beta[i])*(2*m[i]-X[i]/(1-X[i]))/(2*X[i])))
+    end"""
+    
+    z=maximum(g)
+    if isnan(z)
+        println("Error: Speed is NaN!")
+    end
+    return z
 end
 
 function update_dt(X, m, beta,dt,ginit)
 
     monitor_ratio = zeros(L)
-    g=ginit
+    dx=X[5]-X[4]
+    g=speed(X,m,beta,dx)
 
-    for i in 4:L-4
-        #monitor_ratio[i] = 2*state_array[i,1]/initX[i]*(1-initX[i])
-        #if monitor_ratio[i]>0.50
-        g=speed(X,m,beta,dx)
-        #end
-    end
+    """if dt*(ginit/g) < 0.00014
+        println("dt ", dt "\n g", g, " ginit ", ginit)
+    end"""
+    return  dx/g*0.5#dt*(ginit/g)
 
-    return  dt*(ginit/g)
 end
 
 function find_origin(X)
@@ -226,15 +232,15 @@ function n_rk4wrapper(f,y0,x,u,spl_funcs,data) # u depicts T array, or M!!
     return y[:,:]
 end
 
-function twod_n_rk4wrapper(f,y0,x,u,spl_funcs,data,coef) # u depicts T array, or M!!
+function twod_n_rk4wrapper(f,y0,x,u,spl_funcs,data) # u depicts T array, or M!!
     L = length(x)
     n = length(y0)
     y = zeros(L,n)
     y[1,:] = y0;
     for i in 1:L-1
         h = x[i+1] .- x[i]
-        k1 = f(y[i,:], x[i],u,spl_funcs,i,data,coef)
-        k2 = f(y[i,:] .+ k1 * h, x[i] .+ h,u,spl_funcs,i,data,coef)
+        k1 = f(y[i,:], x[i],u,spl_funcs,i,data)
+        k2 = f(y[i,:] .+ k1 * h, x[i] .+ h,u,spl_funcs,i,data)
         y[i+1,:] = y[i,:] .+ (h/2) * (k1 .+ k2)
     end
     return y[:,:]
@@ -292,6 +298,21 @@ function print_muninn(io::IO, t, data)
     end
     println(io) # insert empty line to indicate end of data set
 end
+
+
+"""function print_muninn(io::IO, t, data)
+    i=1
+    for file in files
+        open(dir*"/data.txt", "a") do file
+        #@assert length(xs) == length(data[:,1])
+        @printf io "\"Time = %.10e\n" t
+        for i in 1:length(data[:,1])
+            @printf io "% .10e % .10e\n" data[i,5] data[i,i]
+        end
+        println(io) # insert empty line to indicate end of data set
+        i=i+1
+    end
+end"""
 
 #ghosts
 
@@ -368,6 +389,22 @@ function dissipation4(y,i,eps)#0.02
     return (-1)^2*eps*1/(dx)*delta4
 end
 
+"""function dissipation4(y,i,eps)#0.02
+    if i==4
+        delta4=(-13/6*y[i+5,:]+71/6*y[i+4,:]-77/3*y[i+3,:]+83/3*y[i+2,:]-89/6*y[i+1,:]+19/6*y[i,:])
+    elseif i==5
+        delta4=(-7/6*y[i+4,:]+41/6*y[i+3,:]-47/3*y[i+2,:]+53/3*y[i+1,:]-59/6*y[i,:]+13/6*y[i-1,:])
+    elseif i==6 || i==7
+        delta4=(y[i+2,:]-4*y[i+1,:]+6*y[i,:]-4*y[i-1,:]+y[i-2,:]);
+    elseif i==8
+        delta4=(-7/6*y[i-4,:]+41/6*y[i-3,:]-47/3*y[i-2,:]+53/3*y[i-1,:]-59/6*y[i,:]+13/6*y[i+1,:])
+    else
+        delta4=(-13/6*y[i-5,:]+71/6*y[i-4,:]-77/3*y[i-3,:]+83/3*y[i-2,:]-89/6*y[i-1,:]+19/6*y[i,:])        
+    end
+
+    return (-1)^2*eps*1/(dx)*delta4
+end"""
+
 
 #2nd order  dissipation, added to 1st order scheme
 function dissipation2(y,i)
@@ -377,16 +414,16 @@ end
 
 
 # Finite difference approximation
-function Der(y,i,k,X)
+"""function Der(y,i,k,X)
 
     if i==4 # left boundary LOP2, TEM
         z = (-27*y[i,k]+58*y[i+1,k]-56*y[i+2,k]+36*y[i+3,k]-13*y[i+4,k]+2*y[i+5,k])/(12*(X[i+1]-X[i]))
     elseif i==5 # left boundary LOP1, TEM
         z = (-2*y[i-1,k]-15*y[i,k]+28*y[i+1,k]-16*y[i+2,k]+6*y[i+3,k]-y[i+4,k])/(12*(X[i+1]-X[i]))
     elseif i==L-3 # right boundary TEM
-        z = (-27*y[i,k]+58*y[i-1,k]-56*y[i-2,k]+36*y[i-3,k]-13*y[i-4,k]+2*y[i-5,k])/(12*(X[i]-X[i-1]))
+        z = (-27*y[i,k]+58*y[i-1,k]-56*y[i-2,k]+36*y[i-3,k]-13*y[i-4,k]+2*y[i-5,k])/(12*(X[i]-X[i-1]))#i think this should be *(-1)
     elseif i==L-4 # right boundary TEM
-        z = (-2*y[i+1,k]-15*y[i,k]+28*y[i-1,k]-16*y[i-2,k]+6*y[i-3,k]-y[i-4,k])/(12*(X[i+1]-X[i]))
+        z = (-2*y[i+1,k]-15*y[i,k]+28*y[i-1,k]-16*y[i-2,k]+6*y[i-3,k]-y[i-4,k])/(12*(X[i+1]-X[i]))#this too
     else # central
         z = (-y[i+2,k]+8*y[i+1,k]-8*y[i-1,k]+y[i-2,k])/(12*(X[i+1]-X[i]))
     
@@ -394,10 +431,26 @@ function Der(y,i,k,X)
     end
     
     return z
+end"""
+
+
+
+function Der(y,i,k,X)
+
+    if i==4 # left boundary LOP1, TEM
+        z = (y[i+3,k]-4*y[i+2,k]+7*y[i+1,k]-4*y[i,k])/(2*(X[i+1]-X[i]))
+    elseif i==L-3
+        z = (-y[i-3,k]+4*y[i-2,k]-7*y[i-1,k]+4*y[i,k])/(2*(X[i]-X[i-1]))
+    else
+        z = (y[i+1,k]-y[i-1,k])/(2*(X[i+1]-X[i]))
+    end
+        
+    return z
+    
 end
 
 # Finite difference approximation
-function DDer(y,i,k,X)
+"""function DDer(y,i,k,X)
 
     if i==4 # left boundary LOP2, TEM
         z = (15/4*y[i,k]-77/6*y[i+1,k]+107/6*y[i+2,k]-13*y[i+3,k]+61/12*y[i+4,k]-5/6*y[i+5,k])/((X[i+1]-X[i]))
@@ -411,7 +464,7 @@ function DDer(y,i,k,X)
     end
     
     return z
-end
+end"""
 
 function DDer_array(y,k,X)
 
@@ -523,14 +576,14 @@ end
 
 
 #EXACTLY THE SAME POINTS MUST BE CALCULATED THE SAME WAY
-function RHS(y0,x1,time,func,i,data,coef)
+function RHS(y0,x1,time,func,i,data)
     
-    #z=zeros(length(y0))
-    z=Array{Float128}(undef, length(y0))
+    z=zeros(length(y0))
+    #z=Array{Float128}(undef, length(y0))
     derpsi = func
 
-    #z[3]=derpsi(x1)    
-    z[3]=evalInterval(Float128.([x1]),initX1,coef,3)[1];
+    z[3]=derpsi(x1)    
+    #z[3]=evalInterval(Float128.([x1]),initX1,coef,3)[1];
     #taylor
     """if i>4#x1>0.02
         z[3] = derpsi(x1)
@@ -674,14 +727,14 @@ function SF_RHS(data,t,X)
     Threads.@threads for i in 4:L-3 #ORI
         if X[i]<10^(-15) #left
             #println("hey SF_RHS func")
-            dy[i,4]= +1.0/2.0*Der(data,i,4,X) - dissipation4(data,i,0.02)[4];
+            dy[i,4]= +1.0/2.0*Der(data,i,4,X) - dissipation4(data,i,0.035)[4];
             #dy[i,4]= +1.0/2.0*derivative(derpsi_func,X[i]) #- dissipation6(data,i,0.0015)[4];
 
         elseif X[i] < (1-10^(-15)) #bulk
-            dy[i,4]=bulkSF(data,i,X) - dissipation4(data,i,0.02)[4]#epsilon(dt,dx))[4];
+            dy[i,4]=bulkSF(data,i,X) - dissipation4(data,i,0.035)[4]#epsilon(dt,dx))[4];
 
         else #right
-            dy[i,4]= bulkSF(data,i,X) - dissipation4(data,i,0.02)[4]
+            dy[i,4]= bulkSF(data,i,X) - dissipation4(data,i,0.035)[4]
             #0.0#1.0/2.0*exp(2*data[i,2])*derivative(derpsi_func,X[i])#bulkSF(data,i,X,der_funcs) #- dissipation6(data,i,0.035)[4]#1.0/2.0*exp(2*data[i,2])*Der(data,i,4,X) - dissipation6(data,i,epsilon(dt,dx))[4];#0.0
         end
     end
@@ -743,13 +796,13 @@ function timeevolution(state_array,finaltime,dir,run)
         iter = iter + 1
 
         #update time increment
-        #global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)
+        global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)
         
         t = t + dt
-        if iter%10==0
-            println("\n\niteration ", iter, " dt is ", dt, ", time of iteration is ", t)
-        end
-        #println("iteration ", iter, " dt is ", dt, ", time of iteration is ", t)
+        """if iter%10==0
+            println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2], dx), ", dx/dt=", dx/dt)
+        end"""
+        println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2], dx), ", dx/dt=", dx/dt)
 
         T_array = vcat(T_array,t)
 
@@ -786,18 +839,19 @@ function timeevolution(state_array,finaltime,dir,run)
             #CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
             
             #write muninn
-            open(dir*"/data.txt", "a") do file
+            """open(dir*"/data.txt", "a") do file
                 print_muninn(file, t, state_array[:,1:5])
-            end
+            end"""
+            #print_muninn(files,t, state_array[:,1:5])
             T_interp = vcat(T_interp,t)
         end
         CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
         
 
         #threshold for apparent black hole formation
-        global monitor_ratio = zeros(L)
         
-        for i in 4:L-3
+        
+        """for i in 4:L-3
             global monitor_ratio[i] = 2*state_array[i,1]/initX[i]*(1-initX[i])
             if monitor_ratio[i]>0.6
                 global criticality = true
@@ -805,9 +859,17 @@ function timeevolution(state_array,finaltime,dir,run)
                 println("Gridpoint = ", i, " t = ", t, " monitor ratio = ", monitor_ratio[i])
                 global time = t
             end
+        end"""
+        global monitor_ratio[5:L-4] = 2 .* state_array[5:L-4,1] ./ initX[5:L-4] .* (1 .- initX[5:L-4])
+
+        println("max is ", maximum(monitor_ratio))
+        if maximum(monitor_ratio)>0.6
+            global criticality = true
+            println("Supercritical evolution! At time ", t, ", iteration = ", iter)
+            println("t = ", t, "iteration ", iter, " monitor ratio = ", maximum(monitor_ratio))
+            global time = t
         end
 
-        speed_monitor(state_array,t)
 
         """if iter%10==0
             
