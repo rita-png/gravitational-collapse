@@ -290,30 +290,23 @@ function integrator(X,derpsi_func,data)
     return integral
 end
 
-function print_muninn(io::IO, t, data)
-    #@assert length(xs) == length(data[:,1])
-    @printf io "\"Time = %.10e\n" t
-    for i in 1:length(data[:,1])
-        @printf io "% .10e % .10e % .10e % .10e % .10e\n" data[i,5] data[i,1] data[i,2] data[i,3] data[i,4]
+
+function print_muninn(files, t, data, res, mode)
+    #mode is "a" for append or "w" for write
+    j=1
+    for fl in files
+        
+        open(dir*"/muninnDATA/res$res/$fl.txt", mode) do file
+            #@assert length(xs) == length(data[:,1])
+            @printf file "\"Time = %.10e\n" t
+            for i in 1:length(data[:,1])
+                @printf file "% .10e % .10e\n" data[i,5] data[i,j]
+            end
+            println(file) # insert empty line to indicate end of data set
+            end
+        j=j+1
     end
-    println(io) # insert empty line to indicate end of data set
 end
-
-
-"""function print_muninn(io::IO, t, data)
-    i=1
-    for file in files
-        open(dir*"/data.txt", "a") do file
-        #@assert length(xs) == length(data[:,1])
-        @printf io "\"Time = %.10e\n" t
-        for i in 1:length(data[:,1])
-            @printf io "% .10e % .10e\n" data[i,5] data[i,i]
-        end
-        println(io) # insert empty line to indicate end of data set
-        i=i+1
-    end
-end"""
-
 #ghosts
 
 function ghost(y)
@@ -799,10 +792,10 @@ function timeevolution(state_array,finaltime,dir,run)
         global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)
         
         t = t + dt
-        """if iter%10==0
+        if iter%10==0
             println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2], dx), ", dx/dt=", dx/dt)
-        end"""
-        println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2], dx), ", dx/dt=", dx/dt)
+        end
+        #println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2], dx), ", dx/dt=", dx/dt)
 
         T_array = vcat(T_array,t)
 
@@ -839,30 +832,15 @@ function timeevolution(state_array,finaltime,dir,run)
             #CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
             
             #write muninn
-            """open(dir*"/data.txt", "a") do file
-                print_muninn(file, t, state_array[:,1:5])
-            end"""
-            #print_muninn(files,t, state_array[:,1:5])
+            print_muninn(files, t, state_array[:,1:5],res,"a")
             T_interp = vcat(T_interp,t)
         end
         CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
         
 
         #threshold for apparent black hole formation
-        
-        
-        """for i in 4:L-3
-            global monitor_ratio[i] = 2*state_array[i,1]/initX[i]*(1-initX[i])
-            if monitor_ratio[i]>0.6
-                global criticality = true
-                println("Supercritical evolution! At time ", t, ", iteration = ", iter)
-                println("Gridpoint = ", i, " t = ", t, " monitor ratio = ", monitor_ratio[i])
-                global time = t
-            end
-        end"""
         global monitor_ratio[5:L-4] = 2 .* state_array[5:L-4,1] ./ initX[5:L-4] .* (1 .- initX[5:L-4])
 
-        println("max is ", maximum(monitor_ratio))
         if maximum(monitor_ratio)>0.6
             global criticality = true
             println("Supercritical evolution! At time ", t, ", iteration = ", iter)
