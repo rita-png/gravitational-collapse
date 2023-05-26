@@ -164,6 +164,7 @@ function rungekutta4molstep(f,y00,T,w::Int64,X)
     return ghost(y[:,:])
 end
 
+
 function twod_rungekutta4molstep(f,y00,T,w::Int64,X)
     y = y00;
     X=collect(X)
@@ -570,7 +571,6 @@ end
 
 ##AUX
 function RHS(y0,x1,time,func,i,data,auxdata,midstep)
-
     
     z=zeros(length(y0))
     derpsi = func
@@ -580,11 +580,12 @@ function RHS(y0,x1,time,func,i,data,auxdata,midstep)
     aux=auxdata[4:length(auxdata)-3]
 
     if i <= 4 & midstep==true
-        z[3]=aux[2*i,4]
-        y0[3]=aux[2*i-1,3]#this was auxdata, wrong!!
-    elseif i<= 4 & midstep==false
         z[3]=aux[2*i-1,4]
-        y0[3]=aux[2*i-1,3]
+        y0[3]=aux[2*i-1,3]#this was auxdata, wrong!!
+    elseif i<= 4 & midstep==false #here i could just use the interpolation z[3]=derpsi(x1) ola04
+        #z[3]=aux[2*i-1,4]
+        z[3]=derpsi(x1)
+        #y0[3]=aux[2*i-1,3]
     end
     
     #z3 =0 and y3 no not good
@@ -678,18 +679,9 @@ function SF_RHS(data,t,X)
     
     # update m, beta and psi data
     y0=[0.0 0.0 0.0]
-    data[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X[4:L-3],t,derpsi_func,data[:,:])
+    data[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X[4:L-3],t,derpsi_func,data[:,:]) #ola06, sf_rhs tem de receber auxdata, que depois é inputted aqui, basicamente criar uma nova funcao 4molstep, não confundir com a que já existe!
     #data=ghost(data)
 
-    
-    """data[4:L-3,3] = rk4wrapper(psiRHS,0,X[4:L-3],t,derpsi_func,data[:,:])
-
-    psi_func = Spline1D(X[4:L-3],data[4:L-3,3],k=4)
-    funcs = [psi_func derpsi_func]
-    
-    y0=[0.0 0.0]
-    data[4:L-3,1:2] = n_rk4wrapper(mbetaRHS,y0,X[4:L-3],t,funcs,data[:,:])
-    """
 
     #data=ghost(data)
 
@@ -774,7 +766,7 @@ function timeevolution(state_array,finaltime,dir,run,auxstate_array)
         """if iter%10==0
             global dt = update_dt(initX,state_array[:,1],state_array[:,2],dx,ginit)
         end"""
-        t = round(t + dt,digits=5) #t + dt
+        t = round(t + dt,digits=7) #t + dt
         if iter%10==0
             println("iteration ", iter, " dt is ", dt, ", time of iteration is ", t)
         end
@@ -795,11 +787,13 @@ function timeevolution(state_array,finaltime,dir,run,auxstate_array)
         """auxX=auxinitX
         auxX1=auxX[4:L-3]
         auxstate_array[:,:] = rungekutta4molstep(SF_RHS,auxstate_array[:,:],T_array,iter,auxX) #evolve psi,x
-        auxstate_array=ghost(auxstate_array)"""
+        auxderpsi_func = Spline1D(auxX[4:auxL-3],auxstate_array[4:auxL-3,4],k=4) #ghost grid
+        y0=[0.0 0.0 0.0]
+        auxstate_array[4:L-3,1:3] = n_rk4wrapper(RHS,y0,auxX1,t,auxderpsi_func,auxstate_array[:,:]) #evolve psi, beta, m
+        auxstate_array=ghost(auxstate_array)"""#
     
         # update interpolation of psi,x
         derpsi_func = Spline1D(X[4:L-3],state_array[4:L-3,4],k=4)
-        #auxderpsi_func = Spline1D(auxX[4:auxL-3],auxstate_array[4:auxL-3,4],k=4) #ghost grid
 
         #evolve m and beta together, new
         y0=[0.0 0.0 0.0]
@@ -807,15 +801,6 @@ function timeevolution(state_array,finaltime,dir,run,auxstate_array)
         state_array[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X1,t,derpsi_func,state_array[:,:])
         state_array=ghost(state_array)
         
-        """
-        state_array[4:L-3,3] = rk4wrapper(psiRHS,0,X[4:L-3],t,derpsi_func,state_array[:,:])
-
-        psi_func = Spline1D(X[4:L-3],state_array[4:L-3,3],k=4)
-        funcs = [psi_func derpsi_func]
-        
-        y0=[0.0 0.0]
-        state_array[4:L-3,1:2] = n_rk4wrapper(mbetaRHS,y0,X[4:L-3],t,funcs,state_array[:,:])
-        """
 
         run=int(run)
         if iter%10==0
@@ -835,7 +820,7 @@ function timeevolution(state_array,finaltime,dir,run,auxstate_array)
         #threshold for apparent black hole formation
         global monitor_ratio = zeros(L)
         
-        for i in 4:L-3
+        """for i in 4:L-3
             global monitor_ratio[i] = 2*state_array[i,1]/initX[i]*(1-initX[i])
             if monitor_ratio[i]>0.99
                 global criticality = true
@@ -843,9 +828,9 @@ function timeevolution(state_array,finaltime,dir,run,auxstate_array)
                 println("X[i] = ", X[i], ", gridpoint = ", i, " t = ", t, " monitor ratio = ", monitor_ratio[i])
                 global time = t
             end
-        end
+        end"""
 
-        speed_monitor(state_array)
+        #speed_monitor(state_array)
         
 
         """if iter%10==0
