@@ -34,6 +34,23 @@ function init_gaussian_der(x,r0,sigma,A)
     return z
 end
 
+function new_init_gaussian_der(x,r0,sigma,A)
+    n=length(x);
+    if n==1
+        z = A * exp(-((x/(1-x)-r0)/sigma)^2) * x^2/((x-1)^6*sigma^2) * (3*sigma^2 - 6*x*sigma^2 + x^2*(-2+3*sigma^2) - 2*r0*(x-1)*x)
+        #z= A * exp(-((x/(1-x)-r0)/sigma)^2) * (3 * x^2 / (1-x) ^4 - (x/(1-x))^3 * (2*(x-r0*(-x+1)))/(sigma^2*(1-x)^3))
+    else
+        z=zeros(n);
+        for i in 1:n
+            if i<n-3 #avoid NaN for x=1, otherwise, it's 0
+                #z[i] = 2*A * x[i]/(1-x[i])^3 * exp(-((x[i]/(1-x[i])-r0)/sigma)^2) * (1 - x[i]/(1-x[i]) * (x[i]/(1-x[i]) - r0) / sigma^2)
+                z[i]=A * exp(-((x[i]/(1-x[i])-r0)/sigma)^2) * (3 * x[i]^2 / (1-x[i]) ^4 - (x[i]/(1-x[i]))^3 * (2*(x[i]-r0*(-x[i]+1)))/(sigma^2*(1-x[i])^3))
+            end
+        end
+    end
+    return z
+end
+
 function create_range(ori,stop,dx,N)
 
     array = []
@@ -792,9 +809,9 @@ function timeevolution(state_array,finaltime,dir,run)
         global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)
         
         t = t + dt
-        if iter%10==0
+        """if iter%10==0
             println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2], dx), ", dx/dt=", dx/dt)
-        end
+        end"""
         #println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2], dx), ", dx/dt=", dx/dt)
 
         T_array = vcat(T_array,t)
@@ -832,11 +849,11 @@ function timeevolution(state_array,finaltime,dir,run)
             #CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
             
             #write muninn
-            print_muninn(files, t, state_array[:,1:5],res,"a")
+            #print_muninn(files, t, state_array[:,1:5],res,"a")#UNCOMMENT
             T_interp = vcat(T_interp,t)
         end
-        CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
-        
+        #CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
+        CSV.write(dir*"/run$run/time_step$iter.csv", Tables.table(state_array), writeheader=false)
 
         #threshold for apparent black hole formation
         global monitor_ratio[5:L-4] = 2 .* state_array[5:L-4,1] ./ initX[5:L-4] .* (1 .- initX[5:L-4])
@@ -854,7 +871,7 @@ function timeevolution(state_array,finaltime,dir,run)
             CSV.write(dir*"/monitor_ratio$iter.csv", Tables.table(monitor_ratio), writeheader=false)
             
         end"""
-        CSV.write(dir*"/monitor_ratio$iter.csv", Tables.table(monitor_ratio), writeheader=false)
+        #CSV.write(dir*"/monitor_ratio$iter.csv", Tables.table(monitor_ratio), writeheader=false)
         if criticality == true
             break
         end
