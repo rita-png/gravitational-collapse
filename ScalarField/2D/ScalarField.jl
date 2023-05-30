@@ -311,17 +311,30 @@ end
 function print_muninn(files, t, data, res, mode)
     #mode is "a" for append or "w" for write
     j=1
-    for fl in files
-        
-        open(dir*"/muninnDATA/res$res/$fl.txt", mode) do file
-            #@assert length(xs) == length(data[:,1])
-            @printf file "\"Time = %.10e\n" t
-            for i in 1:length(data[:,1])
-                @printf file "% .10e % .10e\n" data[i,5] data[i,j]
-            end
-            println(file) # insert empty line to indicate end of data set
-            end
-        j=j+1
+    if bisection==false
+        for fl in files #normal run
+            
+            open(dir*"/muninnDATA/res$res/$fl.txt", mode) do file
+                @printf file "\"Time = %.10e\n" t
+                for i in 1:length(data[:,1])
+                    @printf file "% .10e % .10e\n" data[i,5] data[i,j]
+                end
+                println(file) # insert empty line to indicate end of data set
+                end
+            j=j+1
+        end
+    else
+        for fl in files #bisection search
+            
+            open(dir*"/muninnDATA/run$run/$fl.txt", mode) do file
+                @printf file "\"Time = %.10e\n" t
+                for i in 1:length(data[:,1])
+                    @printf file "% .10e % .10e\n" data[i,5] data[i,j]
+                end
+                println(file) # insert empty line to indicate end of data set
+                end
+            j=j+1
+        end
     end
 end
 #ghosts
@@ -833,27 +846,16 @@ function timeevolution(state_array,finaltime,dir,run)
         state_array[4:L-3,1:3] = twod_n_rk4wrapper(RHS,y0,X1,t,derpsi_func,state_array[:,:])
         state_array=ghost(state_array)
         
-        """
-        state_array[4:L-3,3] = rk4wrapper(psiRHS,0,X[4:L-3],t,derpsi_func,state_array[:,:])
-
-        psi_func = Spline1D(X[4:L-3],state_array[4:L-3,3],k=4)
-        funcs = [psi_func derpsi_func]
-        
-        y0=[0.0 0.0]
-        state_array[4:L-3,1:2] = n_rk4wrapper(mbetaRHS,y0,X[4:L-3],t,funcs,state_array[:,:])
-        """
 
         run=int(run)
-        if iter%10==0||iter>15000
+        if iter%10==0||t>1
             #CSV.write(dir*"/run$run/time_step$iter.csv", Tables.table(state_array), writeheader=false)
-            #CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
+            CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
             
             #write muninn
-            #print_muninn(files, t, state_array[:,1:5],res,"a")#UNCOMMENT
+            print_muninn(files, t, state_array[:,1:5],res,"a")#UNCOMMENT
             T_interp = vcat(T_interp,t)
         end
-        #CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
-        CSV.write(dir*"/run$run/time_step$iter.csv", Tables.table(state_array), writeheader=false)
 
         #threshold for apparent black hole formation
         global monitor_ratio[5:L-4] = 2 .* state_array[5:L-4,1] ./ initX[5:L-4] .* (1 .- initX[5:L-4])

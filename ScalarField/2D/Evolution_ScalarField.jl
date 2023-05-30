@@ -82,7 +82,7 @@ CSV.write(dir*"/run$run/time_step0.csv", Tables.table(state_array), writeheader=
 
 global files=["m", "beta", "psi", "derpsi"]
 
-#print_muninn(files, 0, state_array[:,1:5],res,"w",dir)
+print_muninn(files, 0, state_array[:,1:5],res,"w")
 
 time=0
 criticality=0.0

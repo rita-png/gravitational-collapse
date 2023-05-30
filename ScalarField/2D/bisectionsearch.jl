@@ -7,11 +7,11 @@
 
 using CSV, Tables, DataFrames, ProgressBars, Plots
 
-
-global low_bound = 0.04925#0.04922733163833619
-global high_bound = 0.0495#0.04922733211517334
+global bisection=true
+global low_bound = 0.04926157283782959#0.04925#0.04922733163833619
+global high_bound = 0.049261573076248164#0.0495#0.04922733211517334
 global run = 1
-global runmax = 20
+global runmax = 30
 
 
 plt_A_crit = Vector{Float64}()
