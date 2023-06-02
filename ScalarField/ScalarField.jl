@@ -784,21 +784,21 @@ function timeevolution(state_array,finaltime,dir,run,auxstate_array)
         state_array=ghost(state_array)
 
         #AUX ghost grid
-        """auxX=auxinitX
+        auxX=auxinitX
         auxX1=auxX[4:L-3]
         auxstate_array[:,:] = rungekutta4molstep(SF_RHS,auxstate_array[:,:],T_array,iter,auxX) #evolve psi,x
         auxderpsi_func = Spline1D(auxX[4:auxL-3],auxstate_array[4:auxL-3,4],k=4) #ghost grid
         y0=[0.0 0.0 0.0]
         auxstate_array[4:L-3,1:3] = n_rk4wrapper(RHS,y0,auxX1,t,auxderpsi_func,auxstate_array[:,:]) #evolve psi, beta, m
-        auxstate_array=ghost(auxstate_array)"""#
+        auxstate_array=ghost(auxstate_array)#
     
         # update interpolation of psi,x
         derpsi_func = Spline1D(X[4:L-3],state_array[4:L-3,4],k=4)
 
         #evolve m and beta together, new
         y0=[0.0 0.0 0.0]
-        #state_array[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X1,t,derpsi_func,state_array[:,:],auxstate_array[:,:]) #ghost grid
-        state_array[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X1,t,derpsi_func,state_array[:,:])
+        state_array[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X1,t,derpsi_func,state_array[:,:],auxstate_array[:,:]) #ghost grid
+        #state_array[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X1,t,derpsi_func,state_array[:,:])
         state_array=ghost(state_array)
         
 
