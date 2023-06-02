@@ -44,7 +44,7 @@ while(run <= runmax)
 
     #println(df[1, :explode])
     if (df[run, :explode]) == 1.0
-        println("Found a NaN at time ",df[run+1, :time])
+        println("Found a NaN at time ",df[run, :time])
     end
     
     if (df[run, :criticality]) == 1.0
