@@ -21,3 +21,15 @@ All set:
 To run a jupyter notebook, simply type inside the directory you wish:
 
 jupyter notebook
+
+Git:
+git add
+git status
+git diff
+git commit -m ""
+git push origin {branch}
+
+Branch is main
+
+git reset: undo add
+git checkout -- .: local equal to remote repo
