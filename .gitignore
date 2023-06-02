@@ -3,13 +3,14 @@ ScalarField/evols/
 ScalarField/StoredDATA/
 ScalarField/.ipynb_checkpoints/
 ScalarField/todo.txt
+ScalarField/tests.ipynb
 
 TestModel/DATA/
 TestModel/.ipynb_checkpoints/
 TestModel/NestedModel221020.pdf
 
-TestModel/2D/.ipynb_checkpoints/
-TestModel/2D/Log grid.ipynb
+ScalarField/2D/.ipynb_checkpoints/
+ScalarField/2D/Log grid.ipynb
 
 ScalarField/changing-grid/.ipynb_checkpoints
 
