@@ -1,9 +1,10 @@
 ScalarField/DATA/
-TestModel/DATA/
-TestModel/evols/
-TestModel/StoredDATA/
-TestModel/.ipynb_checkpoints/
+ScalarField/evols/
+ScalarField/StoredDATA/
 ScalarField/.ipynb_checkpoints/
+
+TestModel/DATA/
+TestModel/.ipynb_checkpoints/
 TestModel/NestedModel221020.pdf
 muninn
 *.gif
