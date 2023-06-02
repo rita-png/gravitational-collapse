@@ -54,40 +54,35 @@ function extrapolate_in(y0,y1,y2,y3)
 end
 
 
-"""function extrapolate_in(y2,y3)
-    return y2 + (y2-y3)
-end
-
-function extrapolate_out(y1,y2)
-    return y2 + (y2-y1)
-end"""
 
 # Calculating dt
-function dt_scale(X, m, beta,dx)
+function speed(X, m, beta,dx)
 
     L = length(X)
-    g = []
-    ori=find_origin(X)
-    for i in (ori:(L-4))
-        g = vcat(g,abs(exp(2*beta[i])*m[i]))
-    end
     
-    return  maximum(g)
+    ori=find_origin(X)
+
+    g = zeros(int(L-5-ori))
+    g=abs.((1.0 .- initX[ori+1:L-4]) .^ 3.0 .* exp.(2 .* state_array[ori+1:L-4,2]) .* (2 .* state_array[ori+1:L-4,1] .- initX[ori+1:L-4] ./ (1 .- initX[ori+1:L-4])) ./ (2 .* initX[ori+1:L-4]))
+    
+    z=maximum(g)
+    if isnan(z)
+        println("Error: Speed is NaN!")
+    end
+    return z
 end
 
-function update_dt(X, m, beta,dx,ginit)
+function update_dt(X, m, beta,dt,ginit)
 
     monitor_ratio = zeros(L)
-    g=ginit
+    dx=X[5]-X[4]
+    g=speed(X,m,beta,dx)
 
-    for i in 3:L-4
-        monitor_ratio[i] = 2*state_array[i,1]/initX[i]*(1-initX[i])
-        if monitor_ratio[i]>0.40
-            g=dt_scale(X,m,beta,dx)
-        end
-    end
+    """if dt*(ginit/g) < 0.00014
+        println("dt ", dt "\n g", g, " ginit ", ginit)
+    end"""
+    return  dx/g*0.5#dt*(ginit/g)
 
-    return  dx*(ginit/g)^(0.65)
 end
 
 function find_origin(X)
@@ -288,13 +283,35 @@ end
 
 
 
-function print_muninn(io::IO, t, data)
-    #@assert length(xs) == length(data[:,1])
-    @printf io "\"Time = %.10e\n" t
-    for i in 1:length(data[:,1])
-        @printf io "% .10e % .10e % .10e % .10e % .10e\n" data[i,5] data[i,1] data[i,2] data[i,3] data[i,4]
+
+function print_muninn(files, t, data, res, mode)
+    #mode is "a" for append or "w" for write
+    j=1
+    if bisection==false
+        for fl in files #normal run
+            
+            open(dir*"/muninnDATA/res$res/$fl.txt", mode) do file
+                @printf file "\"Time = %.10e\n" t
+                for i in 1:length(data[:,1])
+                    @printf file "% .10e % .10e\n" data[i,5] data[i,j]
+                end
+                println(file) # insert empty line to indicate end of data set
+                end
+            j=j+1
+        end
+    else
+        for fl in files #bisection search
+            
+            open(dir*"/muninnDATA/run$run/$fl.txt", mode) do file
+                @printf file "\"Time = %.10e\n" t
+                for i in 1:length(data[:,1])
+                    @printf file "% .10e % .10e\n" data[i,5] data[i,j]
+                end
+                println(file) # insert empty line to indicate end of data set
+                end
+            j=j+1
+        end
     end
-    println(io) # insert empty line to indicate end of data set
 end
 
 #ghosts
@@ -315,24 +332,6 @@ function ghost(y)
     return y
 end
 
-"""function ghost(y)
-    L=length(y[:,1])
-    
-    #inner boundary extrapolation
-    y[3,:]=extrapolate_in(y[4,:], y[3,:])
-    y[2,:]=extrapolate_in(y[3,:], y[4,:])
-    y[1,:]=extrapolate_in(y[2,:], y[3,:])
-
-    #outer boundary extrapolation
-    y[L-2,:]=extrapolate_out(y[L-4,:], y[L-3,:])
-    y[L-1,:]=extrapolate_out(y[L-3,:], y[L-2,:])
-    y[L,:]=extrapolate_out(y[L-2,:], y[L-1,:])
-
-   
-
-    return y
-end
-"""
 
 #6th order dissipation, added to 4th order original scheme
 function dissipation6(y,i,eps)
@@ -343,11 +342,11 @@ function dissipation6(y,i,eps)
     elseif i==6
         delta6= (5*y[i-2,:]-34*y[i-1,:]+100*y[i,:]-166*y[i+1,:]+170*y[i+2,:]-110*y[i+3,:]+44*y[i+4,:]-10*y[i+5,:]+y[i+6,:])/2;
     elseif i==L-3
-        delta6= (19*y[i,:]-142*y[i-1,:]+464*y[i-2,:]-866*y[i-3,:]+1010*y[i-4,:]-754*y[i-5,:]+352*y[i-6,:]-94*y[i-7,:]+11*y[i-8,:])/2;
+        delta6= -(19*y[i,:]-142*y[i-1,:]+464*y[i-2,:]-866*y[i-3,:]+1010*y[i-4,:]-754*y[i-5,:]+352*y[i-6,:]-94*y[i-7,:]+11*y[i-8,:])/2;
     elseif i==L-4
-        delta6= (11*y[i+1,:]-80*y[i,:]+254*y[i-1,:]-460*y[i-2,:]+520*y[i-3,:]-376*y[i-4,:]+170*y[i-5,:]-44*y[i-6,:]+5*y[i-7,:])/2;
+        delta6= -(11*y[i+1,:]-80*y[i,:]+254*y[i-1,:]-460*y[i-2,:]+520*y[i-3,:]-376*y[i-4,:]+170*y[i-5,:]-44*y[i-6,:]+5*y[i-7,:])/2;
     elseif i==L-5
-        delta6= (5*y[i+2,:]-34*y[i+1,:]+100*y[i,:]-166*y[i-1,:]+170*y[i-2,:]-110*y[i-3,:]+44*y[i-4,:]-10*y[i-5,:]+y[i-6,:])/2;
+        delta6= -(5*y[i+2,:]-34*y[i+1,:]+100*y[i,:]-166*y[i-1,:]+170*y[i-2,:]-110*y[i-3,:]+44*y[i-4,:]-10*y[i-5,:]+y[i-6,:])/2;
     else
         delta6=(y[i+3,:]-6*y[i+2,:]+15*y[i+1,:]-20*y[i,:]+15*y[i-1,:]-6*y[i-2,:]+y[i-3,:]);
     end
@@ -355,19 +354,6 @@ function dissipation6(y,i,eps)
 return (-1)^3*eps*1/(dx)*delta6
 end
 
-
-#4th order  dissipation, added to 2nd order original scheme
-function dissipation4(y,i,eps)
-        delta4=(y[i+2,:]-4*y[i+1,:]+6*y[i,:]-4*y[i-1,:]+y[i-2,:]);
-    return (-1)^2*eps*1/(dx)*delta4
-end
-
-
-#2nd order  dissipation, added to 1st order scheme
-function dissipation2(y,i)
-        delta2=(y[i+1,:]-2*y[i,:]+y[i-1,:]);
-    return (-1)^1*epsilon*1/(dx)*delta2
-end
 
 
 # Finite difference approximation
@@ -378,9 +364,9 @@ function Der(y,i,k,X)
     elseif i==5 # left boundary LOP1, TEM
         z = (-2*y[i-1,k]-15*y[i,k]+28*y[i+1,k]-16*y[i+2,k]+6*y[i+3,k]-y[i+4,k])/(12*(X[i+1]-X[i]))
     elseif i==L-3 # right boundary TEM
-        z = (-27*y[i,k]+58*y[i-1,k]-56*y[i-2,k]+36*y[i-3,k]-13*y[i-4,k]+2*y[i-5,k])/(12*(X[i]-X[i-1]))
+        z = -(-27*y[i,k]+58*y[i-1,k]-56*y[i-2,k]+36*y[i-3,k]-13*y[i-4,k]+2*y[i-5,k])/(12*(X[i]-X[i-1])) #fixed this *-1
     elseif i==L-4 # right boundary TEM
-        z = (-2*y[i+1,k]-15*y[i,k]+28*y[i-1,k]-16*y[i-2,k]+6*y[i-3,k]-y[i-4,k])/(12*(X[i+1]-X[i]))
+        z = -(-2*y[i+1,k]-15*y[i,k]+28*y[i-1,k]-16*y[i-2,k]+6*y[i-3,k]-y[i-4,k])/(12*(X[i+1]-X[i]))
     else # central
         z = (-y[i+2,k]+8*y[i+1,k]-8*y[i-1,k]+y[i-2,k])/(12*(X[i+1]-X[i]))
     
@@ -550,17 +536,17 @@ function RHS(y0,x1,time,func,i,data)
         z[1] = 0.0;
         z[2] = 0.0;
     elseif abs.(x1 .- 1.0)<10^(-15) #right
-        z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;#2.0 .* pi .* (y0[3]) .^ 2.0
-        #z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0;#2.0 .* pi .* (y0[3]) .^ 2.0
-        z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0;#0.0
-        #z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0;#0.0
+        #z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;#2.0 .* pi .* (y0[3]) .^ 2.0
+        z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0;#2.0 .* pi .* (y0[3]) .^ 2.0
+        #z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0;#0.0
+        z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0;#0.0
 
         
     else #bulk
-        z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;
-        z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0;
-        #z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0;
-        #z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0;
+        #z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;
+        #z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0;
+        z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0;
+        z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0;
         
     end
     #println("   ")
@@ -568,7 +554,7 @@ function RHS(y0,x1,time,func,i,data)
     #println("   ")
     return z[:]
 end
-
+"""
 ##AUX
 function RHS(y0,x1,time,func,i,data,auxdata,midstep)
     
@@ -606,69 +592,10 @@ function RHS(y0,x1,time,func,i,data,auxdata,midstep)
     end
 
     return z[:]
-end
-
-"""function psiRHS(y0,x1,time,func,i,data)
-    
-    derpsi = func
-
-    z=derpsi(x1)
-
-    
-    #taylor
-    if i>4#x1>0.02
-        z = derpsi(x1)
-        
-    #elseif midstep==true
-    else
-        #println("ola, x1= ", x1)
-        auxdata=zeros(L,4)
-        auxdata[4:L-3,4]=DDer_array(state_array,4,initX)
-        
-
-        D3phi = auxdata[4,4]
-  
-        auxdata2=zeros(L,4)
-        auxdata2[4:L-3,4]=DDer_array(auxdata,4,initX)
-        D5phi = auxdata2[4,4]
-
-        z = data[4,4] + 3*D3phi*x1^2/(3*2) + 5*D5phi*x1^4/(5*4*3*2)
-
-
-    end
-
-    return z
-end
-
-function mbetaRHS(y0,x1,time,func,i,data)
-    
-    z=zeros(length(y0))
-    derpsi = func[2]
-    psi = func[1]
-
-
-    
-    #m and beta
-    if x1<10^(-15) #left
-        z[1] = 0.0;
-        z[2] = 0.0;
-    elseif abs.(x1 .- 1.0)<10^(-15) #right
-        z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (psi(x1) .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;#2.0 .* pi .* (y0[3]) .^ 2.0
-        #z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0;#2.0 .* pi .* (y0[3]) .^ 2.0
-        z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (psi(x1)  .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0;#0.0
-        #z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0;#0.0
-    else #right
-        z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (psi(x1) .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;
-        z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (psi(x1)  .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0;
-        #z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0;
-        #z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0;
-        
-    end
-
-    return z
 end"""
-# Defining the function in the RHS of the evolution equation system
 
+# Defining the function in the RHS of the evolution equation system
+using Base.Threads
 function SF_RHS(data,t,X)
     
     L=length(X)
@@ -679,8 +606,7 @@ function SF_RHS(data,t,X)
     
     # update m, beta and psi data
     y0=[0.0 0.0 0.0]
-    data[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X[4:L-3],t,derpsi_func,data[:,:]) #ola06, sf_rhs tem de receber auxdata, que depois é inputted aqui, basicamente criar uma nova funcao 4molstep, não confundir com a que já existe!
-    #data=ghost(data)
+    data[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X[4:L-3],t,derpsi_func,data[:,:])
 
 
     #data=ghost(data)
@@ -690,7 +616,7 @@ function SF_RHS(data,t,X)
     #beta_func = Spline1D(X[4:L-3],data[4:L-3,2],k=4)
     #der_funcs=[derivative(m_func,X[4:L-3]) derivative(beta_func,X[4:L-3]) derivative(derpsi_func,X[4:L-3])]
     ###NEW###
-    for i in 4:L-3 #ORI
+    Threads.@threads for i in 4:L-3 #ORI
         if X[i]<10^(-15) #left
             #println("hey SF_RHS func")
             dy[i,4]= +1.0/2.0*Der(data,i,4,X) - dissipation6(data,i,0.003)[4];
@@ -755,23 +681,22 @@ function timeevolution(state_array,finaltime,dir,run,auxstate_array)
 
     t=0.0
     T_array = [0.0]
-    T_interp = [0.0]
     iter = 0
-
+    auxx=0
     while t<finaltime#@TRACK
 
         iter = iter + 1
 
         #update time increment
-        """if iter%10==0
-            global dt = update_dt(initX,state_array[:,1],state_array[:,2],dx,ginit)
-        end"""
-        t = round(t + dt,digits=7) #t + dt
-        if iter%10==0
-            println("iteration ", iter, " dt is ", dt, ", time of iteration is ", t)
-        end
-        #println("iteration ", iter, " dt is ", dt, ", time of iteration is ", t)
 
+        #global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)      
+        
+        t = t + dt
+        if iter%10==0
+            println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2], dx), ", dx/dt=", dx/dt)
+        end
+        
+        
         T_array = vcat(T_array,t)
 
         #X = update_grid(state_array[:,:],T,t)
@@ -797,8 +722,8 @@ function timeevolution(state_array,finaltime,dir,run,auxstate_array)
 
         #evolve m and beta together, new
         y0=[0.0 0.0 0.0]
-        state_array[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X1,t,derpsi_func,state_array[:,:],auxstate_array[:,:]) #ghost grid
-        #state_array[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X1,t,derpsi_func,state_array[:,:])
+        #state_array[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X1,t,derpsi_func,state_array[:,:],auxstate_array[:,:]) #ghost grid
+        state_array[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X1,t,derpsi_func,state_array[:,:])
         state_array=ghost(state_array)
         
 
@@ -808,40 +733,25 @@ function timeevolution(state_array,finaltime,dir,run,auxstate_array)
             CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
 
             #write muninn
-            open(dir*"/data.txt", "a") do file
-                print_muninn(file, t, state_array[:,1:5])
-            end
+            print_muninn(files, t, state_array[:,1:5],res,"a")
 
-            T_interp = vcat(T_interp,t)
         end
-        #CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
-        
+
 
         #threshold for apparent black hole formation
-        global monitor_ratio = zeros(L)
-        
-        """for i in 4:L-3
-            global monitor_ratio[i] = 2*state_array[i,1]/initX[i]*(1-initX[i])
-            if monitor_ratio[i]>0.99
-                global criticality = true
-                println("Supercritical evolution! At time ", t)
-                println("X[i] = ", X[i], ", gridpoint = ", i, " t = ", t, " monitor ratio = ", monitor_ratio[i])
-                global time = t
-            end
-        end"""
+        global monitor_ratio[5:L-4] = 2 .* state_array[5:L-4,1] ./ initX[5:L-4] .* (1 .- initX[5:L-4])
 
-        #speed_monitor(state_array)
-        
-
-        """if iter%10==0
-            
-            CSV.write(dir*"/monitor_ratio$iter.csv", Tables.table(monitor_ratio), writeheader=false)
-            
-        end"""
-
-        if criticality == true
-            break
+        if maximum(monitor_ratio)>0.70&&auxx==0
+            global criticality = true
+            auxx=auxx+1
+            println("Supercritical evolution! At time ", t, ", iteration = ", iter)
+            println("t = ", t, "iteration ", iter, " monitor ratio = ", maximum(monitor_ratio))
+            global time = t
         end
+
+        """if criticality == true
+            break
+        end"""
         
         if isnan(state_array[L-3,4])
             global explode = true
@@ -856,7 +766,7 @@ function timeevolution(state_array,finaltime,dir,run,auxstate_array)
     
     global evol_stats = [criticality A sigma r0 time explode run]
 
-    return evol_stats, T_interp
+    return evol_stats, T_array
 
 end    
 
