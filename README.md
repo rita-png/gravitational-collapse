@@ -24,10 +24,11 @@ jupyter notebook
 
 Git:
 git add
-git status
+git status: list files not commited to local repo
 git diff
 git commit -m ""
 git push origin {branch}
+git log: check commits list
 
 Branch is main
 
