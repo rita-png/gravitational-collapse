@@ -86,13 +86,6 @@ function extrapolate_in(y0,y1,y2,y3)
 end
 
 
-"""function extrapolate_in(y2,y3)
-    return y2 + (y2-y3)
-end
-
-function extrapolate_out(y1,y2)
-    return y2 + (y2-y1)
-end"""
 
 # Calculating dt
 function speed(X, m, beta,dx)
@@ -337,6 +330,7 @@ function print_muninn(files, t, data, res, mode)
         end
     end
 end
+
 #ghosts
 
 function ghost(y)
@@ -355,45 +349,6 @@ function ghost(y)
     return y
 end
 
-"""function ghost(y)
-    L=length(y[:,1])
-    
-    #inner boundary extrapolation
-    y[3,:]=extrapolate_in(y[4,:], y[3,:])
-    y[2,:]=extrapolate_in(y[3,:], y[4,:])
-    y[1,:]=extrapolate_in(y[2,:], y[3,:])
-
-    #outer boundary extrapolation
-    y[L-2,:]=extrapolate_out(y[L-4,:], y[L-3,:])
-    y[L-1,:]=extrapolate_out(y[L-3,:], y[L-2,:])
-    y[L,:]=extrapolate_out(y[L-2,:], y[L-1,:])
-
-   
-
-    return y
-end
-"""
-
-#6th order dissipation, added to 4th order original scheme
-function dissipation6(y,i,eps)
-    if i==4
-        delta6= (19*y[i,:]-142*y[i+1,:]+464*y[i+2,:]-866*y[i+3,:]+1010*y[i+4,:]-754*y[i+5,:]+352*y[i+6,:]-94*y[i+7,:]+11*y[i+8,:])/2;
-    elseif i==5
-        delta6= (11*y[i-1,:]-80*y[i,:]+254*y[i+1,:]-460*y[i+2,:]+520*y[i+3,:]-376*y[i+4,:]+170*y[i+5,:]-44*y[i+6,:]+5*y[i+7,:])/2;
-    elseif i==6
-        delta6= (5*y[i-2,:]-34*y[i-1,:]+100*y[i,:]-166*y[i+1,:]+170*y[i+2,:]-110*y[i+3,:]+44*y[i+4,:]-10*y[i+5,:]+y[i+6,:])/2;
-    elseif i==L-3
-        delta6= (19*y[i,:]-142*y[i-1,:]+464*y[i-2,:]-866*y[i-3,:]+1010*y[i-4,:]-754*y[i-5,:]+352*y[i-6,:]-94*y[i-7,:]+11*y[i-8,:])/2;
-    elseif i==L-4
-        delta6= (11*y[i+1,:]-80*y[i,:]+254*y[i-1,:]-460*y[i-2,:]+520*y[i-3,:]-376*y[i-4,:]+170*y[i-5,:]-44*y[i-6,:]+5*y[i-7,:])/2;
-    elseif i==L-5
-        delta6= (5*y[i+2,:]-34*y[i+1,:]+100*y[i,:]-166*y[i-1,:]+170*y[i-2,:]-110*y[i-3,:]+44*y[i-4,:]-10*y[i-5,:]+y[i-6,:])/2;
-    else
-        delta6=(y[i+3,:]-6*y[i+2,:]+15*y[i+1,:]-20*y[i,:]+15*y[i-1,:]-6*y[i-2,:]+y[i-3,:]);
-    end
-
-return (-1)^3*eps*1/(dx)*delta6
-end
 
 
 #4th order  dissipation, added to 2nd order original scheme
@@ -437,27 +392,6 @@ end
 
 
 # Finite difference approximation
-"""function Der(y,i,k,X)
-
-    if i==4 # left boundary LOP2, TEM
-        z = (-27*y[i,k]+58*y[i+1,k]-56*y[i+2,k]+36*y[i+3,k]-13*y[i+4,k]+2*y[i+5,k])/(12*(X[i+1]-X[i]))
-    elseif i==5 # left boundary LOP1, TEM
-        z = (-2*y[i-1,k]-15*y[i,k]+28*y[i+1,k]-16*y[i+2,k]+6*y[i+3,k]-y[i+4,k])/(12*(X[i+1]-X[i]))
-    elseif i==L-3 # right boundary TEM
-        z = (-27*y[i,k]+58*y[i-1,k]-56*y[i-2,k]+36*y[i-3,k]-13*y[i-4,k]+2*y[i-5,k])/(12*(X[i]-X[i-1]))#i think this should be *(-1)
-    elseif i==L-4 # right boundary TEM
-        z = (-2*y[i+1,k]-15*y[i,k]+28*y[i-1,k]-16*y[i-2,k]+6*y[i-3,k]-y[i-4,k])/(12*(X[i+1]-X[i]))#this too
-    else # central
-        z = (-y[i+2,k]+8*y[i+1,k]-8*y[i-1,k]+y[i-2,k])/(12*(X[i+1]-X[i]))
-    
-
-    end
-    
-    return z
-end"""
-
-
-
 function Der(y,i,k,X)
 
     if i==4 # left boundary LOP1, TEM
