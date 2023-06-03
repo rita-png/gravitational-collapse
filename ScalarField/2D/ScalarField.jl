@@ -67,7 +67,7 @@ function create_range(ori,stop,dx,N)
 end
 
 function gridfunc(x)
-    return tanh.((x ./ 2) ./ (sqrt.(1 .- x .^ 2)))
+    return tanh.((x ./ 4) ./ (sqrt.(1 .- x .^ 2)))
 end;
 
 # Interpolation
@@ -753,7 +753,7 @@ function timeevolution(state_array,finaltime,dir,run)
         iter = iter + 1
 
         #update time increment
-        global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)
+        #global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)
         
         t = t + dt
         if iter%10==0
@@ -782,15 +782,15 @@ function timeevolution(state_array,finaltime,dir,run)
         
 
         run=int(run)
-        if iter%10==0||t>1
+        """if iter%10==0
             #CSV.write(dir*"/run$run/time_step$iter.csv", Tables.table(state_array), writeheader=false)
             CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
             
             #write muninn
             print_muninn(files, t, state_array[:,1:5],res,"a")
             
-        end
-        #CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
+        end"""
+        CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
         #print_muninn(files, t, state_array[:,1:5],res,"a")
         
         #threshold for apparent black hole formation
