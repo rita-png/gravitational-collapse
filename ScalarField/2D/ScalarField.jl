@@ -66,6 +66,10 @@ function create_range(ori,stop,dx,N)
 
 end
 
+function gridfunc(x)
+    return tanh.((x ./ 2) ./ (sqrt.(1 .- x .^ 2)))
+end;
+
 # Interpolation
 
 function interpolate(x,x1,x2,y1,y2)
@@ -358,9 +362,9 @@ function dissipation4(y,i,eps)#0.02
     elseif i==5
         delta4=(-7/6*y[i+4,:]+41/6*y[i+3,:]-47/3*y[i+2,:]+53/3*y[i+1,:]-59/6*y[i,:]+13/6*y[i-1,:])
     elseif i==L-3
-        delta4=(-13/6*y[i-5,:]+71/6*y[i-4,:]-77/3*y[i-3,:]+83/3*y[i-2,:]-89/6*y[i-1,:]+19/6*y[i,:])
+        delta4=-(-13/6*y[i-5,:]+71/6*y[i-4,:]-77/3*y[i-3,:]+83/3*y[i-2,:]-89/6*y[i-1,:]+19/6*y[i,:])
     elseif i==L-4
-        delta4=(-7/6*y[i-4,:]+41/6*y[i-3,:]-47/3*y[i-2,:]+53/3*y[i-1,:]-59/6*y[i,:]+13/6*y[i+1,:])
+        delta4=-(-7/6*y[i-4,:]+41/6*y[i-3,:]-47/3*y[i-2,:]+53/3*y[i-1,:]-59/6*y[i,:]+13/6*y[i+1,:])
     else
         delta4=(y[i+2,:]-4*y[i+1,:]+6*y[i,:]-4*y[i-1,:]+y[i-2,:]);
     end
@@ -390,20 +394,63 @@ function dissipation2(y,i)
     return (-1)^1*epsilon*1/(dx)*delta2
 end
 
+#calculate dx~/dx at known gridpoints
+function jacobian(y,X,i)
+    if i==4
+        z = (y[i+3]-4*y[i+2]+7*y[i+1]-4*y[i])/(2*(X[i+1]-X[i]))
+    elseif i==L-3
+        z = (-y[i-3]+4*y[i-2]-7*y[i-1]+4*y[i])/(2*(X[i]-X[i-1]))
+    else
+        z = (y[i+1]-y[i-1])/(2*(X[i+1]-X[i]))
+    end
+
+    return z
+end
+
+function jacobian(y,X)
+    z=zeros(length(y))
+
+    for i in 4:L-3
+        if i==4
+            z[i] = (y[i+3]-4*y[i+2]+7*y[i+1]-4*y[i])/(2*(X[i+1]-X[i]))
+        elseif i==L-3
+            z[i] = (-y[i-3]+4*y[i-2]-7*y[i-1]+4*y[i])/(2*(X[i]-X[i-1]))
+        elseif i<L-3||i>4
+            z[i] = (y[i+1]-y[i-1])/(2*(X[i+1]-X[i]))
+        end
+    end
+
+    return z
+end
 
 # Finite difference approximation
 function Der(y,i,k,X)
 
+    jacob = 1.0
+    if loggrid==true
+        jacob = jacobian(X,originalX,i)#loggridfunc(X[i])
+    end
+
     if i==4 # left boundary LOP1, TEM
-        z = (y[i+3,k]-4*y[i+2,k]+7*y[i+1,k]-4*y[i,k])/(2*(X[i+1]-X[i]))
+        z = (y[i+3,k]-4*y[i+2,k]+7*y[i+1,k]-4*y[i,k])/(2*(X[i+1]-X[i]))*jacob
     elseif i==L-3
-        z = (-y[i-3,k]+4*y[i-2,k]-7*y[i-1,k]+4*y[i,k])/(2*(X[i]-X[i-1]))
+        z = (-y[i-3,k]+4*y[i-2,k]-7*y[i-1,k]+4*y[i,k])/(2*(X[i]-X[i-1]))*jacob
     else
-        z = (y[i+1,k]-y[i-1,k])/(2*(X[i+1]-X[i]))
+        z = (y[i+1,k]-y[i-1,k])/(2*(X[i+1]-X[i]))*jacob
     end
         
     return z
     
+end
+
+#calculate dx~/dx at unknown gridpoints
+function der_grid(X)
+    
+    aux = jacobian(X,originalX)
+    
+    dergrid_func = Spline1D(X[4:L-3],aux[4:L-3],k=4, bc="extrapolate")
+
+    return dergrid_func
 end
 
 # Finite difference approximation
@@ -491,15 +538,9 @@ function chebyshev_cut(X)
 end
 function bulkSF(y,i,X)
     
-    #der_m = der_funcs[i-3,1]#derivative(spl_funcs[1],X[i])
-    #der_beta = der_funcs[i-3,2] #derivative(spl_funcs[2],X[i])
-    #dder_psi = der_funcs[i-3,3] #derivative(spl_funcs[3],X[i])
-
     #psi,x
     dy=-1.0/2.0*exp(2.0*y[i,2])*(-(2*(X[i]-1)^3*y[i,3]*(X[i]*((X[i]-1)*Der(y,i,1,X)+X[i]*Der(y,i,2,X))+y[i,1]*(1+2*(X[i]-1)*X[i]*Der(y,i,2,X))))/X[i]^3 - (2*(X[i]-1)^4*(X[i]*((X[i]-1)*Der(y,i,1,X)+X[i]*Der(y,i,2,X))+y[i,1]*(1+2(X[i]-1)*X[i]*Der(y,i,2,X)))*y[i,4])/X[i]^2 - ((X[i]+2*(X[i]-1)*y[i,1])*Der(y,i,4,X))/X[i])
 
-    #dy=-1.0/2.0*exp(2.0*y[i,2])*(-(2*(X[i]-1)^3*y[i,3]*(X[i]*((X[i]-1)*der_m+X[i]*der_beta)+y[i,1]*(1+2*(X[i]-1)*X[i]*der_beta)))/X[i]^3 - (2*(X[i]-1)^4*(X[i]*((X[i]-1)*der_m+X[i]*der_beta)+y[i,1]*(1+2(X[i]-1)*X[i]*der_beta))*y[i,4])/X[i]^2 - ((X[i]+2*(X[i]-1)*y[i,1])*dder_psi)/X[i])
-    
     return dy
 end
 
@@ -540,9 +581,15 @@ function RHS(y0,x1,time,func,i,data)
     z=zeros(length(y0))
     #z=Array{Float128}(undef, length(y0))
     derpsi = func
-
-    z[3]=derpsi(x1)    
+    
+    z[3]=derpsi(x1)
     #z[3]=evalInterval(Float128.([x1]),initX1,coef,3)[1];
+
+    jacob = 1.0
+    if loggrid==true
+        jacob = dergrid_func(x1)
+    end
+
     #taylor
     """if i>4#x1>0.02
         z[3] = derpsi(x1)
@@ -570,9 +617,9 @@ function RHS(y0,x1,time,func,i,data)
         z[2] = 0.0;
     elseif abs.(x1 .- 1.0)<10^(-15) #right
         #z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;#2.0 .* pi .* (y0[3]) .^ 2.0
-        z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0;#2.0 .* pi .* (y0[3]) .^ 2.0
-        #z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0;#0.0
-        z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0;#0.0
+        z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0;
+        #z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0;
+        z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0;
 
         
     else #bulk
@@ -588,65 +635,7 @@ function RHS(y0,x1,time,func,i,data)
     return z[:]
 end
 
-"""function psiRHS(y0,x1,time,func,i,data)
-    
-    derpsi = func
 
-    z=derpsi(x1)
-
-    
-    #taylor
-    if i>4#x1>0.02
-        z = derpsi(x1)
-        
-    #elseif midstep==true
-    else
-        #println("ola, x1= ", x1)
-        auxdata=zeros(L,4)
-        auxdata[4:L-3,4]=DDer_array(state_array,4,initX)
-        
-
-        D3phi = auxdata[4,4]
-  
-        auxdata2=zeros(L,4)
-        auxdata2[4:L-3,4]=DDer_array(auxdata,4,initX)
-        D5phi = auxdata2[4,4]
-
-        z = data[4,4] + 3*D3phi*x1^2/(3*2) + 5*D5phi*x1^4/(5*4*3*2)
-
-
-    end
-
-    return z
-end
-
-function mbetaRHS(y0,x1,time,func,i,data)
-    
-    z=zeros(length(y0))
-    derpsi = func[2]
-    psi = func[1]
-
-
-    
-    #m and beta
-    if x1<10^(-15) #left
-        z[1] = 0.0;
-        z[2] = 0.0;
-    elseif abs.(x1 .- 1.0)<10^(-15) #right
-        z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (psi(x1) .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;#2.0 .* pi .* (y0[3]) .^ 2.0
-        #z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0;#2.0 .* pi .* (y0[3]) .^ 2.0
-        z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (psi(x1)  .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0;#0.0
-        #z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0;#0.0
-    else #right
-        z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (psi(x1) .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;
-        z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (psi(x1)  .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0;
-        #z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0;
-        #z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0;
-        
-    end
-
-    return z
-end"""
 # Defining the function in the RHS of the evolution equation system
 using Base.Threads
 
@@ -661,27 +650,8 @@ function SF_RHS(data,t,X)
     # update m, beta and psi data
     y0=[0.0 0.0 0.0]
     data[4:L-3,1:3] = twod_n_rk4wrapper(RHS,y0,X[4:L-3],t,derpsi_func,data[:,:])
-    #data=ghost(data)
 
-    
-    """data[4:L-3,3] = rk4wrapper(psiRHS,0,X[4:L-3],t,derpsi_func,data[:,:])
 
-    psi_func = Spline1D(X[4:L-3],data[4:L-3,3],k=4)
-    funcs = [psi_func derpsi_func]
-    
-    y0=[0.0 0.0]
-    data[4:L-3,1:2] = n_rk4wrapper(mbetaRHS,y0,X[4:L-3],t,funcs,data[:,:])
-    """
-
-    #data=ghost(data)
-
-    ###NEW###
-    #m_func = Spline1D(X[4:L-3],data[4:L-3,1],k=4)
-    #beta_func = Spline1D(X[4:L-3],data[4:L-3,2],k=4)
-    #der_funcs=[derivative(m_func,X[4:L-3]) derivative(beta_func,X[4:L-3]) derivative(derpsi_func,X[4:L-3])]
-    ###NEW###
-
-    
 
     Threads.@threads for i in 4:L-3 #ORI
         if X[i]<10^(-15) #left
@@ -840,12 +810,12 @@ function timeevolution(state_array,finaltime,dir,run)
 
 
         # Mesh refinement
-        DDer_array=zeros(L)
+        """DDer_array=zeros(L)
         for i in 5:L-4
             DDer_array[i]=DDer(state_array,i,1,initX)
         end
 
-        k = maximum(DDer_array)/maximum(state_array[5:L-4,1])
+        k = maximum(DDer_array)/maximum(state_array[5:L-4,1])"""
         
         """if k>10 && meshrefinement==true
             
