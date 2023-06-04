@@ -25,7 +25,9 @@ function init_gaussian_der(x,r0,sigma,A)
     else
         z=zeros(n);
         for i in 1:n
-            if i<n-3 #avoid NaN for x=1, otherwise, it's 0
+            if abs(x[i] - 1.0)<10^(-15) #avoid NaN for x=1, otherwise, it's 0
+                z[i] = 0.0
+            else
                 #z[i] = 2*A * x[i]/(1-x[i])^3 * exp(-((x[i]/(1-x[i])-r0)/sigma)^2) * (1 - x[i]/(1-x[i]) * (x[i]/(1-x[i]) - r0) / sigma^2)
                 z[i]=A * exp(-((x[i]/(1-x[i])-r0)/sigma)^2) * (3 * x[i]^2 / (1-x[i]) ^4 - (x[i]/(1-x[i]))^3 * (2*(x[i]-r0*(-x[i]+1)))/(sigma^2*(1-x[i])^3))
             end
@@ -68,6 +70,35 @@ end
 
 function gridfunc(x)
     return tanh.((x ./ 4) ./ (sqrt.(1 .- x .^ 2)))
+    #return tanh.((x .^ 2) ./ (1 .- x .^ 2))
+end;
+
+function analytic_jacobian(x)
+
+    if length(x) == 1
+        if abs.(x .- 1.0)<10^(-15) #right
+            return 0.0
+        else
+            #return 2.0 * x * (sech(x^2.0/(1.0-x^2.0)))^2.0 / (1.0-x^2.0)^2.0
+            return (sech(x/(4.0*(sqrt(1.0-x^2.0)))))^2.0 / ((1.0-x^2.0)*4.0*(sqrt(1.0-x^2.0)))
+        end
+    else
+        z = zeros(length(x))
+        for i in 1:length(x)
+            """if abs.(x[i] .- 1.0)<10^(-15) #right
+                z[i] = 0.0
+            else
+                z[i] = 2.0 * x[i] * (sech(x[i]^2.0/(1.0-x[i]^2.0)))^2.0 / (1.0-x[i]^2.0)^2.0
+            end"""
+            if abs.(x[i] .- 1.0)<10^(-15) #right
+                z[i] = 0.0
+            else
+                z[i] = (sech(x[i]/(4.0*(sqrt(1.0-x[i]^2.0)))))^2.0 / ((1.0-x[i]^2.0)*4.0*(sqrt(1.0-x[i]^2.0)))
+            end
+        end
+        
+        return z
+    end
 end;
 
 # Interpolation
@@ -394,7 +425,7 @@ function dissipation2(y,i)
     return (-1)^1*epsilon*1/(dx)*delta2
 end
 
-#calculate dx~/dx at known gridpoints
+"""#calculate dx~/dx at known gridpoints
 function jacobian(y,X,i)
     if i==4
         z = (y[i+3]-4*y[i+2]+7*y[i+1]-4*y[i])/(2*(X[i+1]-X[i]))
@@ -423,12 +454,22 @@ function jacobian(y,X)
     return z
 end
 
+#calculate dx~/dx at unknown gridpoints
+function der_grid(X)
+    
+    aux = jacobian(X,originalX)
+    
+    dergrid_func = Spline1D(X[4:L-3],aux[4:L-3],k=4, bc="extrapolate")
+
+    return dergrid_func
+end"""
+
 # Finite difference approximation
 function Der(y,i,k,X)
 
     jacob = 1.0
     if loggrid==true
-        jacob = jacobian(X,originalX,i)#loggridfunc(X[i])
+        jacob = analytic_jacobian(X[i])#jacobian(X,originalX,i)#loggridfunc(X[i])
     end
 
     if i==4 # left boundary LOP1, TEM
@@ -443,15 +484,6 @@ function Der(y,i,k,X)
     
 end
 
-#calculate dx~/dx at unknown gridpoints
-function der_grid(X)
-    
-    aux = jacobian(X,originalX)
-    
-    dergrid_func = Spline1D(X[4:L-3],aux[4:L-3],k=4, bc="extrapolate")
-
-    return dergrid_func
-end
 
 # Finite difference approximation
 """function DDer(y,i,k,X) #4th
@@ -587,7 +619,7 @@ function RHS(y0,x1,time,func,i,data)
 
     jacob = 1.0
     if loggrid==true
-        jacob = dergrid_func(x1)
+        jacob = analytic_jacobian(x1)#dergrid_func(x1)
     end
 
     #taylor
@@ -616,17 +648,19 @@ function RHS(y0,x1,time,func,i,data)
         z[1] = 0.0;
         z[2] = 0.0;
     elseif abs.(x1 .- 1.0)<10^(-15) #right
-        #z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;#2.0 .* pi .* (y0[3]) .^ 2.0
-        z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0;
-        #z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0;
-        z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0;
+        
+        #z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0 ./ jacob;
+        #z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0 ./ jacob;
+
+        z[1] = 0.0
+        z[2] = 0.0
 
         
     else #bulk
         #z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;
         #z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0;
-        z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0;
-        z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0;
+        z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0 ./ jacob;
+        z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0 ./ jacob;
         
     end
     #println("   ")
@@ -656,14 +690,14 @@ function SF_RHS(data,t,X)
     Threads.@threads for i in 4:L-3 #ORI
         if X[i]<10^(-15) #left
             #println("hey SF_RHS func")
-            dy[i,4]= +1.0/2.0*Der(data,i,4,X) - dissipation4(data,i,0.035)[4];
+            dy[i,4]= +1.0/2.0*Der(data,i,4,X) #- dissipation4(data,i,0.035)[4];
             #dy[i,4]= +1.0/2.0*derivative(derpsi_func,X[i]) #- dissipation6(data,i,0.0015)[4];
 
         elseif X[i] < (1-10^(-15)) #bulk
-            dy[i,4]=bulkSF(data,i,X) - dissipation4(data,i,0.035)[4]#epsilon(dt,dx))[4];
+            dy[i,4]=bulkSF(data,i,X) #- dissipation4(data,i,0.035)[4]#epsilon(dt,dx))[4];
 
         else #right
-            dy[i,4]= bulkSF(data,i,X) - dissipation4(data,i,0.035)[4]
+            dy[i,4]= bulkSF(data,i,X) #- dissipation4(data,i,0.035)[4]
             #0.0#1.0/2.0*exp(2*data[i,2])*derivative(derpsi_func,X[i])#bulkSF(data,i,X,der_funcs) #- dissipation6(data,i,0.035)[4]#1.0/2.0*exp(2*data[i,2])*Der(data,i,4,X) - dissipation6(data,i,epsilon(dt,dx))[4];#0.0
         end
     end
@@ -756,10 +790,10 @@ function timeevolution(state_array,finaltime,dir,run)
         #global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)
         
         t = t + dt
-        if iter%10==0
+        """if iter%10==0
             println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2], dx), ", dx/dt=", dx/dt)
-        end
-        #println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2], dx), ", dx/dt=", dx/dt)
+        end"""
+        println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2], dx), ", dx/dt=", dx/dt)
 
         T_array = vcat(T_array,t)
 
