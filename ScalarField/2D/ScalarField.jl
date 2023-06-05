@@ -69,29 +69,35 @@ function create_range(ori,stop,dx,N)
 end
 
 function gridfunc(x)
-    return tanh.((x ./ 4) ./ (sqrt.(1 .- x .^ 2)))
-    #return tanh.((x .^ 2) ./ (1 .- x .^ 2))
+    #return tanh.((x .^ 2) ./ (1 .- x .^ 2)) #option 1
+    #return tanh.((x ./ 4) ./ (sqrt.(1 .- x .^ 2))) #option 2
+    return 1.0/2.0 .+ 1.0/2.0 .* cos.(pi .* (1.0 .+ x))
+    
 end;
 
 function analytic_jacobian(x)
 
     if length(x) == 1
         if abs.(x .- 1.0)<10^(-15) #right
+            println("hallo at analytic jacobian")
             return 0.0
         else
-            #return 2.0 * x * (sech(x^2.0/(1.0-x^2.0)))^2.0 / (1.0-x^2.0)^2.0
-            return (sech(x/(4.0*(sqrt(1.0-x^2.0)))))^2.0 / ((1.0-x^2.0)*4.0*(sqrt(1.0-x^2.0)))
+            #return 2.0 * x * (sech(x^2.0/(1.0-x^2.0)))^2.0 / (1.0-x^2.0)^2.0 #option 1
+            return (sech(x/(4.0*(sqrt(1.0-x^2.0)))))^2.0 / ((1.0-x^2.0)*4.0*(sqrt(1.0-x^2.0))) #option 2
         end
     else
         z = zeros(length(x))
         for i in 1:length(x)
+            #option 1
             """if abs.(x[i] .- 1.0)<10^(-15) #right
                 z[i] = 0.0
             else
                 z[i] = 2.0 * x[i] * (sech(x[i]^2.0/(1.0-x[i]^2.0)))^2.0 / (1.0-x[i]^2.0)^2.0
             end"""
+            #option 2
             if abs.(x[i] .- 1.0)<10^(-15) #right
                 z[i] = 0.0
+                println("hallo at analytic jacobian")
             else
                 z[i] = (sech(x[i]/(4.0*(sqrt(1.0-x[i]^2.0)))))^2.0 / ((1.0-x[i]^2.0)*4.0*(sqrt(1.0-x[i]^2.0)))
             end
@@ -132,12 +138,12 @@ function speed(X, m, beta,dx)
     g = zeros(int(L-5-ori))
     g=abs.((1.0 .- initX[ori+1:L-4]) .^ 3.0 .* exp.(2 .* state_array[ori+1:L-4,2]) .* (2 .* state_array[ori+1:L-4,1] .- initX[ori+1:L-4] ./ (1 .- initX[ori+1:L-4])) ./ (2 .* initX[ori+1:L-4]))
     
-    println("jacobian(X) ", jacobian(X))
-    """println("g ", g)
-    dividir g por jacobian
-    jacobian(X)
-    println("g/jacob ", ) """
+
+    if loggrid == true
+        g = g ./ analytic_jacobian(X[5:L-4])
+    end
     
+
     z=maximum(g)
     if isnan(z)
         println("Error: Speed is NaN!")
@@ -542,7 +548,7 @@ function chebyshev(N)
         if i==1
             X[i]=0.0
         else
-            X[i]=1/2+1/2*cos((2*i-1)*pi/(2*N))
+            X[i]=(1/2+1/2*cos((2*i-1)*pi/(2*N)))
         end
     end
 
@@ -658,6 +664,7 @@ function RHS(y0,x1,time,func,i,data)
             z[1] = 0.0
             z[2] = 0.0
         end
+        println("hello")
         
     else #bulk
         #z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;
@@ -666,9 +673,9 @@ function RHS(y0,x1,time,func,i,data)
         z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0 ./ jacob;
         
     end
-    #println("   ")
-    #println("z[:] ", z[:])
-    #println("   ")
+    println("   ")
+    println("z[:] ", z[:], " x1 ", x1)
+    println("   ")
     return z[:]
 end
 
@@ -693,14 +700,14 @@ function SF_RHS(data,t,X)
     Threads.@threads for i in 4:L-3 #ORI
         if X[i]<10^(-15) #left
             #println("hey SF_RHS func")
-            dy[i,4]= +1.0/2.0*Der(data,i,4,X) #- dissipation4(data,i,0.035)[4];
+            dy[i,4]= +1.0/2.0*Der(data,i,4,X) - dissipation4(data,i,0.02)[4];
             #dy[i,4]= +1.0/2.0*derivative(derpsi_func,X[i]) #- dissipation6(data,i,0.0015)[4];
 
         elseif X[i] < (1-10^(-15)) #bulk
-            dy[i,4]=bulkSF(data,i,X) #- dissipation4(data,i,0.035)[4]#epsilon(dt,dx))[4];
+            dy[i,4]=bulkSF(data,i,X) - dissipation4(data,i,0.02)[4]#epsilon(dt,dx))[4];
 
         else #right
-            dy[i,4]= bulkSF(data,i,X) #- dissipation4(data,i,0.035)[4]
+            dy[i,4]= bulkSF(data,i,X) - dissipation4(data,i,0.02)[4]
             #0.0#1.0/2.0*exp(2*data[i,2])*derivative(derpsi_func,X[i])#bulkSF(data,i,X,der_funcs) #- dissipation6(data,i,0.035)[4]#1.0/2.0*exp(2*data[i,2])*Der(data,i,4,X) - dissipation6(data,i,epsilon(dt,dx))[4];#0.0
         end
     end
@@ -790,13 +797,13 @@ function timeevolution(state_array,finaltime,dir,run)
         iter = iter + 1
 
         #update time increment
-        #global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)
+        global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)
         
         t = t + dt
-        """if iter%10==0
+        if iter%20==0
             println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2], dx), ", dx/dt=", dx/dt)
-        end"""
-        println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2], dx), ", dx/dt=", dx/dt)
+        end
+        #println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2], dx), ", dx/dt=", dx/dt)
 
         T_array = vcat(T_array,t)
 
@@ -819,15 +826,15 @@ function timeevolution(state_array,finaltime,dir,run)
         
 
         run=int(run)
-        """if iter%10==0
+        if iter%50==0
             #CSV.write(dir*"/run$run/time_step$iter.csv", Tables.table(state_array), writeheader=false)
             CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
             
             #write muninn
             print_muninn(files, t, state_array[:,1:5],res,"a")
             
-        end"""
-        CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
+        end
+        #CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
         #print_muninn(files, t, state_array[:,1:5],res,"a")
         
         #threshold for apparent black hole formation
@@ -910,13 +917,4 @@ function twod_epsilon(dt,dx)
 
     
     return (dx/dt*(1/2)^(2*2+1))
-end
-
-function speed_monitor(data,t)
-    for i in 4:L-3
-        speed = (1-initX[i])^3*exp(2*data[i,2])*(2*data[i,1]/initX[i]-1/(1-initX[i]))/2
-        if speed >10
-            println("Warning! Speed is ", speed, " at time t= ", t, ", X[i] = ", initX[i])
-        end
-    end
 end
