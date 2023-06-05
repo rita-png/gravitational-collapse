@@ -35,6 +35,9 @@ Tf=Nt*dt; #final time
 
 global dir = "/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA/bisectionsearch"
 
+global loggrid = false
+global bisection=true
+
 ori=0.0
 initX1 = nothing
 N=int(N)

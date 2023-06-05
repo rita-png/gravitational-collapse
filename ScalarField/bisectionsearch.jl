@@ -5,11 +5,11 @@
 
 #Searching for A* between 0.05 and 0.20
 
-using CSV, Tables, DataFrames, ProgressBars, Plots
+using CSV, Tables, DataFrames, ProgressBars, Plots, Printf
 
 
-global low_bound = 0.04
-global high_bound = 0.1
+global low_bound = 0.049
+global high_bound = 0.05
 global run = 1
 global runmax = 20
 

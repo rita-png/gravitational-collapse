@@ -66,7 +66,7 @@ function dt_scale(X, m, beta,dx)
     return  maximum(g)
 end
 
-function update_dt(X, m, beta,dx,ginit)
+"""function update_dt(X, m, beta,dx,ginit)
 
     monitor_ratio = zeros(L)
     g=ginit
@@ -80,7 +80,7 @@ function update_dt(X, m, beta,dx,ginit)
 
     return  dx*sqrt(ginit/g)
 end
-
+""" #THis needs to be fixed
 function find_origin(X)
 
     #origin_i=Int64
@@ -295,8 +295,6 @@ function Der(y,i,k,X)
         z = (-2*y[i-1,k]-15*y[i,k]+28*y[i+1,k]-16*y[i+2,k]+6*y[i+3,k]-y[i+4,k])/(12*(X[i+1]-X[i]))
     else # central
         z = (-y[i+2,k]+8*y[i+1,k]-8*y[i-1,k]+y[i-2,k])/(12*(X[i+1]-X[i]))
-    
-
     end
     
     return z

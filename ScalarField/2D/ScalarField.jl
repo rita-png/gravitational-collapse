@@ -132,9 +132,11 @@ function speed(X, m, beta,dx)
     g = zeros(int(L-5-ori))
     g=abs.((1.0 .- initX[ori+1:L-4]) .^ 3.0 .* exp.(2 .* state_array[ori+1:L-4,2]) .* (2 .* state_array[ori+1:L-4,1] .- initX[ori+1:L-4] ./ (1 .- initX[ori+1:L-4])) ./ (2 .* initX[ori+1:L-4]))
     
-    """for i in (ori+1:(L-4))
-        g = vcat(g,abs((1.0-X[i])^3.0*exp(2*beta[i])*(2*m[i]-X[i]/(1-X[i]))/(2*X[i])))
-    end"""
+    println("jacobian(X) ", jacobian(X))
+    """println("g ", g)
+    dividir g por jacobian
+    jacobian(X)
+    println("g/jacob ", ) """
     
     z=maximum(g)
     if isnan(z)
@@ -649,12 +651,13 @@ function RHS(y0,x1,time,func,i,data)
         z[2] = 0.0;
     elseif abs.(x1 .- 1.0)<10^(-15) #right
         
-        #z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0 ./ jacob;
-        #z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0 ./ jacob;
-
-        z[1] = 0.0
-        z[2] = 0.0
-
+        if loggrid==false
+            z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0 ./ jacob;
+            z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0 ./ jacob;
+        else
+            z[1] = 0.0
+            z[2] = 0.0
+        end
         
     else #bulk
         #z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;

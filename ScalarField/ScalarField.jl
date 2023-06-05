@@ -677,7 +677,7 @@ end
 
 #using ProgressMeter
 using Term.Progress
-function timeevolution(state_array,finaltime,dir,run,auxstate_array)
+function timeevolution(state_array,finaltime,dir,run)#(state_array,finaltime,dir,run,auxstate_array)
 
     t=0.0
     T_array = [0.0]
@@ -709,13 +709,13 @@ function timeevolution(state_array,finaltime,dir,run,auxstate_array)
         state_array=ghost(state_array)
 
         #AUX ghost grid
-        auxX=auxinitX
+        """auxX=auxinitX
         auxX1=auxX[4:L-3]
         auxstate_array[:,:] = rungekutta4molstep(SF_RHS,auxstate_array[:,:],T_array,iter,auxX) #evolve psi,x
         auxderpsi_func = Spline1D(auxX[4:auxL-3],auxstate_array[4:auxL-3,4],k=4) #ghost grid
         y0=[0.0 0.0 0.0]
         auxstate_array[4:L-3,1:3] = n_rk4wrapper(RHS,y0,auxX1,t,auxderpsi_func,auxstate_array[:,:]) #evolve psi, beta, m
-        auxstate_array=ghost(auxstate_array)#
+        auxstate_array=ghost(auxstate_array)"""#
     
         # update interpolation of psi,x
         derpsi_func = Spline1D(X[4:L-3],state_array[4:L-3,4],k=4)
@@ -749,9 +749,9 @@ function timeevolution(state_array,finaltime,dir,run,auxstate_array)
             global time = t
         end
 
-        """if criticality == true
+        if criticality == true
             break
-        end"""
+        end
         
         if isnan(state_array[L-3,4])
             global explode = true
