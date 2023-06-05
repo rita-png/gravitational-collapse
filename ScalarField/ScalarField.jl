@@ -689,7 +689,7 @@ function timeevolution(state_array,finaltime,dir,run)#(state_array,finaltime,dir
 
         #update time increment
 
-        #global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)      
+        global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)      
         
         t = t + dt
         if iter%10==0
@@ -788,11 +788,3 @@ function epsilon(dt,dx)
     return z
 end
 
-function speed_monitor(data)
-    for i in 4:L-3
-        speed = (1-initX[i])^3*exp(2*data[i,2])*(2*data[i,1]/initX[i]-1/(1-initX[i]))/2
-        if speed >10
-            println("Warning! Speed is ", speed, " at time t= ", t, ", X[i] = ", X[i])
-        end
-    end
-end

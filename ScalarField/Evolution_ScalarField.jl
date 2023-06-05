@@ -34,8 +34,8 @@ Tf=Nt*dt; #final time
 
 global dir = "/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA/bisectionsearch"
 
-global bisection == true
-global loggrid == false
+global bisection = true
+global loggrid = false
 
 ori=0.0;
 initX1 = nothing
