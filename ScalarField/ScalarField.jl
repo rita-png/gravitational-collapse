@@ -619,15 +619,15 @@ function SF_RHS(data,t,X)
     Threads.@threads for i in 4:L-3 #ORI
         if X[i]<10^(-15) #left
             #println("hey SF_RHS func")
-            dy[i,4]= +1.0/2.0*Der(data,i,4,X) - dissipation6(data,i,0.003)[4];
+            dy[i,4]= +1.0/2.0*Der(data,i,4,X) - dissipation6(data,i,0.0035)[4];
             #dy[i,4]= +1.0/2.0*derivative(derpsi_func,X[i]) #- dissipation6(data,i,0.0015)[4];
 
         elseif X[i] < (1-10^(-15)) #bulk
-            dy[i,4]=bulkSF(data,i,X) - dissipation6(data,i,0.003)[4]#epsilon(dt,dx))[4];
+            dy[i,4]=bulkSF(data,i,X) - dissipation6(data,i,0.0035)[4]#epsilon(dt,dx))[4];
 
         else #right
             #dy[i,4]= 1.0/2.0*exp(2*data[i,2])*Der(data,i,4,X) - dissipation6(data,i,epsilon(dt,dx))[4]
-            dy[i,4]= bulkSF(data,i,X) - dissipation6(data,i,0.003)[4]
+            dy[i,4]= bulkSF(data,i,X) - dissipation6(data,i,0.0035)[4]
             #0.0#1.0/2.0*exp(2*data[i,2])*derivative(derpsi_func,X[i])#bulkSF(data,i,X,der_funcs) #- dissipation6(data,i,0.035)[4]#1.0/2.0*exp(2*data[i,2])*Der(data,i,4,X) - dissipation6(data,i,epsilon(dt,dx))[4];#0.0
         end
     end
@@ -682,7 +682,7 @@ function timeevolution(state_array,finaltime,dir,run)#(state_array,finaltime,dir
     t=0.0
     T_array = [0.0]
     iter = 0
-    auxx=0
+    
     while t<finaltime#@TRACK
 
         iter = iter + 1
@@ -692,9 +692,9 @@ function timeevolution(state_array,finaltime,dir,run)#(state_array,finaltime,dir
         global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)      
         
         t = t + dt
-        if iter%10==0
+        """if iter%10==0
             println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2], dx), ", dx/dt=", dx/dt)
-        end
+        end"""
         
         
         T_array = vcat(T_array,t)
@@ -729,9 +729,11 @@ function timeevolution(state_array,finaltime,dir,run)#(state_array,finaltime,dir
 
         run=int(run)
         if iter%10==0
-            #CSV.write(dir*"/run$run/time_step$iter.csv", Tables.table(state_array), writeheader=false)
-            CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
-
+            if bisection==true
+                CSV.write(dir*"/run$run/time_step$iter.csv", Tables.table(state_array), writeheader=false)
+            else
+                CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
+            end
             #write muninn
             print_muninn(files, t, state_array[:,1:5],res,"a")
 
@@ -741,9 +743,8 @@ function timeevolution(state_array,finaltime,dir,run)#(state_array,finaltime,dir
         #threshold for apparent black hole formation
         global monitor_ratio[5:L-4] = 2 .* state_array[5:L-4,1] ./ initX[5:L-4] .* (1 .- initX[5:L-4])
 
-        if maximum(monitor_ratio)>0.70&&auxx==0
+        if maximum(monitor_ratio)>0.70
             global criticality = true
-            auxx=auxx+1
             println("Supercritical evolution! At time ", t, ", iteration = ", iter)
             println("t = ", t, "iteration ", iter, " monitor ratio = ", maximum(monitor_ratio))
             global time = t
