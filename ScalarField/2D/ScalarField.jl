@@ -91,8 +91,8 @@ function analytic_jacobian(x)
             #return (sech(x/(4.0*(sqrt(1.0-x^2.0)))))^2.0 / ((1.0-x^2.0)*4.0*(sqrt(1.0-x^2.0))) #option 2
             #return chebyshev derivative #option 3
             #return (0.55*sech(x/(2.0 * sqrt(1.1 - x^2.0)))^2.0)/(1.1 - x^2.0)^(3.0/2.0) #option 4
-            return (0.2525*sech(x/(4.0 * sqrt(1.01 - x^2.0)))^2.0)/(1.01 - x^2.0)^(3.0/2.0) #option 5
-            #return 0.9/2 * sin(pi * (1 - 0.9 * x)) #option6
+            #return (0.2525*sech(x/(4.0 * sqrt(1.01 - x^2.0)))^2.0)/(1.01 - x^2.0)^(3.0/2.0) #option 5
+            return 0.9/2 * sin(pi * (1 - 0.9 * x)) #option6
         end
     else
         z = zeros(length(x))
@@ -112,13 +112,15 @@ function analytic_jacobian(x)
             end"""
             
             #z[i] = (0.55*sech(x[i]/(2.0 * sqrt(1.1 - x[i]^2.0)))^2.0)/(1.1 - x[i]^2.0)^(3.0/2.0) # option 4
-            z[i] = (0.2525*sech(x[i]/(4.0 * sqrt(1.01 - x[i]^2.0)))^2.0)/(1.01 - x[i]^2.0)^(3.0/2.0) # option 5
-            #z[i] = 0.9 ./ 2 .* sin.(pi .* (1 .- 0.9 .* x[i])) #option6
+            #z[i] = (0.2525*sech(x[i]/(4.0 * sqrt(1.01 - x[i]^2.0)))^2.0)/(1.01 - x[i]^2.0)^(3.0/2.0) # option 5
+            z[i] = 0.9 ./ 2 .* sin.(pi .* (1 .- 0.9 .* x[i])) #option6
         end
         
         return z
     end
 end;
+
+
 
 # Interpolation
 
@@ -150,13 +152,13 @@ function speed(X, m, beta,dx)
 
     g = zeros(int(L-5-ori))
     g=abs.((1.0 .- initX[ori+1:L-4]) .^ 3.0 .* exp.(2 .* state_array[ori+1:L-4,2]) .* (2 .* state_array[ori+1:L-4,1] .- initX[ori+1:L-4] ./ (1 .- initX[ori+1:L-4])) ./ (2 .* initX[ori+1:L-4]))
-    
+    println(g)
 
     if loggrid == true
-        g = g ./ analytic_jacobian(X[5:L-4])
+        g = g ./ jacobian_func(X[5:L-4])#analytic_jacobian(X[5:L-4])
     end
     
-
+    println(g)
     z=maximum(g)
     if isnan(z)
         println("Error: Speed is NaN!")
@@ -490,7 +492,7 @@ function Der(y,i,k,X)
 
     jacob = 1.0
     if loggrid==true
-        jacob = analytic_jacobian(X[i])#jacobian(X,originalX,i)#loggridfunc(X[i])
+        jacob = jacobian_func(X[i])#analytic_jacobian(X[i])#jacobian(X,originalX,i)#loggridfunc(X[i])
     end
 
     if i==4 # left boundary LOP1, TEM
@@ -640,7 +642,7 @@ function RHS(y0,x1,time,func,i,data)
 
     jacob = 1.0
     if loggrid==true
-        jacob = analytic_jacobian(x1)#dergrid_func(x1)
+        jacob = jacobian_func(x1)#analytic_jacobian(x1)#dergrid_func(x1)
     end
 
     #taylor
@@ -812,7 +814,7 @@ function timeevolution(state_array,finaltime,dir,run)
         iter = iter + 1
 
         #update time increment
-        global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)
+        #global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)
         
         t = t + dt
         if iter%20==0
