@@ -68,13 +68,18 @@ function create_range(ori,stop,dx,N)
 
 end
 
+# outputs xtilde(x)
 function gridfunc(x)
     #return tanh.((x .^ 2) ./ (1 .- x .^ 2)) #option 1
     #return tanh.((x ./ 4) ./ (sqrt.(1 .- x .^ 2))) #option 2
-    return 1.0/2.0 .+ 1.0/2.0 .* cos.(pi .* (1.0 .+ x))
+    #return 1.0/2.0 .+ 1.0/2.0 .* cos.(pi .* (1.0 .+ x)) #option 3
+    #return tanh.((x ./ 2) ./ (sqrt.(1.1 .- x .^ 2))) #option 4
+    return tanh.((x ./ 4) ./ (sqrt.(1.01 .- x .^ 2))) #option 5
+    #return 1/2 .+ 1/2 .* cos.( pi .* (1 .- 0.9 .* x)) #option 6
     
 end;
 
+# outputs dxtilde/dx(x)
 function analytic_jacobian(x)
 
     if length(x) == 1
@@ -83,7 +88,11 @@ function analytic_jacobian(x)
             return 0.0
         else
             #return 2.0 * x * (sech(x^2.0/(1.0-x^2.0)))^2.0 / (1.0-x^2.0)^2.0 #option 1
-            return (sech(x/(4.0*(sqrt(1.0-x^2.0)))))^2.0 / ((1.0-x^2.0)*4.0*(sqrt(1.0-x^2.0))) #option 2
+            #return (sech(x/(4.0*(sqrt(1.0-x^2.0)))))^2.0 / ((1.0-x^2.0)*4.0*(sqrt(1.0-x^2.0))) #option 2
+            #return chebyshev derivative #option 3
+            #return (0.55*sech(x/(2.0 * sqrt(1.1 - x^2.0)))^2.0)/(1.1 - x^2.0)^(3.0/2.0) #option 4
+            return (0.2525*sech(x/(4.0 * sqrt(1.01 - x^2.0)))^2.0)/(1.01 - x^2.0)^(3.0/2.0) #option 5
+            #return 0.9/2 * sin(pi * (1 - 0.9 * x)) #option6
         end
     else
         z = zeros(length(x))
@@ -95,12 +104,16 @@ function analytic_jacobian(x)
                 z[i] = 2.0 * x[i] * (sech(x[i]^2.0/(1.0-x[i]^2.0)))^2.0 / (1.0-x[i]^2.0)^2.0
             end"""
             #option 2
-            if abs.(x[i] .- 1.0)<10^(-15) #right
+            """if abs.(x[i] .- 1.0)<10^(-15) #right
                 z[i] = 0.0
                 println("hallo at analytic jacobian")
             else
                 z[i] = (sech(x[i]/(4.0*(sqrt(1.0-x[i]^2.0)))))^2.0 / ((1.0-x[i]^2.0)*4.0*(sqrt(1.0-x[i]^2.0)))
-            end
+            end"""
+            
+            #z[i] = (0.55*sech(x[i]/(2.0 * sqrt(1.1 - x[i]^2.0)))^2.0)/(1.1 - x[i]^2.0)^(3.0/2.0) # option 4
+            z[i] = (0.2525*sech(x[i]/(4.0 * sqrt(1.01 - x[i]^2.0)))^2.0)/(1.01 - x[i]^2.0)^(3.0/2.0) # option 5
+            #z[i] = 0.9 ./ 2 .* sin.(pi .* (1 .- 0.9 .* x[i])) #option6
         end
         
         return z
@@ -656,15 +669,17 @@ function RHS(y0,x1,time,func,i,data)
         z[1] = 0.0;
         z[2] = 0.0;
     elseif abs.(x1 .- 1.0)<10^(-15) #right
+        z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0 ./ jacob;
+        z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0 ./ jacob;
         
-        if loggrid==false
+        """if loggrid==false
             z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0 ./ jacob;
             z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0 ./ jacob;
         else
             z[1] = 0.0
             z[2] = 0.0
-        end
-        println("hello")
+        end"""
+        #println("hello")
         
     else #bulk
         #z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;
@@ -673,9 +688,9 @@ function RHS(y0,x1,time,func,i,data)
         z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0 ./ jacob;
         
     end
-    println("   ")
-    println("z[:] ", z[:], " x1 ", x1)
-    println("   ")
+    #println("   ")
+    #println("z[:] ", z[:], " x1 ", x1)
+    #println("   ")
     return z[:]
 end
 
@@ -826,7 +841,7 @@ function timeevolution(state_array,finaltime,dir,run)
         
 
         run=int(run)
-        if iter%50==0
+        if iter%10==0
             #CSV.write(dir*"/run$run/time_step$iter.csv", Tables.table(state_array), writeheader=false)
             CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
             
@@ -845,7 +860,7 @@ function timeevolution(state_array,finaltime,dir,run)
             println("monitor ratio is above 0.6, iteration ", iter, ", t=", t,)
             auxxx=1
         end"""
-        if maximum(monitor_ratio)>0.60
+        if maximum(monitor_ratio)>0.70
             global criticality = true
             println("Supercritical evolution! At time ", t, ", iteration = ", iter)
             println("t = ", t, "iteration ", iter, " monitor ratio = ", maximum(monitor_ratio))
