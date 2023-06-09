@@ -74,8 +74,8 @@ function gridfunc(x)
     #return tanh.((x ./ 4) ./ (sqrt.(1 .- x .^ 2))) #option 2
     #return 1.0/2.0 .+ 1.0/2.0 .* cos.(pi .* (1.0 .+ x)) #option 3
     #return tanh.((x ./ 2) ./ (sqrt.(1.1 .- x .^ 2))) #option 4
-    return tanh.((x ./ 4) ./ (sqrt.(1.01 .- x .^ 2))) #option 5
-    #return 1/2 .+ 1/2 .* cos.( pi .* (1 .- 0.9 .* x)) #option 6
+    #return tanh.((x ./ 4) ./ (sqrt.(1.01 .- x .^ 2))) #option 5
+    return 1/2 .+ 1/2 .* cos.( pi .* (1 .- 0.9 .* x)) #option 6
     
 end;
 
@@ -120,7 +120,9 @@ function analytic_jacobian(x)
     end
 end;
 
-
+function inverse(x)
+    return -(acos(2*x-1)-pi)/(0.9*pi)
+end
 
 # Interpolation
 
@@ -144,7 +146,7 @@ end
 
 
 # Calculating dt
-function speed(X, m, beta,dx)
+function speed(X, m, beta)
 
     L = length(X)
     
@@ -152,13 +154,9 @@ function speed(X, m, beta,dx)
 
     g = zeros(int(L-5-ori))
     g=abs.((1.0 .- initX[ori+1:L-4]) .^ 3.0 .* exp.(2 .* state_array[ori+1:L-4,2]) .* (2 .* state_array[ori+1:L-4,1] .- initX[ori+1:L-4] ./ (1 .- initX[ori+1:L-4])) ./ (2 .* initX[ori+1:L-4]))
-    println(g)
-
-    if loggrid == true
-        g = g ./ jacobian_func(X[5:L-4])#analytic_jacobian(X[5:L-4])
-    end
+    #println(g)
     
-    println(g)
+    #println(g)
     z=maximum(g)
     if isnan(z)
         println("Error: Speed is NaN!")
@@ -169,12 +167,23 @@ end
 function update_dt(X, m, beta,dt,ginit)
 
     monitor_ratio = zeros(L)
-    dx=X[5]-X[4]
-    g=speed(X,m,beta,dx)
+    
+    g=speed(X,m,beta)
+
+    if loggrid==false
+        dx=X[5]-X[4]
+    else
+        aux=zeros(L-7)
+        for i in 1:L-7
+            aux[i]=initX1[i+1]-initX1[i]
+        end
+        dx=minimum(aux)
+    end
 
     """if dt*(ginit/g) < 0.00014
         println("dt ", dt "\n g", g, " ginit ", ginit)
     end"""
+
     return  dx/g*0.5#dt*(ginit/g)
 
 end
@@ -492,7 +501,8 @@ function Der(y,i,k,X)
 
     jacob = 1.0
     if loggrid==true
-        jacob = jacobian_func(X[i])#analytic_jacobian(X[i])#jacobian(X,originalX,i)#loggridfunc(X[i])
+        X = originalX
+        jacob = jacobian_func(X[i])
     end
 
     if i==4 # left boundary LOP1, TEM
@@ -501,6 +511,27 @@ function Der(y,i,k,X)
         z = (-y[i-3,k]+4*y[i-2,k]-7*y[i-1,k]+4*y[i,k])/(2*(X[i]-X[i-1]))*jacob
     else
         z = (y[i+1,k]-y[i-1,k])/(2*(X[i+1]-X[i]))*jacob
+    end
+        
+    return z
+    
+end
+
+# Finite difference approximation
+function Dertest(y,i,X)
+
+    jacob = 1.0
+    if loggrid==true
+        X = originalX
+        jacob = jacobian_func(X[i])
+    end
+    
+    if i==4 # left boundary LOP1, TEM
+        z = (y[i+3]-4*y[i+2]+7*y[i+1]-4*y[i])/(2*(X[i+1]-X[i]))*jacob
+    elseif i==L-3
+        z = (-y[i-3]+4*y[i-2]-7*y[i-1]+4*y[i])/(2*(X[i]-X[i-1]))*jacob
+    else
+        z = (y[i+1]-y[i-1])/(2*(X[i+1]-X[i]))*jacob
     end
         
     return z
@@ -598,7 +629,19 @@ function bulkSF(y,i,X)
 
     return dy
 end
+"""function bulkSF(y,i,X,funcs)
+    
+    dm=derivative(funcs[1],X[i])
+    dbeta=derivative(funcs[2],X[i])
+    dpsi=derivative(funcs[3],X[i])
+    dderpsi=derivative(funcs[4],X[i])
 
+    #psi,x
+    dy=-1.0/2.0*exp(2.0*y[i,2])*(-(2*(X[i]-1)^3*y[i,3]*(X[i]*((X[i]-1)*dm+X[i]*dbeta)+y[i,1]*(1+2*(X[i]-1)*X[i]*dbeta)))/X[i]^3 - (2*(X[i]-1)^4*(X[i]*((X[i]-1)*dm+X[i]*dbeta)+y[i,1]*(1+2(X[i]-1)*X[i]*dbeta))*y[i,4])/X[i]^2 - ((X[i]+2*(X[i]-1)*y[i,1])*dderpsi)/X[i])
+
+    return dy
+end
+"""
 
 
 function boundarySF(y,X)
@@ -637,14 +680,17 @@ function RHS(y0,x1,time,func,i,data)
     #z=Array{Float128}(undef, length(y0))
     derpsi = func
     
-    z[3]=derpsi(x1)
+    
     #z[3]=evalInterval(Float128.([x1]),initX1,coef,3)[1];
 
     jacob = 1.0
-    if loggrid==true
-        jacob = jacobian_func(x1)#analytic_jacobian(x1)#dergrid_func(x1)
-    end
+    """if loggrid==true
+        x1=inverse(x1)
+        jacob = jacobian_func(x1) #analytic_jacobian(x1)#dergrid_func(x1) WARNING THIS X1 SHOULD BE ORIGINALX
+        println("jacob= ",jacob)
+    end"""
 
+    z[3]=derpsi(x1)./jacob
     #taylor
     """if i>4#x1>0.02
         z[3] = derpsi(x1)
@@ -674,18 +720,8 @@ function RHS(y0,x1,time,func,i,data)
         z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0 ./ jacob;
         z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0 ./ jacob;
         
-        """if loggrid==false
-            z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0 ./ jacob;
-            z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0 ./ jacob;
-        else
-            z[1] = 0.0
-            z[2] = 0.0
-        end"""
-        #println("hello")
-        
+
     else #bulk
-        #z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;
-        #z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0;
         z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0 ./ jacob;
         z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0 ./ jacob;
         
@@ -712,13 +748,19 @@ function SF_RHS(data,t,X)
     y0=[0.0 0.0 0.0]
     data[4:L-3,1:3] = twod_n_rk4wrapper(RHS,y0,X[4:L-3],t,derpsi_func,data[:,:])
 
+    #NEW
+    m_func = Spline1D(X[4:L-3],data[4:L-3,1],k=4)
+    beta_func = Spline1D(X[4:L-3],data[4:L-3,2],k=4)
+    psi_func = Spline1D(X[4:L-3],data[4:L-3,3],k=4)
 
+    funcs=[m_func beta_func psi_func derpsi_func]
+    
 
     Threads.@threads for i in 4:L-3 #ORI
         if X[i]<10^(-15) #left
             #println("hey SF_RHS func")
             dy[i,4]= +1.0/2.0*Der(data,i,4,X) - dissipation4(data,i,0.02)[4];
-            #dy[i,4]= +1.0/2.0*derivative(derpsi_func,X[i]) #- dissipation6(data,i,0.0015)[4];
+            #dy[i,4]= +1.0/2.0*derivative(derpsi_func,X[i]) - dissipation4(data,i,0.02)[4];
 
         elseif X[i] < (1-10^(-15)) #bulk
             dy[i,4]=bulkSF(data,i,X) - dissipation4(data,i,0.02)[4]#epsilon(dt,dx))[4];
@@ -808,19 +850,18 @@ function timeevolution(state_array,finaltime,dir,run)
     iter = 0
     mesh = 0
 
-    auxxx=0
     while t<finaltime#@TRACK
 
         iter = iter + 1
 
         #update time increment
-        #global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)
-        
+        global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)
+        #global dt=0.0000000001
         t = t + dt
-        if iter%20==0
-            println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2], dx), ", dx/dt=", dx/dt)
-        end
-        #println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2], dx), ", dx/dt=", dx/dt)
+        """if iter%20==0
+            println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
+        end"""
+        println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
 
         T_array = vcat(T_array,t)
 
@@ -843,25 +884,25 @@ function timeevolution(state_array,finaltime,dir,run)
         
 
         run=int(run)
-        if iter%10==0
-            #CSV.write(dir*"/run$run/time_step$iter.csv", Tables.table(state_array), writeheader=false)
-            CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
+        """if iter%20==0
+            if bisection==true
+                CSV.write(dir*"/run$run/time_step$iter.csv", Tables.table(state_array), writeheader=false)
+            else
+                CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
+            end
             
             #write muninn
             print_muninn(files, t, state_array[:,1:5],res,"a")
             
-        end
-        #CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
+        end"""
+        CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
         #print_muninn(files, t, state_array[:,1:5],res,"a")
         
         #threshold for apparent black hole formation
         global monitor_ratio[5:L-4] = 2 .* state_array[5:L-4,1] ./ initX[5:L-4] .* (1 .- initX[5:L-4])
 
 
-        """if maximum(monitor_ratio)>0.6 && auxxx==0
-            println("monitor ratio is above 0.6, iteration ", iter, ", t=", t,)
-            auxxx=1
-        end"""
+       
         if maximum(monitor_ratio)>0.70
             global criticality = true
             println("Supercritical evolution! At time ", t, ", iteration = ", iter)
