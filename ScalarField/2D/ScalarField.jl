@@ -517,14 +517,65 @@ function Der(y,i,k,X)
     
 end
 
+#matrix
+function unevenDer(y,i,k,X,spls)
+
+    spl=spls[k]
+
+    dx=X[i+1]-X[i] #shouldnt this dx be constant, for error of derivatives to match?
+
+    if i==4 # left boundary LOP1, TEM
+        dx=X[i+1]-X[i]
+        z = (spl(X[i]+3*dx)-4*spl(X[i]+2*dx)+7*y[i+1,k]-4*y[i,k])/(2*dx)
+    elseif i==L-3
+        dx=X[i]-X[i-1]
+        z = (-spl(X[i]-3*dx)+4*spl(X[i]-2*dx)-7*y[i-1,k]+4*y[i,k])/(2*dx)
+    else
+        dx=X[i+1]-X[i]
+        z = (y[i+1,k]-spl(X[i]-dx))/(2*dx)
+
+        if(X[i]-dx)<0.0 #avoid evaluating spline out of domain
+            dx=X[i+1]-X[i]
+            z = (spl(X[i]+3*dx)-4*spl(X[i]+2*dx)+7*y[i+1,k]-4*y[i,k])/(2*dx)
+        end
+    end
+        
+    return z
+    
+end
+#array
+function unevenDer(y,i,X,spl)
+
+    f=spl
+
+    if i==4 # left boundary LOP1, TEM
+        dx=X[i+1]-X[i] #shouldnt this dx be constant, for error of derivatives to match?
+        z = (spl(X[i]+3*dx)-4*spl(X[i]+2*dx)+7*y[i+1]-4*y[i])/(2*dx)
+       
+    elseif i==L-3
+        dx=X[i]-X[i-1]
+        z = (-spl(X[i]-3*dx)+4*spl(X[i]-2*dx)-7*y[i-1]+4*y[i])/(2*dx)
+    else
+        dx=X[i+1]-X[i]
+        z = (y[i+1]-spl(X[i]-dx))/(2*dx)
+        if(X[i]-dx)<0.0 #avoid evaluating spline out of domain
+            dx=X[i+1]-X[i]
+            z = (spl(X[i]+3*dx)-4*spl(X[i]+2*dx)+7*y[i+1]-4*y[i])/(2*dx)
+        end
+    end
+        
+    return z
+    
+end
+
 # Finite difference approximation
 function Dertest(y,i,X)
 
     jacob = 1.0
-    if loggrid==true
+    """if loggrid==true
         X = originalX
         jacob = jacobian_func(X[i])
-    end
+    end"""
     
     if i==4 # left boundary LOP1, TEM
         z = (y[i+3]-4*y[i+2]+7*y[i+1]-4*y[i])/(2*(X[i+1]-X[i]))*jacob
