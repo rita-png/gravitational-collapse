@@ -97,7 +97,7 @@ function analytic_jacobian(x)
 end;
 
 function inverse(x)
-    return x = 1-1/pi*acos(2x-1)#-(acos(2*x-1)-pi)/(0.9*pi)
+    return x = 1/2+1/2*cos(pi*(1-x))#1-1/pi*acos(2x-1)#-(acos(2*x-1)-pi)/(0.9*pi)
 end
 
 # Interpolation
@@ -605,7 +605,11 @@ function bulkSF(y,i,X)
     
     #psi,x
     #dy=-1.0/2.0*exp(2.0*y[i,2])*(-(2*(X[i]-1)^3*y[i,3]*(X[i]*((X[i]-1)*Der(y,i,1,X)+X[i]*Der(y,i,2,X))+y[i,1]*(1+2*(X[i]-1)*X[i]*Der(y,i,2,X))))/X[i]^3 - (2*(X[i]-1)^4*(X[i]*((X[i]-1)*Der(y,i,1,X)+X[i]*Der(y,i,2,X))+y[i,1]*(1+2(X[i]-1)*X[i]*Der(y,i,2,X)))*y[i,4])/X[i]^2 - ((X[i]+2*(X[i]-1)*y[i,1])*Der(y,i,4,X))/X[i])
-    dy=-(1.0/(2.0 * pi^2.0*(pi-h(X[i]))^3.0))*exp(2.0*y[i,2]) *(-pi^2.0*h(X[i])^2.0*(pi-h(X[i])*(1.0+2.0*y[i,1]))*y[i,3]+pi*(pi-h(X[i]))*h(X[i])^2.0*y[i,3]*(pi-2.0*sqrt(-((-1.0+X[i])*X[i]))*h(X[i])^2.0*Der(y,i,1,X))+2.0*pi*sqrt(-((-1.0+X[i])*X[i]))*(pi-h(X[i]))*h(X[i])^3.0*(pi-h(X[i])*(1.0+2.0*y[i,1]))*y[i,3]*Der(y,i,2,X)+pi*sqrt(-((-1.0+X[i])*X[i]))*(pi-h(X[i]))*h(X[i])^3.0*(pi-h(X[i])*(1.0+2.0*y[i,1]))*y[i,4]-(1.0-X[i])*X[i]*(pi-h(X[i]))^2.0*h(X[i])^5.0*(1.0-2.0*Der(y,i,1,X)+2.0*(X[i]-2.0*y[i,1])*Der(y,i,2,X))*y[i,4]-pi^2.0*(pi-h(X[i]))^2.0*(pi-h(X[i])*(1.0+2.0*y[i,1]))*Der(y,i,4,X))
+    #dy=-(1.0/(2.0 * pi^2.0*(pi-h(X[i]))^3.0))*exp(2.0*y[i,2]) *(-pi^2.0*h(X[i])^2.0*(pi-h(X[i])*(1.0+2.0*y[i,1]))*y[i,3]+pi*(pi-h(X[i]))*h(X[i])^2.0*y[i,3]*(pi-2.0*sqrt(-((-1.0+X[i])*X[i]))*h(X[i])^2.0*Der(y,i,1,X))+2.0*pi*sqrt(-((-1.0+X[i])*X[i]))*(pi-h(X[i]))*h(X[i])^3.0*(pi-h(X[i])*(1.0+2.0*y[i,1]))*y[i,3]*Der(y,i,2,X)+pi*sqrt(-((-1.0+X[i])*X[i]))*(pi-h(X[i]))*h(X[i])^3.0*(pi-h(X[i])*(1.0+2.0*y[i,1]))*y[i,4]-(1.0-X[i])*X[i]*(pi-h(X[i]))^2.0*h(X[i])^5.0*(1.0-2.0*Der(y,i,1,X)+2.0*(X[i]-2.0*y[i,1])*Der(y,i,2,X))*y[i,4]-pi^2.0*(pi-h(X[i]))^2.0*(pi-h(X[i])*(1.0+2.0*y[i,1]))*Der(y,i,4,X))
+    
+    #dy=-(1.0/2.0)*exp(2.0*y[i,2])*(-cot((pi*X[i])/2.0)^6.0*(-2.0*y[i,1]+tan((pi*X[i])/2.0)^2.0)*y[i,3]+(cot((pi*X[i])/2.0)^4.0*y[i,3]*(pi-2.0*cos((pi*X[i])/2.0)^2.0*cot((pi*X[i])/2.0)*Der(y,i,1,X)))/pi-(cot((pi*X[i])/2.0)^5.0*(-1.0+cos(pi*X[i])+2.0*(1.0+cos(pi*X[i]))*y[i,1])*y[i,3]*Der(y,i,2,X))/pi-(cot((pi*X[i])/2.0)^5.0*(-1.0+cos(pi*X[i])+2.0*(1.0+cos(pi*X[i]))*y[i,1])*y[i,4])/(2*pi)+(cos((pi*X[i])/2.0)^4.0*cot((pi*X[i])/2.0)^4.0*(-1.0+2.0*Der(y,i,1,X)-2.0*(X[i]-2.0*y[i,1])*Der(y,i,2,X))*y[i,4])/pi^2+(-1.0+2.0*cot((pi*X[i])/2.0)^2.0*y[i,1])*Der(y,i,4,X))
+    
+    dy=-(1.0/2.0)*exp(2.0*y[i,2])*(cot((pi*X[i])/2)^4*(-1+2*cot((pi*X[i])/2)^2*y[i,1])*y[i,3]+(cot((pi*X[i])/2)^4*y[i,3]*(pi-2*cos((pi*X[i])/2)^2*cot((pi*X[i])/2)*Der(y,i,1,X)))/pi-(cot((pi*X[i])/2)^5*(-1+cos(pi*X[i])+2*(1+cos(pi*X[i]))*y[i,1])*y[i,3]*Der(y,i,2,X))/pi-(cot((pi*X[i])/2)^5*(-1+cos(pi*X[i])+2*(1+cos(pi*X[i]))*y[i,1])*y[i,4])/(2*pi)+(cos((pi*X[i])/2)^4*cot((pi*X[i])/2)^4*(-1+2*Der(y,i,1,X)-2*(X[i]-2*y[i,1])*Der(y,i,2,X))*y[i,4])/pi^2+(-1+2*cot((pi*X[i])/2)^2*y[i,1])*Der(y,i,4,X))
     return dy
 end
 
@@ -654,14 +658,19 @@ function RHS(y0,x1,time,func,i,data)
         z[1] = 0.0;
         z[2] = 0.0;
     elseif abs.(x1 .- 1.0)<10^(-15) #right
-        z[1] = 0.0#(4*pi^2*(-1+pi/h(x1)+2*(-2+pi/h(x1))*y0[1])*(y0[3]+(sqrt(1-(-1+2*x1)^2)*(-2+pi/h(x1))*(-1+pi/h(x1))*h(x1)^2*z[3])/(2*pi))^2)/(sqrt(1-(-1+2*x1)^2)*(-1+pi/h(x1))^3*h(x1)^2)
-        z[2] = 0.0#-((2*(pi-2*h(x1))*(pi*y0[3]+sqrt(-((-1+x1)*x1))*(pi^2-3*pi*h(x1)+2*h(x1)^2)*(z[3]))^2)/(sqrt(-((-1+x1)*x1))*(pi-h(x1))^3))
-        
-
+        #grid 1
+        #z[1] = 0.0#(4*pi^2*(-1+pi/h(x1)+2*(-2+pi/h(x1))*y0[1])*(y0[3]+(sqrt(1-(-1+2*x1)^2)*(-2+pi/h(x1))*(-1+pi/h(x1))*h(x1)^2*z[3])/(2*pi))^2)/(sqrt(1-(-1+2*x1)^2)*(-1+pi/h(x1))^3*h(x1)^2)
+        #z[2] = 0.0#-((2*(pi-2*h(x1))*(pi*y0[3]+sqrt(-((-1+x1)*x1))*(pi^2-3*pi*h(x1)+2*h(x1)^2)*(z[3]))^2)/(sqrt(-((-1+x1)*x1))*(pi-h(x1))^3))
+        #grid 2
+        z[1] = ((-1.0+cos(pi*x1)+2.0(1.0+cos(pi*x1))*y0[1])*sin(pi*x1)*(-2.0*y0[3]+sin(pi*x1)*z[3])^2.0)/(-1.0+cos(pi*x1))^3.0
+        z[2] = 1.0/16.0*csc((pi*x1)/2.0)^8.0*sin(pi*x1)^3.0*(-2.0*pi*y0[3]+sin(pi*x1)*z[3])^2
     else #bulk
-        z[1] = (4*pi^2*(-1+pi/h(x1)+2*(-2+pi/h(x1))*y0[1])*(y0[3]+(sqrt(1-(-1+2*x1)^2)*(-2+pi/h(x1))*(-1+pi/h(x1))*h(x1)^2*z[3])/(2*pi))^2)/(sqrt(1-(-1+2*x1)^2)*(-1+pi/h(x1))^3*h(x1)^2)
-        z[2] = -((2*(pi-2*h(x1))*(pi*y0[3]+sqrt(-((-1+x1)*x1))*(pi^2-3*pi*h(x1)+2*h(x1)^2)*(z[3]))^2)/(sqrt(-((-1+x1)*x1))*(pi-h(x1))^3))
-        
+        #grid 1
+        #z[1] = (4*pi^2*(-1+pi/h(x1)+2*(-2+pi/h(x1))*y0[1])*(y0[3]+(sqrt(1-(-1+2*x1)^2)*(-2+pi/h(x1))*(-1+pi/h(x1))*h(x1)^2*z[3])/(2*pi))^2)/(sqrt(1-(-1+2*x1)^2)*(-1+pi/h(x1))^3*h(x1)^2)
+        #z[2] = -((2*(pi-2*h(x1))*(pi*y0[3]+sqrt(-((-1+x1)*x1))*(pi^2-3*pi*h(x1)+2*h(x1)^2)*(z[3]))^2)/(sqrt(-((-1+x1)*x1))*(pi-h(x1))^3))
+        #grid 2
+        z[1] = ((-1.0+cos(pi*x1)+2.0(1.0+cos(pi*x1))*y0[1])*sin(pi*x1)*(-2.0*y0[3]+sin(pi*x1)*z[3])^2.0)/(-1.0+cos(pi*x1))^3.0
+        z[2] = 1.0/16.0*csc((pi*x1)/2.0)^8.0*sin(pi*x1)^3.0*(-2.0*pi*y0[3]+sin(pi*x1)*z[3])^2
     end
     #println("   ")
     #println("z[:] ", z[:], " x1 ", x1)
@@ -689,24 +698,26 @@ function SF_RHS(data,t,X)
     Threads.@threads for i in 4:L-3 #ORI
         if X[i]<10^(-15) #left
             dy[i,4]= 0.0 - dissipation4(data,i,0.02)[4];
-            if isnan(dy[i,4])
-                println("NAN!!!!!!!!!, i =", i)
-            end
+            
         elseif X[i] < (1-10^(-15)) #bulk
             dy[i,4]=bulkSF(data,i,X) - dissipation4(data,i,0.02)[4]
             if isnan(dy[i,4])
                 println("NAN!!!!!!!!!, i =", i)
             end
         else #right
-            dy[i,4]= bulkSF(data,i,X) - dissipation4(data,i,0.02)[4]
+            dy[i,4]= 0.0 - dissipation4(data,i,0.02)[4]
             if isnan(dy[i,4])
-                println("NAN!!!!!!!!!, i =", i)
+                println("NAN!!!!!!!!! aqui, i =", i)
             end
+        
         end
+
+    
+    
     end
     
     
-    
+    dy[4,4]=extrapolate_in(dy[5,4], dy[6,4], dy[7,4], dy[8,4])
   
     #dy=ghost(dy)
     return dy
@@ -791,7 +802,7 @@ function timeevolution(state_array,finaltime,dir,run)
 
         #update time increment
         #global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)
-        #global dt=0.0000000001
+        global dt=0.0000000001
         t = t + dt
         """if iter%20==0
             println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
