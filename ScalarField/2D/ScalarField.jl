@@ -75,12 +75,13 @@ function gridfunc(x)
     #return 1.0/2.0 .+ 1.0/2.0 .* cos.(pi .* (1.0 .+ x)) #option 3
     #return tanh.((x ./ 2) ./ (sqrt.(1.1 .- x .^ 2))) #option 4
     #return tanh.((x ./ 4) ./ (sqrt.(1.01 .- x .^ 2))) #option 5
-    return 1/2 .+ 1/2 .* cos.( pi .* (1 .- 0.9 .* x)) #option 6
+    #return 1/2 .+ 1/2 .* cos.( pi .* (1 .- x)) #option 6
+    return 1/2 .+ 1/2 .* cos.( pi .* (1 .- x)) #option 7
     
 end;
 
 # outputs dxtilde/dx(x)
-function analytic_jacobian(x)
+"""function analytic_jacobian(x)
 
     if length(x) == 1
         if abs.(x .- 1.0)<10^(-15) #right
@@ -118,7 +119,7 @@ function analytic_jacobian(x)
         
         return z
     end
-end;
+end;"""
 
 function inverse(x)
     return -(acos(2*x-1)-pi)/(0.9*pi)
@@ -500,10 +501,10 @@ end"""
 function Der(y,i,k,X)
 
     jacob = 1.0
-    if loggrid==true
+    """if loggrid==true
         X = originalX
         jacob = jacobian_func(X[i])
-    end
+    end"""
 
     if i==4 # left boundary LOP1, TEM
         z = (y[i+3,k]-4*y[i+2,k]+7*y[i+1,k]-4*y[i,k])/(2*(X[i+1]-X[i]))*jacob
@@ -680,6 +681,15 @@ function bulkSF(y,i,X)
 
     return dy
 end
+
+function bulkSF(y,i,X,spls)
+    
+    #psi,x
+    dy=-1.0/2.0*exp(2.0*y[i,2])*(-(2*(X[i]-1)^3*y[i,3]*(X[i]*((X[i]-1)*unevenDer(y,i,1,X,spls)+X[i]*unevenDer(y,i,2,X,spls))+y[i,1]*(1+2*(X[i]-1)*X[i]*unevenDer(y,i,2,X,spls))))/X[i]^3 - (2*(X[i]-1)^4*(X[i]*((X[i]-1)*unevenDer(y,i,1,X,spls)+X[i]*unevenDer(y,i,2,X,spls))+y[i,1]*(1+2(X[i]-1)*X[i]*unevenDer(y,i,2,X,spls)))*y[i,4])/X[i]^2 - ((X[i]+2*(X[i]-1)*y[i,1])*unevenDer(y,i,4,X,spls))/X[i])
+
+    return dy
+end
+
 """function bulkSF(y,i,X,funcs)
     
     dm=derivative(funcs[1],X[i])
@@ -809,15 +819,17 @@ function SF_RHS(data,t,X)
 
     Threads.@threads for i in 4:L-3 #ORI
         if X[i]<10^(-15) #left
-            #println("hey SF_RHS func")
-            dy[i,4]= +1.0/2.0*Der(data,i,4,X) - dissipation4(data,i,0.02)[4];
+            dy[i,4]= +1.0/2.0*unevenDer(data,i,4,X,funcs) #- dissipation4(data,i,0.02)[4];
+            #dy[i,4]= +1.0/2.0*Der(data,i,4,X) - dissipation4(data,i,0.02)[4];
             #dy[i,4]= +1.0/2.0*derivative(derpsi_func,X[i]) - dissipation4(data,i,0.02)[4];
 
         elseif X[i] < (1-10^(-15)) #bulk
-            dy[i,4]=bulkSF(data,i,X) - dissipation4(data,i,0.02)[4]#epsilon(dt,dx))[4];
+            dy[i,4]=bulkSF(data,i,X,funcs) - dissipation4(data,i,0.02)[4]#epsilon(dt,dx))[4];
+            #dy[i,4]=bulkSF(data,i,X) - dissipation4(data,i,0.02)[4]#epsilon(dt,dx))[4];
 
         else #right
-            dy[i,4]= bulkSF(data,i,X) - dissipation4(data,i,0.02)[4]
+            dy[i,4]= bulkSF(data,i,X,funcs) - dissipation4(data,i,0.02)[4]
+            #dy[i,4]= bulkSF(data,i,X) - dissipation4(data,i,0.02)[4]
             #0.0#1.0/2.0*exp(2*data[i,2])*derivative(derpsi_func,X[i])#bulkSF(data,i,X,der_funcs) #- dissipation6(data,i,0.035)[4]#1.0/2.0*exp(2*data[i,2])*Der(data,i,4,X) - dissipation6(data,i,epsilon(dt,dx))[4];#0.0
         end
     end
@@ -909,10 +921,10 @@ function timeevolution(state_array,finaltime,dir,run)
         global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)
         #global dt=0.0000000001
         t = t + dt
-        """if iter%20==0
+        if iter%100==0
             println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
-        end"""
-        println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
+        end
+        #println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
 
         T_array = vcat(T_array,t)
 
@@ -935,7 +947,7 @@ function timeevolution(state_array,finaltime,dir,run)
         
 
         run=int(run)
-        """if iter%20==0
+        if iter%100==0
             if bisection==true
                 CSV.write(dir*"/run$run/time_step$iter.csv", Tables.table(state_array), writeheader=false)
             else
@@ -945,8 +957,8 @@ function timeevolution(state_array,finaltime,dir,run)
             #write muninn
             print_muninn(files, t, state_array[:,1:5],res,"a")
             
-        end"""
-        CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
+        end
+        #CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
         #print_muninn(files, t, state_array[:,1:5],res,"a")
         
         #threshold for apparent black hole formation
