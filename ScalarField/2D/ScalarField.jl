@@ -75,13 +75,13 @@ function gridfunc(x)
     #return 1.0/2.0 .+ 1.0/2.0 .* cos.(pi .* (1.0 .+ x)) #option 3
     #return tanh.((x ./ 2) ./ (sqrt.(1.1 .- x .^ 2))) #option 4
     #return tanh.((x ./ 4) ./ (sqrt.(1.01 .- x .^ 2))) #option 5
-    #return 1/2 .+ 1/2 .* cos.( pi .* (1 .- x)) #option 6
-    return 1/2 .+ 1/2 .* cos.( pi .* (1 .- x)) #option 7
+    return 1/2 .+ 1/2 .* cos.( pi .* (1 .- 0.9 .* x)) #option 6
+    #return 1/2 .+ 1/2 .* cos.( pi .* (1 .- x)) #option 7
     
 end;
 
 # outputs dxtilde/dx(x)
-"""function analytic_jacobian(x)
+function analytic_jacobian(x)
 
     if length(x) == 1
         if abs.(x .- 1.0)<10^(-15) #right
@@ -119,7 +119,7 @@ end;
         
         return z
     end
-end;"""
+end;
 
 function inverse(x)
     return -(acos(2*x-1)-pi)/(0.9*pi)
@@ -570,7 +570,7 @@ function unevenDer(y,i,X,spl)
 end
 
 # Finite difference approximation
-function Dertest(y,i,X)
+"""function Dertest(y,i,X)
 
     jacob = 1.0
     """if loggrid==true
@@ -589,7 +589,7 @@ function Dertest(y,i,X)
     return z
     
 end
-
+"""
 
 # Finite difference approximation
 """function DDer(y,i,k,X) #4th
@@ -653,27 +653,7 @@ function chebyshev(N)
     return sort(X)
 end
 
-function chebyshev_weigth(X)
-    w=ones(length(X))
-    len=length(X)
-    for i in 1:len
-            
-        w[i]=w[i]=1/2+1/2*abs(cos((i-1)*pi/(len)))#1/2+1/2*(cos(1/2*(i-1)*pi/(len)))
 
-    end
-    return w
-end
-function chebyshev_cut(X)
-    N=length(X)
-    new_grid=zeros(int(N/4))
-    
-    new_grid[1:int(N/4)] = X[1:int(N/4)]
-    new_grid=vcat(new_grid, X[int(N/4):4:int(3*N/4)])
-    new_grid=vcat(new_grid, X[int(3*N/4):2:int(N)])
-    
-    #deleteat!(A, 2)
-    return new_grid
-end
 function bulkSF(y,i,X)
     
     #psi,x
@@ -690,19 +670,6 @@ function bulkSF(y,i,X,spls)
     return dy
 end
 
-"""function bulkSF(y,i,X,funcs)
-    
-    dm=derivative(funcs[1],X[i])
-    dbeta=derivative(funcs[2],X[i])
-    dpsi=derivative(funcs[3],X[i])
-    dderpsi=derivative(funcs[4],X[i])
-
-    #psi,x
-    dy=-1.0/2.0*exp(2.0*y[i,2])*(-(2*(X[i]-1)^3*y[i,3]*(X[i]*((X[i]-1)*dm+X[i]*dbeta)+y[i,1]*(1+2*(X[i]-1)*X[i]*dbeta)))/X[i]^3 - (2*(X[i]-1)^4*(X[i]*((X[i]-1)*dm+X[i]*dbeta)+y[i,1]*(1+2(X[i]-1)*X[i]*dbeta))*y[i,4])/X[i]^2 - ((X[i]+2*(X[i]-1)*y[i,1])*dderpsi)/X[i])
-
-    return dy
-end
-"""
 
 
 function boundarySF(y,X)
@@ -787,9 +754,6 @@ function RHS(y0,x1,time,func,i,data)
         z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0 ./ jacob;
         
     end
-    #println("   ")
-    #println("z[:] ", z[:], " x1 ", x1)
-    #println("   ")
     return z[:]
 end
 
@@ -819,7 +783,7 @@ function SF_RHS(data,t,X)
 
     Threads.@threads for i in 4:L-3 #ORI
         if X[i]<10^(-15) #left
-            dy[i,4]= +1.0/2.0*unevenDer(data,i,4,X,funcs) #- dissipation4(data,i,0.02)[4];
+            dy[i,4]= +1.0/2.0*unevenDer(data,i,4,X,funcs) - dissipation4(data,i,0.02)[4];
             #dy[i,4]= +1.0/2.0*Der(data,i,4,X) - dissipation4(data,i,0.02)[4];
             #dy[i,4]= +1.0/2.0*derivative(derpsi_func,X[i]) - dissipation4(data,i,0.02)[4];
 
@@ -919,7 +883,7 @@ function timeevolution(state_array,finaltime,dir,run)
 
         #update time increment
         global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)
-        #global dt=0.0000000001
+        #global dt=0.00001
         t = t + dt
         if iter%100==0
             println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
