@@ -664,9 +664,9 @@ function timeevolution(state_array,finaltime,dir,run)#(state_array,finaltime,dir
         global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)      
         
         t = t + dt
-        if iter%10==0
+        """if iter%10==0
             println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2], dx), ", dx/dt=", dx/dt)
-        end
+        end"""
         
         
         T_array = vcat(T_array,t)
