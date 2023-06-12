@@ -34,12 +34,11 @@ function init_gaussian_der(x,r0,sigma,A)
     return z
 end
 
-# Interpolation
 
-function interpolate(x,x1,x2,y1,y2)
-    return y1+(y2-y1)*(x-x1)/(x2-x1)
-end
-#(1−x)^4=x^4−4x^3+6x^2−4x+1 ex. 4th order polynomial
+# outputs xtilde(x)
+function gridfunc(x)
+    return 1/2 .+ 1/2 .* cos.( pi .* (1 .- 0.9 .* x)) #option 6
+end;
 
 
 
@@ -56,7 +55,7 @@ end
 
 
 # Calculating dt
-function speed(X, m, beta,dx)
+function speed(X, m, beta)
 
     L = length(X)
     
@@ -72,15 +71,23 @@ function speed(X, m, beta,dx)
     return z
 end
 
+
 function update_dt(X, m, beta,dt,ginit)
 
     monitor_ratio = zeros(L)
-    dx=X[5]-X[4]
-    g=speed(X,m,beta,dx)
+    
+    g=speed(X,m,beta)
 
-    """if dt*(ginit/g) < 0.00014
-        println("dt ", dt "\n g", g, " ginit ", ginit)
-    end"""
+    if loggrid==false
+        dx=X[5]-X[4]
+    else
+        aux=zeros(L-7)
+        for i in 1:L-7
+            aux[i]=initX1[i+1]-initX1[i]
+        end
+        dx=minimum(aux)
+    end
+
     return  dx/g*0.5#dt*(ginit/g)
 
 end
@@ -390,6 +397,115 @@ function DDer_array(y,k,X)
     return aux2
 end
 
+
+#matrix
+function unevenDer(y,i,k,X,spls)
+
+    if k==4 #array of spline has variables m, beta and derpsi
+        spl=spls[3]
+    else
+        spl=spls[k]
+    end
+
+    #for L-3 AND L-4 USE CENTRAL 
+    
+
+    dx=X[i+1]-X[i] #shouldnt this dx be constant, for error of derivatives to match?
+
+    if i==4 # left boundary LOP1, TEM
+        dx=X[i+1]-X[i]
+        z = (-27*y[i,k]+58*y[i+1,k]-56*spl(X[i]+2*dx)+36*spl(X[i]+3*dx)-13*spl(X[i]+4*dx)+2*spl(X[i]+5*dx))/(12*(X[i+1]-X[i]))
+    elseif i==5 # left boundary LOP1, TEM
+        dx=X[i+1]-X[i]
+        z = (-2*spl(X[i]-dx)-15*y[i,k]+28*y[i+1,k]-16*spl(X[i]+2*dx)+6*spl(X[i]+3*dx)-spl(X[i]+4*dx))/(12*(X[i+1]-X[i]))
+    """elseif i==L-3
+        dx=X[i]-X[i-1]
+        z = (-27*y[i,k]+58*y[i-1,k]-56*spl(X[i]-2*dx)+36*spl(X[i]-3*dx)-13*spl(X[i]-4*dx)+2*spl(X[i]-5*dx))/(12*(X[i]-X[i-1])) #12-06 i did *-1
+    elseif i==L-4 # right boundary TEM
+        dx=X[i+1]-X[i]
+        z = (-2*y[i+1,k]-15*y[i]+28*spl(X[i]-dx)-16*spl(X[i]-2*dx)+6*spl(X[i]-3*dx)-spl(X[i]-4*dx))/(12*(X[i+1]-X[i])) #12-06 i did *-1"""
+    else
+        dx=X[i+1]-X[i]
+        #z = (y[i+1,k]-spl(X[i]-dx))/(2*dx)
+        z = (-spl(X[i]+2dx)+8*y[i+1,k]-8*spl(X[i]-dx)+spl(X[i]-2*dx))/(12*(X[i+1]-X[i]))
+
+        if(X[i]-dx)<0.0||(X[i]-2*dx)<0.0 #avoid evaluating spline out of domain
+            dx=X[i+1]-X[i]
+            z = (spl(X[i]+3*dx)-4*spl(X[i]+2*dx)+7*y[i+1,k]-4*y[i,k])/(2*dx)
+        end
+        """if(X[i]+dx)>1.0||(X[i]+2*dx)>1.0 #avoid evaluating spline out of domain
+            dx=X[i]-X[i-1]
+            z = (-27*y[i,k]+58*y[i-1,k]-56*spl(X[i]-2*dx)+36*spl(X[i]-3*dx)-13*spl(X[i]-4*dx)+2*spl(X[i]-5*dx))/(12*(X[i]-X[i-1]))
+        end"""
+    end
+        
+    return z
+    
+end
+
+
+#array
+"""function unevenDer(y,i,X,spl)
+
+
+    
+
+    dx=X[i+1]-X[i] #shouldnt this dx be constant, for error of derivatives to match?
+
+    if i==4 # left boundary LOP1, TEM
+        dx=X[i+1]-X[i]
+        z = (-27*y[i]+58*y[i+1]-56*spl(X[i]+2*dx)+36*spl(X[i]+3*dx)-13*spl(X[i]+4*dx)+2*spl(X[i]+5*dx))/(12*(X[i+1]-X[i]))
+    elseif i==5 # left boundary LOP1, TEM
+        dx=X[i+1]-X[i]
+        z = (-2*spl(X[i]-dx)-15*y[i]+28*y[i+1]-16*spl(X[i]+2*dx)+6*spl(X[i]+3*dx)-spl(X[i]+4*dx))/(12*(X[i+1]-X[i]))
+    elseif i==L-3
+        dx=X[i]-X[i-1]
+        z = -(-27*y[i]+58*y[i-1]-56*spl(X[i]-2*dx)+36*spl(X[i]-3*dx)-13*spl(X[i]-4*dx)+2*spl(X[i]-5*dx))/(12*(X[i]-X[i-1])) #12-06 i did *-1
+    elseif i==L-4 # right boundary TEM
+        dx=X[i+1]-X[i]
+        z = -(-2*y[i+1]-15*y[i]+28*spl(X[i]-dx)-16*spl(X[i]-2*dx)+6*spl(X[i]-3*dx)-spl(X[i]-4*dx))/(12*(X[i+1]-X[i])) #12-06 i did *-1
+    else
+        dx=X[i+1]-X[i]
+        #z = (y[i+1,k]-spl(X[i]-dx))/(2*dx)
+        z = (-spl(X[i]+2dx)+8*y[i+1]-8*spl(X[i]-dx)+spl(X[i]-2*dx))/(12*(X[i+1]-X[i]))
+
+        if(X[i]-dx)<0.0||(X[i]-2*dx)<0.0 #avoid evaluating spline out of domain
+            dx=X[i+1]-X[i]
+            z = (spl(X[i]+3*dx)-4*spl(X[i]+2*dx)+7*y[i+1]-4*y[i])/(2*dx)
+        end
+        if(X[i]+dx)>1.0||(X[i]+2*dx)>1.0 #avoid evaluating spline out of domain
+            dx=X[i]-X[i-1]
+            z = -(-27*y[i]+58*y[i-1]-56*spl(X[i]-2*dx)+36*spl(X[i]-3*dx)-13*spl(X[i]-4*dx)+2*spl(X[i]-5*dx))/(12*(X[i]-X[i-1]))
+        end
+    end
+        
+    return z
+    
+end"""
+
+
+function Dertest(y,i,X)
+
+    jacob = 1.0
+    #if loggrid==true
+        #X = originalX
+        #jacob = jacobian_func(X[i])
+    #end
+    
+    if i==4 # left boundary LOP1, TEM
+        z = (y[i+3]-4*y[i+2]+7*y[i+1]-4*y[i])/(2*(X[i+1]-X[i]))*jacob
+    elseif i==L-3
+        z = (-y[i-3]+4*y[i-2]-7*y[i-1]+4*y[i])/(2*(X[i]-X[i-1]))*jacob
+    else
+        z = (y[i+1]-y[i-1])/(2*(X[i+1]-X[i]))*jacob
+    end
+        
+    return z
+    
+end
+
+
+
 int(x) = floor(Int, x)
 
 function chebyshev(N)
@@ -429,21 +545,22 @@ function chebyshev_cut(X)
     #deleteat!(A, 2)
     return new_grid
 end
-function bulkSF(y,i,X)
-    
-    #der_m = der_funcs[i-3,1]#derivative(spl_funcs[1],X[i])
-    #der_beta = der_funcs[i-3,2] #derivative(spl_funcs[2],X[i])
-    #dder_psi = der_funcs[i-3,3] #derivative(spl_funcs[3],X[i])
 
+"""function bulkSF(y,i,X)
+    
     #psi,x
     dy=-1.0/2.0*exp(2.0*y[i,2])*(-(2*(X[i]-1)^3*y[i,3]*(X[i]*((X[i]-1)*Der(y,i,1,X)+X[i]*Der(y,i,2,X))+y[i,1]*(1+2*(X[i]-1)*X[i]*Der(y,i,2,X))))/X[i]^3 - (2*(X[i]-1)^4*(X[i]*((X[i]-1)*Der(y,i,1,X)+X[i]*Der(y,i,2,X))+y[i,1]*(1+2(X[i]-1)*X[i]*Der(y,i,2,X)))*y[i,4])/X[i]^2 - ((X[i]+2*(X[i]-1)*y[i,1])*Der(y,i,4,X))/X[i])
+ 
+    return dy
+end"""
 
-    #dy=-1.0/2.0*exp(2.0*y[i,2])*(-(2*(X[i]-1)^3*y[i,3]*(X[i]*((X[i]-1)*der_m+X[i]*der_beta)+y[i,1]*(1+2*(X[i]-1)*X[i]*der_beta)))/X[i]^3 - (2*(X[i]-1)^4*(X[i]*((X[i]-1)*der_m+X[i]*der_beta)+y[i,1]*(1+2(X[i]-1)*X[i]*der_beta))*y[i,4])/X[i]^2 - ((X[i]+2*(X[i]-1)*y[i,1])*dder_psi)/X[i])
+function bulkSF(y,i,X,spls)
     
+    #psi,x
+    dy=-1.0/2.0*exp(2.0*y[i,2])*(-(2*(X[i]-1)^3*y[i,3]*(X[i]*((X[i]-1)*unevenDer(y,i,1,X,spls)+X[i]*unevenDer(y,i,2,X,spls))+y[i,1]*(1+2*(X[i]-1)*X[i]*unevenDer(y,i,2,X,spls))))/X[i]^3 - (2*(X[i]-1)^4*(X[i]*((X[i]-1)*unevenDer(y,i,1,X,spls)+X[i]*unevenDer(y,i,2,X,spls))+y[i,1]*(1+2(X[i]-1)*X[i]*unevenDer(y,i,2,X,spls)))*y[i,4])/X[i]^2 - ((X[i]+2*(X[i]-1)*y[i,1])*unevenDer(y,i,4,X,spls))/X[i])
+
     return dy
 end
-
-
 
 function boundarySF(y,X)
 
@@ -579,33 +696,25 @@ function SF_RHS(data,t,X)
     # update m, beta and psi data
     y0=[0.0 0.0 0.0]
     data[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X[4:L-3],t,derpsi_func,data[:,:])
+    data=ghost(data)
 
+    #NEW
+    m_func = Spline1D(X[4:L],data[4:L,1],k=4)
+    beta_func = Spline1D(X[4:L],data[4:L,2],k=4)
 
-    #data=ghost(data)
+    funcs=[m_func beta_func derpsi_func]
 
-    ###NEW###
-    #m_func = Spline1D(X[4:L-3],data[4:L-3,1],k=4)
-    #beta_func = Spline1D(X[4:L-3],data[4:L-3,2],k=4)
-    #der_funcs=[derivative(m_func,X[4:L-3]) derivative(beta_func,X[4:L-3]) derivative(derpsi_func,X[4:L-3])]
-    ###NEW###
-    Threads.@threads for i in 4:L-3 #ORI
+    Threads.@threads for i in 4:L-3
         if X[i]<10^(-15) #left
-            #println("hey SF_RHS func")
-            dy[i,4]= +1.0/2.0*Der(data,i,4,X) - dissipation6(data,i,0.0065)[4];
-            #dy[i,4]= +1.0/2.0*derivative(derpsi_func,X[i]) #- dissipation6(data,i,0.0015)[4];
-
+            dy[i,4]= +1.0/2.0*unevenDer(data,i,4,X,funcs) #- dissipation6(data,i,0.0065)[4];
         elseif X[i] < (1-10^(-15)) #bulk
-            dy[i,4]=bulkSF(data,i,X) - dissipation6(data,i,0.0065)[4]#epsilon(dt,dx))[4];
-
+            dy[i,4]=bulkSF(data,i,X,funcs) #- dissipation6(data,i,0.0065)[4]
         else #right
-            #dy[i,4]= 1.0/2.0*exp(2*data[i,2])*Der(data,i,4,X) - dissipation6(data,i,epsilon(dt,dx))[4]
-            dy[i,4]= bulkSF(data,i,X) - dissipation6(data,i,0.0065)[4]
-            #0.0#1.0/2.0*exp(2*data[i,2])*derivative(derpsi_func,X[i])#bulkSF(data,i,X,der_funcs) #- dissipation6(data,i,0.035)[4]#1.0/2.0*exp(2*data[i,2])*Der(data,i,4,X) - dissipation6(data,i,epsilon(dt,dx))[4];#0.0
+            dy[i,4]= bulkSF(data,i,X,funcs) #- dissipation6(data,i,0.0065)[4]
         end
     end
     
     
-  
     #dy=ghost(dy)
     return dy
 
@@ -661,12 +770,12 @@ function timeevolution(state_array,finaltime,dir,run)#(state_array,finaltime,dir
 
         #update time increment
 
-        global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)      
+        #global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)      
         
         t = t + dt
-        """if iter%10==0
-            println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2], dx), ", dx/dt=", dx/dt)
-        end"""
+        if iter%100==0
+            println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
+        end
         
         
         T_array = vcat(T_array,t)
@@ -700,7 +809,7 @@ function timeevolution(state_array,finaltime,dir,run)#(state_array,finaltime,dir
         
 
         run=int(run)
-        if iter%10==0
+        if iter%100==0
             if bisection==true
                 CSV.write(dir*"/run$run/time_step$iter.csv", Tables.table(state_array), writeheader=false)
             else
