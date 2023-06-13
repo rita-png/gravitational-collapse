@@ -155,9 +155,7 @@ function speed(X, m, beta)
 
     g = zeros(int(L-5-ori))
     g=abs.((1.0 .- initX[ori+1:L-4]) .^ 3.0 .* exp.(2 .* state_array[ori+1:L-4,2]) .* (2 .* state_array[ori+1:L-4,1] .- initX[ori+1:L-4] ./ (1 .- initX[ori+1:L-4])) ./ (2 .* initX[ori+1:L-4]))
-    #println(g)
-    
-    #println(g)
+
     z=maximum(g)
     if isnan(z)
         println("Error: Speed is NaN!")
@@ -521,7 +519,13 @@ end
 #matrix
 function unevenDer(y,i,k,X,spls)
 
-    spl=spls[k]
+    if k==4 #array of spline has variables m, beta and derpsi
+        spl=spls[3]
+    else
+        spl=spls[k]
+    end
+
+    
 
     dx=X[i+1]-X[i] #shouldnt this dx be constant, for error of derivatives to match?
 
@@ -544,6 +548,7 @@ function unevenDer(y,i,k,X,spls)
     return z
     
 end
+
 #array
 function unevenDer(y,i,X,spl)
 
@@ -573,10 +578,10 @@ end
 """function Dertest(y,i,X)
 
     jacob = 1.0
-    """if loggrid==true
-        X = originalX
-        jacob = jacobian_func(X[i])
-    end"""
+    #if loggrid==true
+        #X = originalX
+        #jacob = jacobian_func(X[i])
+    #end
     
     if i==4 # left boundary LOP1, TEM
         z = (y[i+3]-4*y[i+2]+7*y[i+1]-4*y[i])/(2*(X[i+1]-X[i]))*jacob
@@ -711,14 +716,7 @@ function RHS(y0,x1,time,func,i,data)
     
     #z[3]=evalInterval(Float128.([x1]),initX1,coef,3)[1];
 
-    jacob = 1.0
-    """if loggrid==true
-        x1=inverse(x1)
-        jacob = jacobian_func(x1) #analytic_jacobian(x1)#dergrid_func(x1) WARNING THIS X1 SHOULD BE ORIGINALX
-        println("jacob= ",jacob)
-    end"""
-
-    z[3]=derpsi(x1)./jacob
+    z[3]=derpsi(x1)
     #taylor
     """if i>4#x1>0.02
         z[3] = derpsi(x1)
@@ -745,13 +743,13 @@ function RHS(y0,x1,time,func,i,data)
         z[1] = 0.0;
         z[2] = 0.0;
     elseif abs.(x1 .- 1.0)<10^(-15) #right
-        z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0 ./ jacob;
-        z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0 ./ jacob;
+        z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0;
+        z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0;
         
 
     else #bulk
-        z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0 ./ jacob;
-        z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0 ./ jacob;
+        z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0;
+        z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0;
         
     end
     return z[:]
@@ -776,9 +774,8 @@ function SF_RHS(data,t,X)
     #NEW
     m_func = Spline1D(X[4:L-3],data[4:L-3,1],k=4)
     beta_func = Spline1D(X[4:L-3],data[4:L-3,2],k=4)
-    psi_func = Spline1D(X[4:L-3],data[4:L-3,3],k=4)
 
-    funcs=[m_func beta_func psi_func derpsi_func]
+    funcs=[m_func beta_func derpsi_func]
     
 
     Threads.@threads for i in 4:L-3 #ORI

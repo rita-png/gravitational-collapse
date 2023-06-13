@@ -28,7 +28,7 @@ while(run <= runmax)
 
     global ARGS = [A,run]
     include("./Evolution_ScalarField.jl");
-    df = CSV.read("/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA/bisectionsearch/parameters.csv", DataFrame)
+    df = CSV.read("./DATA/bisectionsearch/parameters.csv", DataFrame)
 
     if (df[run+1, :criticality]) == 0.0
         println("\nNon critical!")

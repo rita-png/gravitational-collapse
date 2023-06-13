@@ -6,21 +6,17 @@ using CSV, Tables
 using Dierckx
 using Printf
 
-"""println("#######3")
-println("argument received is", ARGS[1])
-println("argument type received is", typeof(ARGS[1]))
-println("#######3")"""
-
-
-
 A = ARGS[1]
 run = ARGS[2]
 
+global dir = "/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA/bisectionsearch"
+
+global loggrid = false
+global bisection=true
+
 include("./ScalarField.jl");
 
-
 # Parameters
-
 
 m = 1
 res=m;
@@ -33,10 +29,7 @@ Nt=2.0^m*4000.0/2.0#2.0^m*7500.0/2.0
 Tf=Nt*dt; #final time
 
 
-global dir = "/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA/bisectionsearch"
 
-global loggrid = false
-global bisection=true
 
 ori=0.0
 initX1 = nothing
@@ -106,6 +99,6 @@ finaltime=1.3
 stats,T_interp=timeevolution(state_array,finaltime,dir,run)
 
 
-CSV.write("/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA/bisectionsearch/parameters.csv", Tables.table(stats), writeheader=true,header=["criticality", "A", "sigma", "r0", "time", "explode", "run"],append=true);
+CSV.write(dir*"/parameters.csv", Tables.table(stats), writeheader=true,header=["criticality", "A", "sigma", "r0", "time", "explode", "run"],append=true);
 
-CSV.write("/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA/bisectionsearch/timearray.csv", Tables.table(T_interp), writeheader=false,append=true);
+CSV.write(dir*"/timearray.csv", Tables.table(T_interp), writeheader=false,append=true);
