@@ -35,9 +35,7 @@ ori=0.0
 initX1 = nothing
 N=int(N)
 initX1=range(ori, stop=Xf, step=dx);
-#initX1=create_range(ori,Xf,dx,N)
 initX = range(round(ori-3.0*dx,digits=10), stop=Xf+3.0*dx, step=dx)
-#initX=create_range(ori-3.0*dx,Xf+3.0*dx,dx,N+6)
 
 L=length(initX);
 
