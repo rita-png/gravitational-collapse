@@ -1,4 +1,4 @@
-# ---------------------------------------------------------------------------
+    # ---------------------------------------------------------------------------
 # Bisection search to look for apparent horizon formation
 # ---------------------------------------------------------------------------
 
@@ -8,8 +8,8 @@
 using CSV, Tables, DataFrames, ProgressBars, Plots, Printf
 
 
-global low_bound = 0.049264507293701174#0.049
-global high_bound = 0.0495#0.05
+global low_bound = 0.0492578125#0.04925#0.049264507293701174#0.049
+global high_bound = 0.049265625#0.049265625#0.049375#0.05
 global run = 1
 global runmax = 20
 

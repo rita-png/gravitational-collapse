@@ -85,10 +85,10 @@ function update_dt(X, m, beta,dt,ginit)
         for i in 1:L-7
             aux[i]=initX1[i+1]-initX1[i]
         end
-        dx=minimum(aux)
+        dx=minimum(aux)*2
     end
 
-    return  dx/g*0.5#dt*(ginit/g)
+    return  dx/g#dx/g*0.5#dt*(ginit/g)
 
 end
 
@@ -198,22 +198,6 @@ function n_rk4wrapper(f,y0,x,u,spl_funcs,data) # u depicts T array, or M!!
     end
     return y[:,:]
 end
-##AUX
-function n_rk4wrapper(f,y0,x,u,spl_funcs,data,auxdata) # u depicts T array, or M!!
-    L = length(x)
-    n = length(y0)
-    y = zeros(L,n)
-    y[1,:] = y0;
-    for i in 1:L-1
-        h = x[i+1] .- x[i]
-        k1 = f(y[i,:], x[i],u,spl_funcs,i,data,auxdata,false)
-        k2 = f(y[i,:] .+ k1 * h/2, x[i] .+ h/2,u,spl_funcs,i,data,auxdata,true)
-        k3 = f(y[i,:] .+ k2 * h/2, x[i] .+ h/2,u,spl_funcs,i,data,auxdata,true)
-        k4 = f(y[i,:] .+ k3 * h, x[i] .+ h,u,spl_funcs,i,data,auxdata,false)
-        y[i+1,:] = y[i,:] .+ (h/6) * (k1 .+ 2*k2 .+ 2*k3 .+ k4)
-    end
-    return y[:,:]
-end
 
 
 function integrator(X,derpsi_func,data)
@@ -269,7 +253,8 @@ function print_muninn(files, t, data, res, mode)
     if bisection==false
         for fl in files #normal run
             
-            open(dir*"/muninnDATA/res$res/$fl.txt", mode) do file
+            #open(dir*"/muninnDATA/res$res/$fl.txt", mode) do file
+            open("./DATA/muninnDATA/res$res/$fl.txt", mode) do file
                 @printf file "\"Time = %.10e\n" t
                 for i in 1:length(data[:,1])
                     @printf file "% .10e % .10e\n" data[i,5] data[i,j]
@@ -281,7 +266,8 @@ function print_muninn(files, t, data, res, mode)
     else
         for fl in files #bisection search
             
-            open(dir*"/muninnDATA/run$run/$fl.txt", mode) do file
+            #open(dir*"/muninnDATA/run$run/$fl.txt", mode) do file
+            open("./DATA/bisectionsearch/muninnDATA/run$run/$fl.txt", mode) do file
                 @printf file "\"Time = %.10e\n" t
                 for i in 1:length(data[:,1])
                     @printf file "% .10e % .10e\n" data[i,5] data[i,j]
@@ -372,30 +358,6 @@ function DDer(y,i,k,X)
     return z
 end
 
-function DDer_array(y,k,X)
-
-    aux=zeros(L-6)
-    i=1
-    j=4
-    for xx in X[4:L-3]
-        aux[i] = Der(y,j,k,X)
-        i=i+1
-        j=j+1
-    end
-
-    auxdata=zeros(L,4)
-    auxdata[4:L-3,k]=aux[:]
-    aux2=zeros(L-6)
-    i=1
-    j=4
-    for xx in X[4:L-3]
-        aux2[i] = Der(auxdata,j,k,X)
-        i=i+1
-        j=j+1
-    end
-    
-    return aux2
-end
 
 
 #matrix
@@ -486,18 +448,13 @@ end"""
 
 function Dertest(y,i,X)
 
-    jacob = 1.0
-    #if loggrid==true
-        #X = originalX
-        #jacob = jacobian_func(X[i])
-    #end
     
     if i==4 # left boundary LOP1, TEM
-        z = (y[i+3]-4*y[i+2]+7*y[i+1]-4*y[i])/(2*(X[i+1]-X[i]))*jacob
+        z = (y[i+3]-4*y[i+2]+7*y[i+1]-4*y[i])/(2*(X[i+1]-X[i]))
     elseif i==L-3
-        z = (-y[i-3]+4*y[i-2]-7*y[i-1]+4*y[i])/(2*(X[i]-X[i-1]))*jacob
+        z = (-y[i-3]+4*y[i-2]-7*y[i-1]+4*y[i])/(2*(X[i]-X[i-1]))
     else
-        z = (y[i+1]-y[i-1])/(2*(X[i+1]-X[i]))*jacob
+        z = (y[i+1]-y[i-1])/(2*(X[i+1]-X[i]))
     end
         
     return z
@@ -524,27 +481,6 @@ function chebyshev(N)
     return sort(X)
 end
 
-function chebyshev_weigth(X)
-    w=ones(length(X))
-    len=length(X)
-    for i in 1:len
-            
-        w[i]=w[i]=1/2+1/2*abs(cos((i-1)*pi/(len)))#1/2+1/2*(cos(1/2*(i-1)*pi/(len)))
-
-    end
-    return w
-end
-function chebyshev_cut(X)
-    N=length(X)
-    new_grid=zeros(int(N/4))
-    
-    new_grid[1:int(N/4)] = X[1:int(N/4)]
-    new_grid=vcat(new_grid, X[int(N/4):4:int(3*N/4)])
-    new_grid=vcat(new_grid, X[int(3*N/4):2:int(N)])
-    
-    #deleteat!(A, 2)
-    return new_grid
-end
 
 """function bulkSF(y,i,X)
     
@@ -599,27 +535,6 @@ function RHS(y0,x1,time,func,i,data)
 
     z[3]=derpsi(x1)
 
-    #taylor
-    """if i>4#x1>0.02
-        z[3] = derpsi(x1)
-        
-    #elseif midstep==true
-    else
-        auxdata=zeros(L,4)
-        auxdata[4:L-3,4]=DDer_array(state_array,4,initX)
-        
-
-        D3phi = auxdata[4,4]
-  
-        auxdata2=zeros(L,4)
-        auxdata2[4:L-3,4]=DDer_array(auxdata,4,initX)
-        D5phi = auxdata2[4,4]
-
-        z[3] = data[4,4] + 3*D3phi*x1^2/(3*2) + 5*D5phi*x1^4/(5*4*3*2)
-
-
-    end"""
-
     #m and beta
     if x1<10^(-15) #left
         z[1] = 0.0;
@@ -638,50 +553,10 @@ function RHS(y0,x1,time,func,i,data)
         z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0;
         
     end
-    #println("   ")
-    #println("z[:] ", z[:])
-    #println("   ")
+
     return z[:]
 end
-"""
-##AUX
-function RHS(y0,x1,time,func,i,data,auxdata,midstep)
-    
-    z=zeros(length(y0))
-    derpsi = func
 
-    z[3]=derpsi(x1)
-
-    aux=auxdata[4:length(auxdata)-3]
-
-    if i <= 4 & midstep==true
-        z[3]=aux[2*i-1,4]
-        y0[3]=aux[2*i-1,3]#this was auxdata, wrong!!
-    elseif i<= 4 & midstep==false #here i could just use the interpolation z[3]=derpsi(x1) ola04
-        #z[3]=aux[2*i-1,4]
-        z[3]=derpsi(x1)
-        #y0[3]=aux[2*i-1,3]
-    end
-    
-    #z3 =0 and y3 no not good
-    #z3 and y3=0 good
-    #y3=0 and z3 no not good
-
-    #m and beta
-    if x1<10^(-15) #left
-        z[1] = 0.0;
-        z[2] = 0.0;
-    elseif abs.(x1 .- 1.0)<10^(-15) #right
-        z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0;#2.0 .* pi .* (y0[3]) .^ 2.0
-        z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0;#0.0
-    else #bulk
-        z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0;
-        z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0;
-        
-    end
-
-    return z[:]
-end"""
 
 # Defining the function in the RHS of the evolution equation system
 using Base.Threads
@@ -706,11 +581,11 @@ function SF_RHS(data,t,X)
 
     Threads.@threads for i in 4:L-3
         if X[i]<10^(-15) #left
-            dy[i,4]= +1.0/2.0*unevenDer(data,i,4,X,funcs) #- dissipation6(data,i,0.0065)[4];
+            dy[i,4]= +1.0/2.0*unevenDer(data,i,4,X,funcs) - dissipation6(data,i,0.0065)[4];
         elseif X[i] < (1-10^(-15)) #bulk
-            dy[i,4]=bulkSF(data,i,X,funcs) #- dissipation6(data,i,0.0065)[4]
+            dy[i,4]=bulkSF(data,i,X,funcs) - dissipation6(data,i,0.0065)[4]
         else #right
-            dy[i,4]= bulkSF(data,i,X,funcs) #- dissipation6(data,i,0.0065)[4]
+            dy[i,4]= bulkSF(data,i,X,funcs) - dissipation6(data,i,0.0065)[4]
         end
     end
     
@@ -718,26 +593,6 @@ function SF_RHS(data,t,X)
     #dy=ghost(dy)
     return dy
 
-end
-
-
-function Grid_RHS(y,t,X)
-    
-    L=length(X)
-    dy=zeros((L,length(y[1,:])));
-
-    for i in 4:(L-3)
-        if X[i]<10^(-7) #left
-
-            dy[i,5]=-1.0/2.0*exp(2.0*y[i,2]);
-
-        else #bulk
-            dy[i,5]=-1.0/2.0*(1-X[i])^2*exp(2.0*y[i,2])*(1-2*y[i,1]*(1-X[i])/X[i]);#dissipation4
-        end
-    end
-    
-    dy=ghost(dy)
-    return dy
 end
 
 function doublegrid(X)
@@ -758,7 +613,7 @@ end
 
 #using ProgressMeter
 using Term.Progress
-function timeevolution(state_array,finaltime,dir,run)#(state_array,finaltime,dir,run,auxstate_array)
+function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run)
 
     t=0.0
     T_array = [0.0]
@@ -767,54 +622,48 @@ function timeevolution(state_array,finaltime,dir,run)#(state_array,finaltime,dir
     while t<finaltime#@TRACK
 
         iter = iter + 1
-
+        
         #update time increment
 
-        #global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)      
-        
-        t = t + dt
-        if iter%100==0
-            println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
+        if criticality!=true#||dt>0.00000001
+            global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)      
         end
+        t = t + dt
+        """if iter%100==0
+            println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
+        end"""
+        #println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
         
         
         T_array = vcat(T_array,t)
 
-        #X = update_grid(state_array[:,:],T,t)
-        
         X=initX #state_array[:,5]
         X1=X[4:L-3]
        
         #evolve psi,x
         state_array[:,:] = rungekutta4molstep(SF_RHS,state_array[:,:],T_array,iter,X) #evolve psi,x
         state_array=ghost(state_array)
-
-        #AUX ghost grid
-        """auxX=auxinitX
-        auxX1=auxX[4:L-3]
-        auxstate_array[:,:] = rungekutta4molstep(SF_RHS,auxstate_array[:,:],T_array,iter,auxX) #evolve psi,x
-        auxderpsi_func = Spline1D(auxX[4:auxL-3],auxstate_array[4:auxL-3,4],k=4) #ghost grid
-        y0=[0.0 0.0 0.0]
-        auxstate_array[4:L-3,1:3] = n_rk4wrapper(RHS,y0,auxX1,t,auxderpsi_func,auxstate_array[:,:]) #evolve psi, beta, m
-        auxstate_array=ghost(auxstate_array)"""#
     
         # update interpolation of psi,x
         derpsi_func = Spline1D(X[4:L-3],state_array[4:L-3,4],k=4)
 
         #evolve m and beta together, new
         y0=[0.0 0.0 0.0]
-        #state_array[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X1,t,derpsi_func,state_array[:,:],auxstate_array[:,:]) #ghost grid
+        
         state_array[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X1,t,derpsi_func,state_array[:,:])
         state_array=ghost(state_array)
         
 
         run=int(run)
-        if iter%100==0
-            if bisection==true
-                CSV.write(dir*"/run$run/time_step$iter.csv", Tables.table(state_array), writeheader=false)
+        #if iter%100==0
+        if (iter%500==0&&t>0.3)||(t>0.85&&iter%25==0)
+            """if bisection==true
+                #CSV.write(dir*"/run$run/time_step$iter.csv", Tables.table(state_array), writeheader=false)
+                CSV.write("./DATA/bisectionsearch/run$run/time_step$iter.csv", Tables.table(state_array), writeheader=false)
             else
-                CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
-            end
+                #CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
+                CSV.write("./DATA/res$res/time_step$iter.csv", Tables.table(state_array), writeheader=false)
+            end"""
             #write muninn
             print_muninn(files, t, state_array[:,1:5],res,"a")
 
@@ -831,9 +680,9 @@ function timeevolution(state_array,finaltime,dir,run)#(state_array,finaltime,dir
             global time = t
         end
 
-        if criticality == true
+        """if criticality == true
             break
-        end
+        end"""
         
         if isnan(state_array[L-3,4])
             global explode = true
@@ -862,11 +711,3 @@ function epsilon(X,i,dt,dx)
     end
     return (dx/dt*(1/2)^(2*3+1))
 end
-
-function epsilon(dt,dx)
-    z=minimum([dx/dt*(1/2)^(2*3), 10])
-    #println("dissipation epsilon is ", (dx/dt*(1/2)^(2*3)))
-    
-    return z
-end
-
