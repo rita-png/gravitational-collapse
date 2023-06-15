@@ -6,7 +6,7 @@ A = ARGS[1]
 run = ARGS[2]
 
 #global dir = "/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA/bisectionsearch"
-global dir = ENV["gc_datapath"]
+global dir = "/home/ritapsantos/data/ritapsantos"#ENV["gc_datapath"]
 println(dir)
 global bisection = true
 global loggrid = true
