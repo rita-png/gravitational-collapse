@@ -617,7 +617,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
     t=0.0
     T_array = [0.0]
     iter = 0
-    
+    k=0
     while t<finaltime#@TRACK
 
         iter = iter + 1
@@ -628,9 +628,9 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
             global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)      
         end
         t = t + dt
-        if iter%100==0
+        """if iter%100==0
             println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
-        end
+        end"""
         #println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
         
         
@@ -672,8 +672,9 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         #threshold for apparent black hole formation
         global monitor_ratio[5:L-4] = 2 .* state_array[5:L-4,1] ./ initX[5:L-4] .* (1 .- initX[5:L-4])
 
-        if maximum(monitor_ratio)>0.70
+        if maximum(monitor_ratio)>0.70&&k==0
             global criticality = true
+            k=k+1
             println("Supercritical evolution! At time ", t, ", iteration = ", iter)
             println("t = ", t, "iteration ", iter, " monitor ratio = ", maximum(monitor_ratio))
             global time = t
