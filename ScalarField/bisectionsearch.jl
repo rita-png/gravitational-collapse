@@ -8,8 +8,8 @@
 using CSV, Tables, DataFrames, ProgressBars, Plots, Printf
 
 
-global low_bound = 0.0492578125#0.04925#0.049264507293701174#0.049
-global high_bound = 0.049265625#0.049265625#0.049375#0.05
+global low_bound = 0.0492646484375#0.0492578125#0.04925#0.049264507293701174#0.049
+global high_bound = 0.049264892578125004#0.049265625#0.049265625#0.049375#0.05
 global run = 1
 global runmax = 20
 
@@ -29,7 +29,7 @@ while(run <= runmax)
 
     global ARGS = [A,run]
     include("./Evolution_ScalarField.jl");
-    df = CSV.read("./DATA/bisectionsearch/parameters.csv", DataFrame)
+    df = CSV.read(dir*"/bisectionsearch/parameters.csv", DataFrame)
 
     if (df[run+1, :criticality]) == 0.0
         println("\nNon critical!")

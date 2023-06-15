@@ -253,8 +253,8 @@ function print_muninn(files, t, data, res, mode)
     if bisection==false
         for fl in files #normal run
             
-            #open(dir*"/muninnDATA/res$res/$fl.txt", mode) do file
-            open("./DATA/muninnDATA/res$res/$fl.txt", mode) do file
+            open(dir*"/muninnDATA/res$res/$fl.txt", mode) do file
+            #open("./DATA/muninnDATA/res$res/$fl.txt", mode) do file
                 @printf file "\"Time = %.10e\n" t
                 for i in 1:length(data[:,1])
                     @printf file "% .10e % .10e\n" data[i,5] data[i,j]
@@ -266,8 +266,8 @@ function print_muninn(files, t, data, res, mode)
     else
         for fl in files #bisection search
             
-            #open(dir*"/muninnDATA/run$run/$fl.txt", mode) do file
-            open("./DATA/bisectionsearch/muninnDATA/run$run/$fl.txt", mode) do file
+            open(dir*"/bisectionsearch/muninnDATA/run$run/$fl.txt", mode) do file
+            #open("./DATA/bisectionsearch/muninnDATA/run$run/$fl.txt", mode) do file
                 @printf file "\"Time = %.10e\n" t
                 for i in 1:length(data[:,1])
                     @printf file "% .10e % .10e\n" data[i,5] data[i,j]
@@ -611,8 +611,7 @@ function doublegrid(X)
 
 end
 
-#using ProgressMeter
-using Term.Progress
+
 function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run)
 
     t=0.0
@@ -625,13 +624,13 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         
         #update time increment
 
-        if criticality!=true#||dt>0.00000001
+        """if criticality!=true#||dt>0.00000001
             global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)      
-        end
-        t = t + dt
-        """if iter%100==0
-            println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
         end"""
+        t = t + dt
+        if iter%100==0
+            println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
+        end
         #println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
         
         
@@ -655,14 +654,14 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         
 
         run=int(run)
-        #if iter%100==0
-        if (iter%500==0&&t>0.3)||(t>0.85&&iter%25==0)
+        if iter%100==0
+        #if (iter%500==0&&t>0.3)||(t>0.85&&iter%25==0)
             """if bisection==true
-                #CSV.write(dir*"/run$run/time_step$iter.csv", Tables.table(state_array), writeheader=false)
-                CSV.write("./DATA/bisectionsearch/run$run/time_step$iter.csv", Tables.table(state_array), writeheader=false)
+                CSV.write(dir*"/bisectionsearch/run$run/time_step$iter.csv", Tables.table(state_array), writeheader=false)
+                #CSV.write("./DATA/bisectionsearch/run$run/time_step$iter.csv", Tables.table(state_array), writeheader=false)
             else
-                #CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
-                CSV.write("./DATA/res$res/time_step$iter.csv", Tables.table(state_array), writeheader=false)
+                CSV.write(dir*"/res$res/time_step$iter.csv", Tables.table(state_array), writeheader=false)
+                #CSV.write("./DATA/res$res/time_step$iter.csv", Tables.table(state_array), writeheader=false)
             end"""
             #write muninn
             print_muninn(files, t, state_array[:,1:5],res,"a")
