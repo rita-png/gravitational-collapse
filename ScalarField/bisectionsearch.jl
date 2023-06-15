@@ -5,7 +5,7 @@
 
 #Searching for A* between 0.05 and 0.20
 
-using CSV, Tables, DataFrames, ProgressBars, Plots, Printf
+using CSV, Tables, DataFrames, Plots, Printf
 
 
 global low_bound = 0.0492646484375#0.0492578125#0.04925#0.049264507293701174#0.049
