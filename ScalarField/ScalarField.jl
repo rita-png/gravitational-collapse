@@ -85,10 +85,11 @@ function update_dt(X, m, beta,dt,ginit)
         for i in 1:L-7
             aux[i]=initX1[i+1]-initX1[i]
         end
-        dx=minimum(aux)*2
+        #dx=minimum(aux)*2
+        dx=minimum(aux)
     end
-
-    return  dx/g#dx/g*0.5#dt*(ginit/g)
+    return dx/g*0.5
+    #return  dx/g#dx/g*0.5#dt*(ginit/g)
 
 end
 
@@ -482,21 +483,21 @@ function chebyshev(N)
 end
 
 
-"""function bulkSF(y,i,X)
+function bulkSF(y,i,X)
     
     #psi,x
     dy=-1.0/2.0*exp(2.0*y[i,2])*(-(2*(X[i]-1)^3*y[i,3]*(X[i]*((X[i]-1)*Der(y,i,1,X)+X[i]*Der(y,i,2,X))+y[i,1]*(1+2*(X[i]-1)*X[i]*Der(y,i,2,X))))/X[i]^3 - (2*(X[i]-1)^4*(X[i]*((X[i]-1)*Der(y,i,1,X)+X[i]*Der(y,i,2,X))+y[i,1]*(1+2(X[i]-1)*X[i]*Der(y,i,2,X)))*y[i,4])/X[i]^2 - ((X[i]+2*(X[i]-1)*y[i,1])*Der(y,i,4,X))/X[i])
  
     return dy
-end"""
-
+end
+"""
 function bulkSF(y,i,X,spls)
     
     #psi,x
     dy=-1.0/2.0*exp(2.0*y[i,2])*(-(2*(X[i]-1)^3*y[i,3]*(X[i]*((X[i]-1)*unevenDer(y,i,1,X,spls)+X[i]*unevenDer(y,i,2,X,spls))+y[i,1]*(1+2*(X[i]-1)*X[i]*unevenDer(y,i,2,X,spls))))/X[i]^3 - (2*(X[i]-1)^4*(X[i]*((X[i]-1)*unevenDer(y,i,1,X,spls)+X[i]*unevenDer(y,i,2,X,spls))+y[i,1]*(1+2(X[i]-1)*X[i]*unevenDer(y,i,2,X,spls)))*y[i,4])/X[i]^2 - ((X[i]+2*(X[i]-1)*y[i,1])*unevenDer(y,i,4,X,spls))/X[i])
 
     return dy
-end
+end"""
 
 function boundarySF(y,X)
 
@@ -581,11 +582,14 @@ function SF_RHS(data,t,X)
 
     Threads.@threads for i in 4:L-3
         if X[i]<10^(-15) #left
-            dy[i,4]= +1.0/2.0*unevenDer(data,i,4,X,funcs) - dissipation6(data,i,0.0065)[4];
+            #dy[i,4]= +1.0/2.0*unevenDer(data,i,4,X,funcs) - dissipation6(data,i,0.0065)[4];
+            dy[i,4]= +1.0/2.0*Der(data,i,4,X) - dissipation6(data,i,0.0065)[4];
         elseif X[i] < (1-10^(-15)) #bulk
-            dy[i,4]=bulkSF(data,i,X,funcs) - dissipation6(data,i,0.0065)[4]
+            #dy[i,4]=bulkSF(data,i,X,funcs) - dissipation6(data,i,0.0065)[4]
+            dy[i,4]=bulkSF(data,i,X) - dissipation6(data,i,0.0065)[4]
         else #right
-            dy[i,4]= bulkSF(data,i,X,funcs) - dissipation6(data,i,0.0065)[4]
+            #dy[i,4]= bulkSF(data,i,X,funcs) - dissipation6(data,i,0.0065)[4]
+            dy[i,4]= bulkSF(data,i,X) - dissipation6(data,i,0.0065)[4]
         end
     end
     
@@ -628,9 +632,9 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
             global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)      
         end
         t = t + dt
-        """if iter%100==0
+        if iter%100==0
             println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
-        end"""
+        end
         #println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
         
         
