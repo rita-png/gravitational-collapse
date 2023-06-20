@@ -2,13 +2,14 @@ using CSV, Tables
 using Dierckx
 
 
-A = ARGS[1]
-run = ARGS[2]
-
+#A = ARGS[1]
+#run = ARGS[2]
+A=0.0492646484375
+run=1
 #global dir = "/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA/bisectionsearch"
 global dir = ENV["gc_datapath"]#"/home/ritapsantos/data/ritapsantos"
 
-println(dir)
+#println(dir)
 global bisection = true
 global loggrid = true
 global meshrefinement = false
