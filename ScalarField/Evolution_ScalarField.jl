@@ -7,7 +7,7 @@ using Dierckx
 A=0.0492646484375
 run=1
 #global dir = "/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA/bisectionsearch"
-global "/home/ritapsantos/data/ritapsantos"#dir = ENV["gc_datapath"]
+global dir = "/home/ritapsantos/data/ritapsantos"#dir = ENV["gc_datapath"]
 
 #println(dir)
 global bisection = true
