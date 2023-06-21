@@ -2,15 +2,15 @@ using CSV, Tables
 using Dierckx
 
 
-#A = ARGS[1]
-#run = ARGS[2]
-A=0.0492646484375
-run=1
+#A = ARGS[1]#changed
+#run = ARGS[2]#changed
+A=0.0492646484375#changed
+run=1#changed
 #global dir = "/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA/bisectionsearch"
-global dir = "/home/ritapsantos/data/ritapsantos"#dir = ENV["gc_datapath"]
+global dir = "/home/ritapsantos/data/ritapsantos"#dir = ENV["gc_datapath"]#changed
 
 #println(dir)
-global bisection = true
+global bisection = false#changed
 global loggrid = true
 global meshrefinement = false
 
@@ -99,7 +99,7 @@ evol_stats = [criticality A sigma r0 time explode run]
 monitor_ratio = zeros(L)
 
 run=int(run)
-if run == 1
+if run == 1 && bisection==true
     CSV.write(dir*"/bisectionsearch/parameters.csv", Tables.table(evol_stats), writeheader=true, header=["criticality", "A", "sigma", "r0", "time", "explode", "run"])
     #CSV.write("./DATA/bisectionsearch/parameters.csv", Tables.table(evol_stats), writeheader=true, header=["criticality", "A", "sigma", "r0", "time", "explode", "run"])
 end
@@ -109,9 +109,10 @@ ginit=speed(initX,state_array[:,1],state_array[:,2])
 finaltime=1.3
 stats,T_interp=timeevolution(state_array,finaltime,run)#timeevolution(state_array,finaltime,dir,run)
 
+if bisection==true
+    CSV.write(dir*"/bisectionsearch/parameters.csv", Tables.table(stats), writeheader=true,header=["criticality", "A", "sigma", "r0", "time", "explode", "run"],append=true);
+    #CSV.write("./DATA/bisectionsearch/parameters.csv", Tables.table(stats), writeheader=true,header=["criticality", "A", "sigma", "r0", "time", "explode", "run"],append=true);
 
-CSV.write(dir*"/bisectionsearch/parameters.csv", Tables.table(stats), writeheader=true,header=["criticality", "A", "sigma", "r0", "time", "explode", "run"],append=true);
-#CSV.write("./DATA/bisectionsearch/parameters.csv", Tables.table(stats), writeheader=true,header=["criticality", "A", "sigma", "r0", "time", "explode", "run"],append=true);
-
-CSV.write(dir*"/bisectionsearch/timearray.csv", Tables.table(T_interp), writeheader=false);
-#CSV.write("./DATA/bisectionsearch/timearray.csv", Tables.table(T_interp), writeheader=false);
+    CSV.write(dir*"/bisectionsearch/timearray.csv", Tables.table(T_interp), writeheader=false);
+    #CSV.write("./DATA/bisectionsearch/timearray.csv", Tables.table(T_interp), writeheader=false);
+end
