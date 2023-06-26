@@ -1,4 +1,4 @@
-m = 2
+m = 1
 A = 0.01#0.0492646484375#0.001#0.049375#5#0.0492645084166179#0.049264507293701174#0.049264508247375494#0.04925#0.0493#0.001#0.049375#0.07#0.05#0.1124921875#0.125
 run = 1
 
@@ -114,7 +114,7 @@ monitor_ratio = zeros(L)
 CSV.write(dir*"/parameters.csv", Tables.table(evol_stats), writeheader=true, header=["criticality", "A", "sigma", "r0", "time", "explode", "run"])
 
 ginit=speed(initX,state_array[:,1],state_array[:,2])
-println(update_dt(initX,state_array[:,1],state_array[:,2],dx,ginit)/dt)
+#println(update_dt(initX,state_array[:,1],state_array[:,2],dx,ginit)/dt)
 
 using Base.Threads
 Threads.nthreads()
