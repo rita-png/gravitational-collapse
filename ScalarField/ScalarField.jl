@@ -629,13 +629,13 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         
         #update time increment
 
-        """if criticality!=true#||dt>0.00000001
+        if criticality!=true#||dt>0.00000001
             global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)      
-        end"""
-        t = t + dt
-        if iter%500==0
-            println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
         end
+        t = t + dt
+        """if iter%500==0
+            println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
+        end"""
         #println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
         
         
@@ -659,8 +659,8 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         
 
         run=int(run)
-        if iter%1000==0
-        #if (iter%500==0&&t>0.3)||(t>0.85&&iter%10==0)
+        #if iter%1000==0
+        if (iter%500==0&&t>0.3)||(t>0.85&&iter%10==0)
             """if bisection==true
                 CSV.write(dir*"/bisectionsearch/run$run/time_step$iter.csv", Tables.table(state_array), writeheader=false)
                 #CSV.write("./DATA/bisectionsearch/run$run/time_step$iter.csv", Tables.table(state_array), writeheader=false)
