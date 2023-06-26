@@ -38,6 +38,7 @@ end
 # outputs xtilde(x)
 function gridfunc(x)
     return 1/2 .+ 1/2 .* cos.( pi .* (1 .- 0.9 .* x)) #option 6
+    #return 1/2 .+ 1/2 .* cos.( pi .* (1 .- x)) #option 7
 end;
 
 
@@ -360,7 +361,6 @@ function DDer(y,i,k,X)
 end
 
 
-
 #matrix
 function unevenDer(y,i,k,X,spls)
 
@@ -397,8 +397,9 @@ function unevenDer(y,i,k,X,spls)
             z = (spl(X[i]+3*dx)-4*spl(X[i]+2*dx)+7*y[i+1,k]-4*y[i,k])/(2*dx)
         end
         """if(X[i]+dx)>1.0||(X[i]+2*dx)>1.0 #avoid evaluating spline out of domain
-            dx=X[i]-X[i-1]
-            z = (-27*y[i,k]+58*y[i-1,k]-56*spl(X[i]-2*dx)+36*spl(X[i]-3*dx)-13*spl(X[i]-4*dx)+2*spl(X[i]-5*dx))/(12*(X[i]-X[i-1]))
+            #dx=X[i]-X[i-1]
+            println("warning!, X[i]", X[i])
+            #z = (-27*y[i,k]+58*y[i-1,k]-56*spl(X[i]-2*dx)+36*spl(X[i]-3*dx)-13*spl(X[i]-4*dx)+2*spl(X[i]-5*dx))/(12*(X[i]-X[i-1]))
         end"""
     end
         
@@ -628,13 +629,13 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         
         #update time increment
 
-        if criticality!=true#||dt>0.00000001
+        """if criticality!=true#||dt>0.00000001
             global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)      
-        end
-        t = t + dt
-        """if iter%500==0
-            println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
         end"""
+        t = t + dt
+        if iter%500==0
+            println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
+        end
         #println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
         
         
@@ -658,8 +659,8 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         
 
         run=int(run)
-        #if iter%100==0
-        if (iter%500==0&&t>0.3)||(t>0.85&&iter%10==0)
+        if iter%100==0
+        #if (iter%500==0&&t>0.3)||(t>0.85&&iter%10==0)
             """if bisection==true
                 CSV.write(dir*"/bisectionsearch/run$run/time_step$iter.csv", Tables.table(state_array), writeheader=false)
                 #CSV.write("./DATA/bisectionsearch/run$run/time_step$iter.csv", Tables.table(state_array), writeheader=false)
