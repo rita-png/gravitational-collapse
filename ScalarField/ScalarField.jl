@@ -659,7 +659,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         
 
         run=int(run)
-        if iter%100==0
+        if iter%1000==0
         #if (iter%500==0&&t>0.3)||(t>0.85&&iter%10==0)
             """if bisection==true
                 CSV.write(dir*"/bisectionsearch/run$run/time_step$iter.csv", Tables.table(state_array), writeheader=false)
