@@ -6,7 +6,7 @@ ScalarField/todo.txt
 ScalarField/tests.ipynb
 ScalarField/fits.jl.ipynb
 ScalarField/Interpolation_tests
-ScalarField/script-convergence.py
+#ScalarField/script-convergence.py
 
 TestModel/DATA/
 TestModel/.ipynb_checkpoints/
