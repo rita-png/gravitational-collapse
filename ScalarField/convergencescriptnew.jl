@@ -6,7 +6,7 @@ global loggrid=true#true
 global bisection=false
 global meshrefinement=false;
 
-using Quadmath, Printf
+using Printf
 
 res=m;
 N=2.0^m*100.0#2.0^m*1000.0/2.0#Nt=2.0^m*1000.0/2.0
@@ -55,7 +55,6 @@ if loggrid==true
 end;
 
 using Dierckx
-using Quadmath
 
 
 ####
@@ -93,8 +92,6 @@ state_array[4:L-3,1:3] = n_rk4wrapper(RHS,y0,initX[4:L-3],0,derpsi_func,state_ar
 
 state_array = ghost(state_array);
 
-using Plots #showing initial data and the initial status of the horizon finder
-plot(initX[4:L-3], state_array[4:L-3,1:4], xaxis="x",title="Initial Data", labels=["m" "beta" "psi" "psi,x"])
 
 using CSV, Tables, Printf
 #CSV.write(dir*"/time_step0.csv", Tables.table(transpose(Matrix(state_array))), writeheader=false)
