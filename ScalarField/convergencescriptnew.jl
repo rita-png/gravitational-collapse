@@ -1,5 +1,5 @@
-m = 1
-A = 0.0492646484375#0.001#0.049375#5#0.0492645084166179#0.049264507293701174#0.049264508247375494#0.04925#0.0493#0.001#0.049375#0.07#0.05#0.1124921875#0.125
+m = 2
+A = 0.01#0.0492646484375#0.001#0.049375#5#0.0492645084166179#0.049264507293701174#0.049264508247375494#0.04925#0.0493#0.001#0.049375#0.07#0.05#0.1124921875#0.125
 run = 1
 
 global loggrid=true#true
@@ -9,7 +9,7 @@ global meshrefinement=false;
 using Printf
 
 res=m;
-N=2.0^m*1000.0/2.0#Nt=2.0^m*1000.0/2.0
+N=2.0^m*100.0#2.0^m*1000.0/2.0#Nt=2.0^m*1000.0/2.0
 Xf=1.0#Float128(1.0);
 
 dx=Xf/N#Float128(Xf/N);
@@ -18,7 +18,7 @@ if loggrid==false
 else
     dt=0.1*round(dx,digits=10)
 end
-Nt=2.0^m*1000.0/2.0#Nt=2.0^m*1000.0/2.0
+Nt=2.0^m*100.0#2.0^m*1000.0/2.0#Nt=2.0^m*1000.0/2.0
 Tf=Nt*dt; #final time
 #print(Tf)
 
@@ -47,11 +47,16 @@ println("step size is  ", dx)
 println("the time step is ", dt)
 
 if loggrid==true
+    """global originalX=initX
+    xtilde=gridfunc(initX1)
+    initX1=xtilde
+    initX=collect(initX)
+    initX[4:L-3]=xtilde"""
     global originalX=initX
     xtilde=gridfunc(initX1)
     initX1=xtilde
     initX=collect(initX)
-    initX[4:L-3]=xtilde
+    initX[4:L-4]=xtilde[1:length(xtilde)-1]
 end;
 
 using Dierckx
@@ -120,16 +125,16 @@ Threads.nthreads()
 
 
 
-"""#global dt = 5e-5/2/2/2 #RES3
+#global dt = 5e-5/2/2/2 #RES3
 if m==1
     global dt=5e-5/2/5
 elseif m==2
     global dt=5e-5/2/2/5
 else
     global dt=5e-5/2/2/2/5
-end"""
+end
 
-finaltime=1.3#2.0#1.3#1.6#2#1.3#0.08*2#0.005*10*5#1#0.9#0.8#0.04*5*4#length(T)-1
+finaltime=2.0#1.3#2.0#1.3#1.6#2#1.3#0.08*2#0.005*10*5#1#0.9#0.8#0.04*5*4#length(T)-1
 evol_stats, T_interp = timeevolution(state_array,finaltime,run);#timeevolution(state_array,finaltime,dir*"/res$res",run,auxstate_array);
 #CSV.write(dir*"/timearray$res.csv", Tables.table(T_interp), writeheader=false);
 
