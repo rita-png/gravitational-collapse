@@ -32,8 +32,8 @@ println("dx =", dx)
 println("dt =", dt)
 println("dx/dt =", dx/dt)
 
-#global dir = "/home/ritapsantos/data/ritapsantos" #~/data/ritapsantos" #"/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA" #
-global dir = "/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA"
+global dir = "/home/ritapsantos/data/ritapsantos" #~/data/ritapsantos" #"/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA" #
+#global dir = "/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA"
 
 using Printf
 include("./ScalarField.jl");
