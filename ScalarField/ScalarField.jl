@@ -646,7 +646,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
             global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)      
         end"""
         t = t + dt
-        if iter%10000==0
+        if iter%100==0
             println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
         end
         #println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
@@ -672,7 +672,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         
 
         run=int(run)
-        if iter%500==0
+        if iter%100==0
         #if (iter%500==0&&t>0.3)||(t>0.85&&iter%10==0)
             """if bisection==true
                 CSV.write(dir*"/bisectionsearch/run$run/time_step$iter.csv", Tables.table(state_array), writeheader=false)
