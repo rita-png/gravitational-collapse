@@ -1,17 +1,14 @@
-    # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 # Bisection search to look for apparent horizon formation
 # ---------------------------------------------------------------------------
 
-
-#Searching for A* between 0.05 and 0.20
-
 using CSV, Tables, DataFrames, Plots, Printf
 
-#updated 17-06
+
 global low_bound = 0.492#0.0492646484375#0.0492578125#0.04925#0.049264507293701174#0.049
 global high_bound = 0.493#0.04926470947265625#0.049264892578125004#0.049265625#0.049265625#0.049375#0.05
 global run = 1
-global runmax = 20
+global runmax = 40
 
 
 plt_A_crit = Vector{Float64}()

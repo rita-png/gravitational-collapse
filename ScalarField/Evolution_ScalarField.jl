@@ -2,10 +2,9 @@ using CSV, Tables
 using Dierckx
 
 
-#A = ARGS[1]#changed
-#run = ARGS[2]#changed
-A=0.0492646484375#changed
-run=1#changed
+A = ARGS[1]
+run = ARGS[2]
+
 #global dir = "/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA/bisectionsearch"
 global dir = "/home/ritapsantos/data/ritapsantos"#dir = ENV["gc_datapath"]#changed
 

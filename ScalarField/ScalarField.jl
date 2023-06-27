@@ -37,7 +37,7 @@ end
 
 # outputs xtilde(x)
 function gridfunc(x)
-    return 1/2 .+ 1/2 .* cos.( pi .* (1 .- 0.9 .* x)) #option 6
+    return 1/2 .+ 1/2 .* cos.( pi .* (1 .- 0.5 .* x)) #option 6
     #return 1/2 .+ 1/2 .* cos.( pi .* (1 .- x)) #option 7
 end;
 
@@ -493,14 +493,14 @@ function bulkSF(y,i,X)
  
     return dy
 end
-"""
+
 function bulkSF(y,i,X,spls)
     
     #psi,x
     dy=-1.0/2.0*exp(2.0*y[i,2])*(-(2*(X[i]-1)^3*y[i,3]*(X[i]*((X[i]-1)*unevenDer(y,i,1,X,spls)+X[i]*unevenDer(y,i,2,X,spls))+y[i,1]*(1+2*(X[i]-1)*X[i]*unevenDer(y,i,2,X,spls))))/X[i]^3 - (2*(X[i]-1)^4*(X[i]*((X[i]-1)*unevenDer(y,i,1,X,spls)+X[i]*unevenDer(y,i,2,X,spls))+y[i,1]*(1+2(X[i]-1)*X[i]*unevenDer(y,i,2,X,spls)))*y[i,4])/X[i]^2 - ((X[i]+2*(X[i]-1)*y[i,1])*unevenDer(y,i,4,X,spls))/X[i])
 
     return dy
-end"""
+end
 
 function boundarySF(y,X)
 
@@ -578,21 +578,32 @@ function SF_RHS(data,t,X)
     data=ghost(data)
 
     #NEW
-    m_func = Spline1D(X[4:L],data[4:L,1],k=4)
-    beta_func = Spline1D(X[4:L],data[4:L,2],k=4)
+    if loggrid==true
+        m_func = Spline1D(X[4:L],data[4:L,1],k=4)
+        beta_func = Spline1D(X[4:L],data[4:L,2],k=4)
 
-    funcs=[m_func beta_func derpsi_func]
+        funcs=[m_func beta_func derpsi_func]
+    end
 
     Threads.@threads for i in 4:L-3
         if X[i]<10^(-15) #left
-            #dy[i,4]= +1.0/2.0*unevenDer(data,i,4,X,funcs) - dissipation6(data,i,0.0065)[4];
-            dy[i,4]= +1.0/2.0*Der(data,i,4,X) - dissipation6(data,i,0.0065)[4];
+            if loggrid==true
+                dy[i,4]= +1.0/2.0*unevenDer(data,i,4,X,funcs) - dissipation6(data,i,0.0065)[4];
+            else
+                dy[i,4]= +1.0/2.0*Der(data,i,4,X) - dissipation6(data,i,0.0065)[4];
+            end
         elseif X[i] < (1-10^(-15)) #bulk
-            #dy[i,4]=bulkSF(data,i,X,funcs) - dissipation6(data,i,0.0065)[4]
-            dy[i,4]=bulkSF(data,i,X) - dissipation6(data,i,0.0065)[4]
+            if loggrid==true
+                dy[i,4]=bulkSF(data,i,X,funcs) - dissipation6(data,i,0.0065)[4]
+            else
+                dy[i,4]=bulkSF(data,i,X) - dissipation6(data,i,0.0065)[4]
+            end
         else #right
-            #dy[i,4]= bulkSF(data,i,X,funcs) - dissipation6(data,i,0.0065)[4]
-            dy[i,4]= bulkSF(data,i,X) - dissipation6(data,i,0.0065)[4]
+            if loggrid==true
+                dy[i,4]= bulkSF(data,i,X,funcs) - dissipation6(data,i,0.0065)[4]
+            else
+                dy[i,4]= bulkSF(data,i,X) - dissipation6(data,i,0.0065)[4]
+            end
         end
     end
     
