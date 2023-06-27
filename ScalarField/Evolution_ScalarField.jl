@@ -4,8 +4,8 @@ using Dierckx
 
 A = ARGS[1]
 run = ARGS[2]
-#global dir = "/home/ritapsantos/data/ritapsantos"
-global dir = "/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA"
+global dir = "/home/ritapsantos/data/ritapsantos"
+#global dir = "/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA"
 
 #println(dir)
 global bisection = true
