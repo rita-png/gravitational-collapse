@@ -1,7 +1,7 @@
 ress=[1,2,3]
 
 
-for resolution in ress:
+for resolution in ress
     
     println("running for resolution ", m, " N = 100, A = 0.01")
     m = resolution
@@ -144,3 +144,4 @@ for resolution in ress:
     evol_stats, T_interp = timeevolution(state_array,finaltime,run);#timeevolution(state_array,finaltime,dir*"/res$res",run,auxstate_array);
     #CSV.write(dir*"/timearray$res.csv", Tables.table(T_interp), writeheader=false);
 
+end
