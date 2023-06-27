@@ -4,13 +4,12 @@ using Dierckx
 
 A = ARGS[1]
 run = ARGS[2]
-
+global dir = "/home/ritapsantos/data/ritapsantos"
 #global dir = "/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA/bisectionsearch"
-global dir = "/home/ritapsantos/data/ritapsantos"#dir = ENV["gc_datapath"]#changed
 
 #println(dir)
-global bisection = false#changed
-global loggrid = true
+global bisection = true
+global loggrid = false #CHANGE
 global meshrefinement = false
 
 include("./ScalarField.jl");
@@ -19,7 +18,7 @@ include("./ScalarField.jl");
 
 m = 1
 res=m;
-N=2.0^m*2000.0/2.0#2.0^m*5000.0/2.0#2.0^m*1000.0;#2.0^m*500.0;#N=2.0^m*500.0#2.0^m*100.0;
+N=2.0^m*1000.0/2.0#2.0^m*5000.0/2.0#2.0^m*1000.0;#2.0^m*500.0;#N=2.0^m*500.0#2.0^m*100.0;
 Xf=1.0;
 
 dx=Xf/N
