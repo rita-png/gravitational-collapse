@@ -37,7 +37,7 @@ end
 
 # outputs xtilde(x)
 function gridfunc(x)
-    return 1/2 .+ 1/2 .* cos.( pi .* (1 .- 0.5 .* x)) #option 6
+    return 1/2 .+ 1/2 .* cos.( pi .* (1 .- 0.9 .* x)) #option 6
     #return 1/2 .+ 1/2 .* cos.( pi .* (1 .- x)) #option 7
 end;
 
@@ -266,9 +266,15 @@ function print_muninn(files, t, data, res, mode)
             j=j+1
         end
     else
+        if loggrid==true
+            auxdir= dir*"/bisectionsearch/muninnDATA/uneven"
+        else
+            auxdir= dir*"/bisectionsearch/muninnDATA/even"
+        end
+        
         for fl in files #bisection search
             
-            open(dir*"/bisectionsearch/muninnDATA/run$run/$fl.txt", mode) do file
+            open(auxdir*"/run$run/$fl.txt", mode) do file
             #open("./DATA/bisectionsearch/muninnDATA/run$run/$fl.txt", mode) do file
                 @printf file "\"Time = %.10e\n" t
                 for i in 1:length(data[:,1])
@@ -280,6 +286,8 @@ function print_muninn(files, t, data, res, mode)
         end
     end
 end
+
+
 
 #ghosts
 
@@ -674,14 +682,6 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         run=int(run)
         if iter%1000==0
         #if (iter%500==0&&t>0.3)||(t>0.85&&iter%10==0)
-            """if bisection==true
-                CSV.write(dir*"/bisectionsearch/run$run/time_step$iter.csv", Tables.table(state_array), writeheader=false)
-                #CSV.write("./DATA/bisectionsearch/run$run/time_step$iter.csv", Tables.table(state_array), writeheader=false)
-            else
-                CSV.write(dir*"/res$res/time_step$iter.csv", Tables.table(state_array), writeheader=false)
-                #CSV.write("./DATA/res$res/time_step$iter.csv", Tables.table(state_array), writeheader=false)
-            end"""
-            #write muninn
             print_muninn(files, t, state_array[:,1:5],res,"a")
 
         end
@@ -717,15 +717,4 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
 
     return evol_stats, T_array
 
-end    
-
-function epsilon(X,i,dt,dx)
-    #minimum([dx/dt*(1/2)^(2*3), 10])
-    #println("dissipation epsilon is ", (dx/dt*(1/2)^(2*3)))
-    if i != L-3
-        dx=X[i+1]-X[i]
-    elseif i==L-3
-        dx = X[i]-X[i-1]
-    end
-    return (dx/dt*(1/2)^(2*3+1))
 end
