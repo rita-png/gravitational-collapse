@@ -13,7 +13,7 @@ global meshrefinement=false;
 using Printf
 
 res=m;
-N=2.0^m*200.0/2.0
+N=2.0^m*100.0/2.0
 Xf=1.0
 
 dx=Xf/N
