@@ -1,5 +1,5 @@
 A = ARGS[1]
-res = round(ARGS[2],digits=1)
+res = round(ARGS[2],digits=0)
 println("running for resolution ", res, " N1 = 100", ", A = ", A)
 
 m = res
