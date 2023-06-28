@@ -4,7 +4,7 @@ using Dierckx
 
 A = ARGS[1]
 run = ARGS[2]
-global dir = "/home/ritapsantos/data/ritapsantos"
+global dir = "/home/ritapsantos/data/ritapsantos/1000"
 #global dir = "/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA"
 
 #println(dir)
@@ -18,7 +18,7 @@ include("./ScalarField.jl");
 
 m = 1
 res=m;
-N=2.0^m*1500.0/2.0#2.0^m*5000.0/2.0#2.0^m*1000.0;#2.0^m*500.0;#N=2.0^m*500.0#2.0^m*100.0;
+N=2.0^m*1000.0/2.0#2.0^m*5000.0/2.0#2.0^m*1000.0;#2.0^m*500.0;#N=2.0^m*500.0#2.0^m*100.0;
 Xf=1.0;
 
 dx=Xf/N
@@ -27,7 +27,7 @@ if loggrid==false
 else
     dt=0.1*round(dx,digits=10)
 end
-Nt=2.0^m*1500.0/2.0#2.0^m*5000.0/2.0
+Nt=2.0^m*1000.0/2.0#2.0^m*5000.0/2.0
 Tf=Nt*dt;
 
 #### Grid ####
