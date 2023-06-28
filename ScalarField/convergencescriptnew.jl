@@ -3,7 +3,7 @@ res = trunc(Int, ARGS[2])
 println("running for resolution ", res, " N1 = 200", ", A = ", A)
 
 m = res
-#A = 0.01#0.0492646484375#0.001#0.049375#5#0.0492645084166179#0.049264507293701174#0.049264508247375494#0.04925#0.0493#0.001#0.049375#0.07#0.05#0.1124921875#0.125
+A = 0.01#0.0492646484375#0.001#0.049375#5#0.0492645084166179#0.049264507293701174#0.049264508247375494#0.04925#0.0493#0.001#0.049375#0.07#0.05#0.1124921875#0.125
 run = 1
 
 global loggrid=true#true
@@ -49,16 +49,16 @@ initX = range(round(ori-3.0*dx,digits=10), stop=Xf+3.0*dx, step=dx)
 L=length(initX);
 
 if loggrid==true
-    """global originalX=initX
-    xtilde=gridfunc(initX1)
-    initX1=xtilde
-    initX=collect(initX)
-    initX[4:L-3]=xtilde"""
     global originalX=initX
     xtilde=gridfunc(initX1)
     initX1=xtilde
     initX=collect(initX)
-    initX[4:L-4]=xtilde[1:length(xtilde)-1]
+    initX[4:L-3]=xtilde
+    """global originalX=initX
+    xtilde=gridfunc(initX1)
+    initX1=xtilde
+    initX=collect(initX)
+    initX[4:L-4]=xtilde[1:length(xtilde)-1]"""
 end;
 
 using Dierckx
@@ -121,11 +121,11 @@ Threads.nthreads()
 
 #global dt = 5e-5/2/2/2 #RES3
 if m==1
-    global dt=5e-7/2/5#0.005
+    global dt=5e-6/2#0.005
 elseif m==2
-    global dt=5e-7/2/2/5#0.005/2
+    global dt=5e-6/2/2#0.005/2
 else
-    global dt=5e-7/2/2/2/5#0.005/2/2
+    global dt=5e-6/2/2/2#0.005/2/2
 end
 
 finaltime=2.0#1.3#2.0#1.3#1.6#2#1.3#0.08*2#0.005*10*5#1#0.9#0.8#0.04*5*4#length(T)-1
