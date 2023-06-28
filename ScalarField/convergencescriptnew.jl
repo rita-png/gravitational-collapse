@@ -121,11 +121,11 @@ Threads.nthreads()
 
 #global dt = 5e-5/2/2/2 #RES3
 if m==1
-    global dt=5e-6/2/5#0.005
+    global dt=5e-7/2/5#0.005
 elseif m==2
-    global dt=5e-6/2/2/5#0.005/2
+    global dt=5e-7/2/2/5#0.005/2
 else
-    global dt=5e-6/2/2/2/5#0.005/2/2
+    global dt=5e-7/2/2/2/5#0.005/2/2
 end
 
 finaltime=2.0#1.3#2.0#1.3#1.6#2#1.3#0.08*2#0.005*10*5#1#0.9#0.8#0.04*5*4#length(T)-1
