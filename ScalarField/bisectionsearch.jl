@@ -26,9 +26,13 @@ while(run <= runmax)
 
     global ARGS = [A,run]
     include("./Evolution_ScalarField.jl");
-    df = CSV.read(dir*"/bisectionsearch/parameters.csv", DataFrame)
+    if loggrid==true
+        df = CSV.read(dir*"/bisectionsearch/muninnDATA/uneven/parameters.csv", DataFrame)
+    else
+        df = CSV.read(dir*"/bisectionsearch/muninnDATA/even/parameters.csv", DataFrame)
+    end
 
-    if (df[run+1, :criticality]) == 0.0
+    if (df[run+1, :Column1]) == 0.0 #:criticality
         println("\nNon critical!")
         push!(plt_A_non_crit, A)
         push!(plt_x1, run)
@@ -37,14 +41,14 @@ while(run <= runmax)
         push!(plt_A_crit, A)
         push!(plt_x2, run)
     end
-    println("\nA = ",df[run+1, :A], " sigma = ", df[run+1, :sigma], " r0 = ", df[run+1, :r0], " Final time = ", df[run+1, :time], " explode = ", df[run+1, :explode])
+    println("\nA = ",df[run+1, :Column2], " sigma = ", df[run+1, :Column3], " r0 = ", df[run+1, :Column4], " Final time = ", df[run+1, :Column5], " explode = ", df[run+1, :Column6])
 
     #println(df[1, :explode])
-    if (df[run+1, :explode]) == 1.0
-        println("Found a NaN at time ",df[run+1, :time])
+    if (df[run+1, :Column6]) == 1.0 #:explode
+        println("Found a NaN")
     end
     
-    if (df[run+1, :criticality]) == 1.0
+    if (df[run+1, :Column1]) == 1.0 #:criticality
         global high_bound = A
     else
         global low_bound = A

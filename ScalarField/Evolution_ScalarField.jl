@@ -4,8 +4,8 @@ using Dierckx
 
 A = ARGS[1]
 run = ARGS[2]
-global dir = "/home/ritapsantos/data/ritapsantos"
-#global dir = "/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA"
+#global dir = "/home/ritapsantos/data/ritapsantos"
+global dir = "/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA"
 
 #println(dir)
 global bisection = true
@@ -18,7 +18,7 @@ include("./ScalarField.jl");
 
 m = 1
 res=m;
-N=2.0^m*10000.0/2.0#2.0^m*5000.0/2.0#2.0^m*1000.0;#2.0^m*500.0;#N=2.0^m*500.0#2.0^m*100.0;
+N=2.0^m*1000.0/2.0#2.0^m*5000.0/2.0#2.0^m*1000.0;#2.0^m*500.0;#N=2.0^m*500.0#2.0^m*100.0;
 Xf=1.0;
 
 dx=Xf/N
@@ -27,7 +27,7 @@ if loggrid==false
 else
     dt=0.1*round(dx,digits=10)
 end
-Nt=2.0^m*10000.0/2.0#2.0^m*5000.0/2.0
+Nt=2.0^m*1000.0/2.0#2.0^m*5000.0/2.0
 Tf=Nt*dt;
 
 #### Grid ####
@@ -102,9 +102,9 @@ monitor_ratio = zeros(L)
 run=int(run)
 if run == 1 && bisection==true
     if loggrid==true
-        CSV.write(dir*"/bisectionsearch/muninnDATA/uneven/parameters.csv", Tables.table(evol_stats), writeheader=true, header=["criticality", "A", "sigma", "r0", "time", "explode", "run"])
+        CSV.write(dir*"/bisectionsearch/muninnDATA/uneven/parameters.csv", Tables.table(evol_stats))#, writeheader=true, header=["criticality", "A", "sigma", "r0", "time", "explode", "run"])
     else
-        CSV.write(dir*"/bisectionsearch/muninnDATA/even/parameters.csv", Tables.table(evol_stats), writeheader=true, header=["criticality", "A", "sigma", "r0", "time", "explode", "run"])
+        CSV.write(dir*"/bisectionsearch/muninnDATA/even/parameters.csv", Tables.table(evol_stats))#, writeheader=true, header=["criticality", "A", "sigma", "r0", "time", "explode", "run"])
     end
 end
 
@@ -115,11 +115,11 @@ stats,T_interp=timeevolution(state_array,finaltime,run)#timeevolution(state_arra
 
 if bisection==true
     if loggrid==true
-        CSV.write(dir*"/bisectionsearch/muninnDATA/uneven/parameters.csv", Tables.table(stats), writeheader=true,header=["criticality", "A", "sigma", "r0", "time", "explode", "run"],append=true);
-        CSV.write(dir*"/bisectionsearch/muninnDATA/uneven/timearray.csv", Tables.table(T_interp), writeheader=false);
+        CSV.write(dir*"/bisectionsearch/muninnDATA/uneven/parameters.csv", Tables.table(stats),append=true);#, writeheader=true,header=["criticality", "A", "sigma", "r0", "time", "explode", "run"],
+        CSV.write(dir*"/bisectionsearch/muninnDATA/uneven/timearray.csv", Tables.table(T_interp))#, writeheader=false);
     else
-        CSV.write(dir*"/bisectionsearch/muninnDATA/even/parameters.csv", Tables.table(stats), writeheader=true,header=["criticality", "A", "sigma", "r0", "time", "explode", "run"],append=true);
-        CSV.write(dir*"/bisectionsearch/muninnDATA/even/timearray.csv", Tables.table(T_interp), writeheader=false);
+        CSV.write(dir*"/bisectionsearch/muninnDATA/even/parameters.csv", Tables.table(stats),append=true)#, writeheader=true,header=["criticality", "A", "sigma", "r0", "time", "explode", "run"]);
+        CSV.write(dir*"/bisectionsearch/muninnDATA/even/timearray.csv", Tables.table(T_interp))#, writeheader=false);
     end
 
     

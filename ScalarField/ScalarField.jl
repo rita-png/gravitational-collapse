@@ -703,14 +703,22 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         end"""
         
         if isnan(state_array[L-3,4])
-            global explode = true
+            if criticality==false
+                global time = iter
+                global explode = true
+            end
+
             println("boom at time=", t)
-            global timestep = iter
             break
+
         end
 
-        global time = t
+        #global time = t
         
+    end
+    
+    if criticality==false
+        global time = t
     end
     
     global evol_stats = [criticality A sigma r0 time explode run]
