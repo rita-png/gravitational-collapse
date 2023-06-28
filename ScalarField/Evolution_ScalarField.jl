@@ -4,13 +4,13 @@ using Dierckx
 
 A = ARGS[1]
 run = ARGS[2]
-#global dir = "/home/ritapsantos/data/ritapsantos/1000"
-global dir = "/home/ritapsantos/data/ritapsantos"
+global dir = "/home/ritapsantos/data/ritapsantos/1000"
+#global dir = "/home/ritapsantos/data/ritapsantos"
 #global dir = "/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA"
 
 #println(dir)
 global bisection = true
-global loggrid = false #CHANGE
+global loggrid = true #CHANGE
 global meshrefinement = false
 
 include("./ScalarField.jl");
@@ -19,7 +19,7 @@ include("./ScalarField.jl");
 
 m = 1
 res=m;
-N=2.0^m*10000.0/2.0#2.0^m*5000.0/2.0#2.0^m*1000.0;#2.0^m*500.0;#N=2.0^m*500.0#2.0^m*100.0;
+N=2.0^m*1000.0/2.0#2.0^m*5000.0/2.0#2.0^m*1000.0;#2.0^m*500.0;#N=2.0^m*500.0#2.0^m*100.0;
 Xf=1.0;
 
 dx=Xf/N
@@ -28,7 +28,7 @@ if loggrid==false
 else
     dt=0.1*round(dx,digits=10)
 end
-Nt=2.0^m*10000.0/2.0#2.0^m*5000.0/2.0
+Nt=2.0^m*1000.0/2.0#2.0^m*5000.0/2.0
 Tf=Nt*dt;
 
 #### Grid ####
@@ -42,16 +42,16 @@ initX = range(round(ori-3.0*dx,digits=10), stop=Xf+3.0*dx, step=dx)
 L=length(initX);
 
 if loggrid==true
-    """global originalX=initX
-    xtilde=gridfunc(initX1)
-    initX1=xtilde
-    initX=collect(initX)
-    initX[4:L-3]=xtilde"""
     global originalX=initX
     xtilde=gridfunc(initX1)
     initX1=xtilde
     initX=collect(initX)
-    initX[4:L-4]=xtilde[1:length(xtilde)-1]
+    initX[4:L-3]=xtilde
+    """global originalX=initX
+    xtilde=gridfunc(initX1)
+    initX1=xtilde
+    initX=collect(initX)
+    initX[4:L-4]=xtilde[1:length(xtilde)-1]"""
 end;
 
 #### Building initial data ####
