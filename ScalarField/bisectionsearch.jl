@@ -4,12 +4,30 @@
 
 using CSV, Tables, DataFrames, Plots, Printf
 
+include("./ScalarField.jl");
+
+
+
+#### CONFIG ####
 
 global low_bound = 0.0492625#0.0492#0.04921#0.0492#0.0492646484375#0.0492578125#0.04925#0.049264507293701174#0.049
-global high_bound = 0.0493#0.0492646484375#0.0493#0.04926470947265625#0.04926470947265625#0.049264892578125004#0.049265625#0.049265625#0.049375#0.05
+global high_bound = 0.04928125#0.0492646484375#0.0493#0.04926470947265625#0.04926470947265625#0.049264892578125004#0.049265625#0.049265625#0.049375#0.05
+
+global N=10000.0
+
+global bisection = true
+global loggrid = false
+
+#global dir = "/home/ritapsantos/data/ritapsantos/1000"
+global dir = "/home/ritapsantos/data/ritapsantos"
+#global dir = "/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA"
+
+#### CONFIG ####
+
+
+
 global run = 1
 global runmax = 40
-
 
 plt_A_crit = Vector{Float64}()
 plt_A_non_crit = Vector{Float64}()
@@ -22,9 +40,9 @@ while(run <= runmax)
     A = (low_bound + high_bound) / 2
 
     println("\n########")
-    println("\nBisection search run ##", run, "\nLow bound = ",low_bound,"; High bound = ", high_bound,"; A = ", A,"\n")
+    println("\nBisection search run ##", run, "\nLow bound = ",low_bound,"; High bound = ", high_bound,"; A = ", A," N = ", N,"\n")
 
-    global ARGS = [A,run]
+    global ARGS = [A,run,N]
     include("./Evolution_ScalarField.jl");
     if loggrid==true
         df = CSV.read(dir*"/bisectionsearch/muninnDATA/uneven/parameters.csv", DataFrame)
