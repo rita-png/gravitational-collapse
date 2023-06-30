@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[72]:
+# In[24]:
 
 
 import pandas as pd
@@ -52,10 +52,14 @@ for var in vars:
     #dir = "/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA/muninnDATA/res1/{}.txt".format(var)
     
     #dir = "/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA/muninnDATA/res1/{}.txt".format(var)
-    dir = "/home/ritapsantos/data/ritapsantos/bisectionsearch/muninnDATA/uneven/run2/{}.txt".format(var)
-    #dir = "/home/rita13santos/Desktop/run1/{}.txt".format(var)
+    
+    #dir = "/home/rita13santos/Desktop/run8/{}.txt".format(var)
     #dir = "/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/StoredDATA/08-06/res1/{}.txt".format(var)
+    
+    #dir="/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/StoredDATA/30-05/run20/res1/{}.txt".format(var)
+    dir = "/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA/muninnDATA/res1/{}.txt".format(var)
 
+    #dir = "/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/StoredDATA/28-06/N200,dt=2.5e-5/res1/{}.txt".format(var)
     print(dir)
 
     with open(dir) as f:
@@ -92,7 +96,7 @@ for var in vars:
 #count
 
 
-# In[74]:
+# In[26]:
 
 
 """dir = "/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA/timearray1.csv"
@@ -111,7 +115,7 @@ print(time)""";
 
 # CSV format
 
-# In[75]:
+# In[19]:
 
 
 """step=10
@@ -159,31 +163,31 @@ for i in range(count-1):
 
 # ####
 
-# In[76]:
+# In[27]:
 
 
 print(m[0][1]) # datam indexes give time then gridpoint
 
 
-# In[77]:
+# In[28]:
 
 
 L=len(m[0])-6 # grid length without the ghostpoints
 dx=grid[0][1]-grid[0][0]
 
 
-# In[78]:
+# In[29]:
 
 
 t=0
-plt_x1 = grid[t][3:len(grid[0])-3]
+"""plt_x1 = grid[t][3:len(grid[0])-3]
 
-plt.plot(plt_x1,m[0][3:len(m[0])-3])
+plt.plot(plt_x1,m[0][3:len(m[0])-3])"""
 
 
 # # Styling plots
 
-# In[79]:
+# In[30]:
 
 
 plt.rcParams.update({'font.size': 12})
@@ -193,10 +197,10 @@ plt.rcParams.update({'font.size': 12})
 
 # Value of Derpsi at the origin over time
 
-# In[80]:
+# In[31]:
 
 
-derpsiplt=[]
+"""derpsiplt=[]
 for i in range(0, len(derpsi)):
     derpsiplt.append(derpsi[i][3]) #saving derpsi at the origin for each timestep
 
@@ -211,11 +215,11 @@ with plt.style.context('fivethirtyeight'):
     plt.scatter(time,derpsiplt,s=0.5)
     plt.xlim([0.9,1.09])
     plt.show()
-
-
+"""
+"""
 # Monitor ratio over time
 
-# In[81]:
+# In[32]:
 
 
 L=len(m[0])
@@ -235,7 +239,7 @@ with plt.style.context('fivethirtyeight'):
 
 # Finding zero crossings
 
-# In[13]:
+# In[33]:
 
 
 from scipy.interpolate import UnivariateSpline
@@ -246,7 +250,7 @@ roots=spl.roots()
 len(roots)
 
 
-# In[14]:
+# In[34]:
 
 
 k=2
@@ -254,19 +258,19 @@ tau_star=(roots[0+k]*roots[3+k]-roots[1+k]*roots[2+k])/(roots[0+k]-roots[1+k]-ro
 tau_star
 
 
-# In[15]:
+# In[35]:
 
 
 roots[k:(k+3)+1]
 
 
-# In[16]:
+# In[13]:
 
 
 tau_star=1.034 #THIS IS GOOD! or k=2
 
 
-# In[17]:
+# In[14]:
 
 
 #adapt_time = [-math.log(abs((tau_star-x))) for x in time[0:len(time)-1]]#0:len(time)-step:step]] #ignoring last timestep, where log(0)
@@ -278,7 +282,7 @@ for x in time:
         adapt_time.append(-math.log(abs((tau_star-x))))
 
 
-# In[18]:
+# In[15]:
 
 
 
@@ -294,7 +298,7 @@ with plt.style.context('fivethirtyeight'):
 
 # $\beta$ at scri+
 
-# In[57]:
+# In[37]:
 
 
 betaplt=[]
@@ -310,18 +314,19 @@ with plt.style.context('fivethirtyeight'):
     plt.plot(time,betaplt,linewidth=0.5)
     plt.scatter(time,betaplt,s=0.5)
     #plt.plot(adapt_time,mplt[0:len(adapt_time)],linewidth=0.5)
-    plt.xlim([1,1.05])
+    #plt.xlim([1,1.05])
     plt.show()
-
+"""
 
 # Bondi mass at scri+
 
-# In[71]:
+# In[38]:
 
 
 mplt=[]
+
 for i in range(0, len(derpsi)):
-    mplt.append(m[i][len(m[0])-4]) #saving derpsi at the origin for each timestep
+    mplt.append(m[i][len(m[0])-5]) #saving derpsi at the origin for each timestep #change to -4
 
 with plt.style.context('fivethirtyeight'):
     
@@ -331,13 +336,15 @@ with plt.style.context('fivethirtyeight'):
     plt.ylabel("Bondi mass")
     plt.plot(time,mplt,linewidth=0.5)
     plt.scatter(time,mplt,s=0.5)
-    plt.xlim([1.02,1.04])
-    plt.ylim([-0.001,0.002])
+    #plt.xlim([.8,1.04])
+    #plt.ylim([-0.001,0.002])
     #plt.plot(adapt_time,mplt[0:len(adapt_time)],linewidth=0.5)
     #plt.xlim([4.32,8.04])
     #plt.ylim([-0.001,0.001])
     plt.show()
 
+    
+"""
 
 # In[44]:
 
@@ -464,7 +471,7 @@ with plt.style.context('fivethirtyeight'):
 # In[ ]:
 
 
-
+"""
 
 
 # In[ ]:
