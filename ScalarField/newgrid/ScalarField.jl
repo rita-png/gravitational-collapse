@@ -17,19 +17,36 @@ function init_gaussian(x,r0,sigma,A)
     return z
 end
 
-function init_gaussian_der(x,r0,sigma,A)
-    n=length(x);
-    if n==1
-        r=x
-        z= A * (2 * exp(-(r-r0)^2/sigma^2) * r - 2 * exp(-(r-r0)^2/sigma^2) * (r-r0)*r^2/sigma^2)#exp(-((x/(1-x)-r0)/sigma)^2) * (3 * x^2 / (1-x) ^4 - (x/(1-x))^3 * (2*(x-r0*(-x+1)))/(sigma^2*(1-x)^3))
-    else
-        z=zeros(n);
-        for i in 1:n
-            r = x[i]
-            z[i] = A * (2 * exp(-(r-r0)^2/sigma^2) * r - 2 * exp(-(r-r0)^2/sigma^2) * (r-r0)*r^2/sigma^2)
-            
+function init_gaussian_der(r,r0,sigma,A)
+    n=length(r);
+    if compactified==false
+        if n==1
+            z= A * (2 * exp(-(r-r0)^2/sigma^2) * r - 2 * exp(-(r-r0)^2/sigma^2) * (r-r0)*r^2/sigma^2)#exp(-((x/(1-x)-r0)/sigma)^2) * (3 * x^2 / (1-x) ^4 - (x/(1-x))^3 * (2*(x-r0*(-x+1)))/(sigma^2*(1-x)^3))
+        else
+            z=zeros(n);
+            for i in 1:n
+                r = r[i]
+                z[i] = A * (2 * exp(-(r-r0)^2/sigma^2) * r - 2 * exp(-(r-r0)^2/sigma^2) * (r-r0)*r^2/sigma^2)
+            end
+        end
+    else # inputted argument r is actually an x
+
+        if n==1
+            x=r
+            r=x/(1-x)
+            z= A * (2 * exp(-(r-r0)^2/sigma^2) * r - 2 * exp(-(r-r0)^2/sigma^2) * (r-r0)*r^2/sigma^2)#exp(-((x/(1-x)-r0)/sigma)^2) * (3 * x^2 / (1-x) ^4 - (x/(1-x))^3 * (2*(x-r0*(-x+1)))/(sigma^2*(1-x)^3))
+        else
+            z=zeros(n);
+            for i in 1:n
+                x=r[i]
+                rr = x/(1-x)
+                z[i] = A * (2 * exp(-(rr-r0)^2/sigma^2) * rr - 2 * exp(-(rr-r0)^2/sigma^2) * (rr-r0)*rr^2/sigma^2)
+                
+            end
+            z[n] = 0
         end
     end
+
     return z
 end
 
@@ -607,10 +624,13 @@ function bulkSF(y,i,X)
     #dy=-(1.0/2.0)*exp(2.0*y[i,2])*(-cot((pi*X[i])/2.0)^6.0*(-2.0*y[i,1]+tan((pi*X[i])/2.0)^2.0)*y[i,3]+(cot((pi*X[i])/2.0)^4.0*y[i,3]*(pi-2.0*cos((pi*X[i])/2.0)^2.0*cot((pi*X[i])/2.0)*Der(y,i,1,X)))/pi-(cot((pi*X[i])/2.0)^5.0*(-1.0+cos(pi*X[i])+2.0*(1.0+cos(pi*X[i]))*y[i,1])*y[i,3]*Der(y,i,2,X))/pi-(cot((pi*X[i])/2.0)^5.0*(-1.0+cos(pi*X[i])+2.0*(1.0+cos(pi*X[i]))*y[i,1])*y[i,4])/(2*pi)+(cos((pi*X[i])/2.0)^4.0*cot((pi*X[i])/2.0)^4.0*(-1.0+2.0*Der(y,i,1,X)-2.0*(X[i]-2.0*y[i,1])*Der(y,i,2,X))*y[i,4])/pi^2+(-1.0+2.0*cot((pi*X[i])/2.0)^2.0*y[i,1])*Der(y,i,4,X))
     
     #dy=-(1.0/2.0)*exp(2.0*y[i,2])*(cot((pi*X[i])/2)^4*(-1+2*cot((pi*X[i])/2)^2*y[i,1])*y[i,3]+(cot((pi*X[i])/2)^4*y[i,3]*(pi-2*cos((pi*X[i])/2)^2*cot((pi*X[i])/2)*Der(y,i,1,X)))/pi-(cot((pi*X[i])/2)^5*(-1+cos(pi*X[i])+2*(1+cos(pi*X[i]))*y[i,1])*y[i,3]*Der(y,i,2,X))/pi-(cot((pi*X[i])/2)^5*(-1+cos(pi*X[i])+2*(1+cos(pi*X[i]))*y[i,1])*y[i,4])/(2*pi)+(cos((pi*X[i])/2)^4*cot((pi*X[i])/2)^4*(-1+2*Der(y,i,1,X)-2*(X[i]-2*y[i,1])*Der(y,i,2,X))*y[i,4])/pi^2+(-1+2*cot((pi*X[i])/2)^2*y[i,1])*Der(y,i,4,X))
-    
-    r=X[i]
-    dy=(1/(2*r^3))*exp(2*y[i,2])*(-2*y[i,1]*y[i,3]+2*r*y[i,3]*Der(y,i,1,X)-2*r^2*y[i,3]*Der(y,i,2,X)+4*r*y[i,1]*y[i,3]*Der(y,i,2,X)+2*r*y[i,1]*y[i,4]-2*r^2*Der(y,i,1,X)*y[i,4]+2*r^3*Der(y,i,2,X)*y[i,4]-4*r^2*y[i,1]*Der(y,i,2,X)*y[i,4]+r^3*Der(y,i,4,X)-2*r^2*y[i,1]*Der(y,i,4,X))
-
+    if compactified == false
+        r=X[i]
+        dy=(1/(2*r^3))*exp(2*y[i,2])*(-2*y[i,1]*y[i,3]+2*r*y[i,3]*Der(y,i,1,X)-2*r^2*y[i,3]*Der(y,i,2,X)+4*r*y[i,1]*y[i,3]*Der(y,i,2,X)+2*r*y[i,1]*y[i,4]-2*r^2*Der(y,i,1,X)*y[i,4]+2*r^3*Der(y,i,2,X)*y[i,4]-4*r^2*y[i,1]*Der(y,i,2,X)*y[i,4]+r^3*Der(y,i,4,X)-2*r^2*y[i,1]*Der(y,i,4,X))
+    else
+        x=X[i]
+        dy=(1/(2*x^3))*exp(2*y[i,2])*(2*(-1+x)*y[i,1]*((-1+x)^2*y[i,3]*(1+2*(-1+x)*x*Der(y,i,2,X))+x*((-1+x)^3*(1+2*(-1+x)*x*Der(y,i,2,X))*y[i,4]+x*Der(y,i,4,X)))+x*(2*(-1+x)^3*y[i,3]*((-1+x)*Der(y,i,1,X)+x*Der(y,i,2,X))+x*(2*(-1+x)^5*Der(y,i,1,X)*y[i,4]+x*(2*(-1+x)^4*Der(y,i,2,X)*y[i,4]+Der(y,i,4,X)))))
+    end
     return dy
 end
 
@@ -651,9 +671,13 @@ function RHS(y0,x1,time,func,i,data)
     #z=Array{Float128}(undef, length(y0))
     derpsi = func
 
-    z[3]=derpsi(x1)
+    if compactified==false
+        z[3]=derpsi(x1)
+    else
+        z[3]=derpsi(x1)/(1-x1)^2
+    end
     
-    r=x1
+    
     
     #m and beta
     if x1<10^(-15) #left
@@ -667,9 +691,20 @@ function RHS(y0,x1,time,func,i,data)
         #grid 2
         #z[1] = ((-1.0+cos(pi*x1)+2.0(1.0+cos(pi*x1))*y0[1])*sin(pi*x1)*(-2.0*y0[3]+sin(pi*x1)*z[3])^2.0)/(-1.0+cos(pi*x1))^3.0
         #z[2] = 1.0/16.0*csc((pi*x1)/2.0)^8.0*sin(pi*x1)^3.0*(-2.0*pi*y0[3]+sin(pi*x1)*z[3])^2"""
-        
-        z[1] = (r - 2.0 * y0[1]) * 2.0 .* pi .* r * ((r*z[3]-y0[3])/r^2.0) ^ 2.0
-        z[2] = 2.0 .* pi .* r * ((r*z[3]-y0[3])/r^2.0) ^ 2.0
+        if compactified == false
+            r=x1
+            z[1] = (r - 2.0 * y0[1]) * 2.0 .* pi .* r * ((r*z[3]-y0[3])/r^2.0) ^ 2.0
+            z[2] = 2.0 .* pi .* r * ((r*z[3]-y0[3])/r^2.0) ^ 2.0
+        else
+            x=x1
+            z[1] = - 2.0 .* pi .* (-1.0 .+ x) .* (y0[3] .+ (-1 + x) .* x .* z[3]) .^ 2.0 ./ x .^ 3.0 .* ( x ./ (1.0 .-x ) .- 2 .* y0[1])
+            z[2] = - 2.0 .* pi .* (-1.0 .+ x) .* (y0[3] .+ (-1 + x) .* x .* z[3]) .^ 2.0 ./ x .^ 3.0
+            if abs.(x1 .- 1.0)<10^(-15)
+                z[1] = 0.0
+                z[2] = 0.0
+                z[3] = 0.0
+            end
+        end
 
     """else #bulk
         #grid 1
@@ -709,10 +744,11 @@ function SF_RHS(data,t,X)
         if X[i]<10^(-15) #left
             dy[i,4]= 0.0 - dissipation4(data,i,0.02)[4];
             
+        elseif abs.(X[i] .- 1.0)<10^(-15)
+            dy[i,4]= 0.0 - dissipation4(data,i,0.02)[4]
+            
         else
             dy[i,4]=bulkSF(data,i,X) - dissipation4(data,i,0.02)[4]
-            
-        
         end
 
     
@@ -804,7 +840,7 @@ function timeevolution(state_array,finaltime,dir,run)
         iter = iter + 1
 
         #update time increment
-        global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)
+        #global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)
         #global dt=0.0000000001
         t = t + dt
         if iter%20==0
@@ -834,9 +870,10 @@ function timeevolution(state_array,finaltime,dir,run)
 
         run=int(run)
         
-        if iter%20==0
+        if iter%5==0
             print_muninn(files, t, state_array[:,1:5],res,"a")
         end
+        #print_muninn(files, t, state_array[:,1:5],res,"a")
 
         #threshold for apparent black hole formation
         global monitor_ratio[5:L-4] = 2 .* state_array[5:L-4,1] ./ initX[5:L-4] #./ initX[5:L-4] .* (1 .- initX[5:L-4])
