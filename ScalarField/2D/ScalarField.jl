@@ -909,12 +909,7 @@ function timeevolution(state_array,finaltime,dir,run)
 
         run=int(run)
         if iter%100==0
-            if bisection==true
-                CSV.write(dir*"/run$run/time_step$iter.csv", Tables.table(state_array), writeheader=false)
-            else
-                CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
-            end
-            
+                
             #write muninn
             print_muninn(files, t, state_array[:,1:5],res,"a")
             

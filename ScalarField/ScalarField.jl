@@ -17,7 +17,7 @@ function init_gaussian(x,r0,sigma,A)
     return z
 end
 
-function init_gaussian_der(x,r0,sigma,A)
+"""function init_gaussian_der(x,r0,sigma,A)
     n=length(x);
     if n==1
         #z= 2*A * x/(1-x)^3 * exp(-((x/(1-x)-r0)/sigma)^2) * (1 - x/(1-x) * (x/(1-x) - r0) / sigma^2)
@@ -31,6 +31,29 @@ function init_gaussian_der(x,r0,sigma,A)
             end
         end
     end
+    return z
+end"""
+
+function init_gaussian_der(r,r0,sigma,A)
+    n=length(r);
+
+    # inputted argument r is actually an x, it's already compactified
+    if n==1
+        x=r
+        r=x/(1-x)
+        z= A * (2 * exp(-(r-r0)^2/sigma^2) * r - 2 * exp(-(r-r0)^2/sigma^2) * (r-r0)*r^2/sigma^2)#exp(-((x/(1-x)-r0)/sigma)^2) * (3 * x^2 / (1-x) ^4 - (x/(1-x))^3 * (2*(x-r0*(-x+1)))/(sigma^2*(1-x)^3))
+    else
+        z=zeros(n);
+        for i in 1:n
+            x=r[i]
+            rr = x/(1-x)
+            z[i] = A * (2 * exp(-(rr-r0)^2/sigma^2) * rr - 2 * exp(-(rr-r0)^2/sigma^2) * (rr-r0)*rr^2/sigma^2)
+            
+        end
+        z[n] = 0.0
+    end
+    
+
     return z
 end
 
@@ -497,8 +520,10 @@ end
 function bulkSF(y,i,X)
     
     #psi,x
-    dy=-1.0/2.0*exp(2.0*y[i,2])*(-(2*(X[i]-1)^3*y[i,3]*(X[i]*((X[i]-1)*Der(y,i,1,X)+X[i]*Der(y,i,2,X))+y[i,1]*(1+2*(X[i]-1)*X[i]*Der(y,i,2,X))))/X[i]^3 - (2*(X[i]-1)^4*(X[i]*((X[i]-1)*Der(y,i,1,X)+X[i]*Der(y,i,2,X))+y[i,1]*(1+2(X[i]-1)*X[i]*Der(y,i,2,X)))*y[i,4])/X[i]^2 - ((X[i]+2*(X[i]-1)*y[i,1])*Der(y,i,4,X))/X[i])
- 
+    #dy=-1.0/2.0*exp(2.0*y[i,2])*(-(2*(X[i]-1)^3*y[i,3]*(X[i]*((X[i]-1)*Der(y,i,1,X)+X[i]*Der(y,i,2,X))+y[i,1]*(1+2*(X[i]-1)*X[i]*Der(y,i,2,X))))/X[i]^3 - (2*(X[i]-1)^4*(X[i]*((X[i]-1)*Der(y,i,1,X)+X[i]*Der(y,i,2,X))+y[i,1]*(1+2(X[i]-1)*X[i]*Der(y,i,2,X)))*y[i,4])/X[i]^2 - ((X[i]+2*(X[i]-1)*y[i,1])*Der(y,i,4,X))/X[i])
+    
+    x=X[i]
+    dy=(1/(2*x^3))*exp(2*y[i,2])*(2*(-1+x)*y[i,1]*((-1+x)^2*y[i,3]*(1+2*(-1+x)*x*Der(y,i,2,X))+x*((-1+x)^3*(1+2*(-1+x)*x*Der(y,i,2,X))*y[i,4]+x*Der(y,i,4,X)))+x*(2*(-1+x)^3*y[i,3]*((-1+x)*Der(y,i,1,X)+x*Der(y,i,2,X))+x*(2*(-1+x)^5*Der(y,i,1,X)*y[i,4]+x*(2*(-1+x)^4*Der(y,i,2,X)*y[i,4]+Der(y,i,4,X)))))
     return dy
 end
 
@@ -545,7 +570,12 @@ function RHS(y0,x1,time,func,i,data)
     z=zeros(length(y0))
     derpsi = func
 
-    z[3]=derpsi(x1)
+    z[3]=derpsi(x1)/(1-x1)^2
+    if abs.(x1 .- 1.0)<10^(-15)
+        #z[1] = 0.0
+        #z[2] = 0.0
+        z[3] = 0.0
+    end
 
     #m and beta
     if x1<10^(-15) #left
@@ -553,7 +583,7 @@ function RHS(y0,x1,time,func,i,data)
         z[2] = 0.0;
     elseif abs.(x1 .- 1.0)<10^(-15) #right
         #z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;#2.0 .* pi .* (y0[3]) .^ 2.0
-        z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0;#2.0 .* pi .* (y0[3]) .^ 2.0
+        z[1] =( 2.0 .* (x1 .- 1.0) .* y0[1])#2.0 .* pi .* (y0[3]) .^ 2.0        
         #z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0;#0.0
         z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0;#0.0
 
@@ -654,7 +684,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
             global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)      
         end"""
         t = t + dt
-        if iter%500==0
+        if iter%20==0
             println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
         end
         #println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
@@ -680,8 +710,8 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         
 
         run=int(run)
-        if iter%500==0
-        #if (iter%500==0&&t>0.3)||(t>0.85&&iter%10==0)
+        if iter%20==0
+        #if (iter%100==0&&t>0.3)||(t>0.85&&iter%10==0)
             print_muninn(files, t, state_array[:,1:5],res,"a")
 
         end
