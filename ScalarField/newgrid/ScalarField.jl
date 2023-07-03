@@ -411,7 +411,25 @@ function ghost(y)
    
     return y
 end
+function dissipation6(y,i,eps)
+    if i==4
+        delta6= (19*y[i,:]-142*y[i+1,:]+464*y[i+2,:]-866*y[i+3,:]+1010*y[i+4,:]-754*y[i+5,:]+352*y[i+6,:]-94*y[i+7,:]+11*y[i+8,:])/2;
+    elseif i==5
+        delta6= (11*y[i-1,:]-80*y[i,:]+254*y[i+1,:]-460*y[i+2,:]+520*y[i+3,:]-376*y[i+4,:]+170*y[i+5,:]-44*y[i+6,:]+5*y[i+7,:])/2;
+    elseif i==6
+        delta6= (5*y[i-2,:]-34*y[i-1,:]+100*y[i,:]-166*y[i+1,:]+170*y[i+2,:]-110*y[i+3,:]+44*y[i+4,:]-10*y[i+5,:]+y[i+6,:])/2;
+    elseif i==L-3
+        delta6= (19*y[i,:]-142*y[i-1,:]+464*y[i-2,:]-866*y[i-3,:]+1010*y[i-4,:]-754*y[i-5,:]+352*y[i-6,:]-94*y[i-7,:]+11*y[i-8,:])/2;
+    elseif i==L-4
+        delta6= (11*y[i+1,:]-80*y[i,:]+254*y[i-1,:]-460*y[i-2,:]+520*y[i-3,:]-376*y[i-4,:]+170*y[i-5,:]-44*y[i-6,:]+5*y[i-7,:])/2;
+    elseif i==L-5
+        delta6= (5*y[i+2,:]-34*y[i+1,:]+100*y[i,:]-166*y[i-1,:]+170*y[i-2,:]-110*y[i-3,:]+44*y[i-4,:]-10*y[i-5,:]+y[i-6,:])/2;
+    else
+        delta6=(y[i+3,:]-6*y[i+2,:]+15*y[i+1,:]-20*y[i,:]+15*y[i-1,:]-6*y[i-2,:]+y[i-3,:]);
+    end
 
+return (-1)^3*eps*1/(dx)*delta6
+end
 
 
 #4th order  dissipation, added to 2nd order original scheme
@@ -493,13 +511,13 @@ function der_grid(X)
 end"""
 
 # Finite difference approximation
-function Der(y,i,k,X)
+"""function Der(y,i,k,X)
 
     jacob = 1.0
-"""    if loggrid==true
+    "if loggrid==true
         X = originalX
         jacob = jacobian_func(X[i])
-    end"""
+    end"
 
     if i==4 # left boundary LOP1, TEM
         z = (y[i+3,k]-4*y[i+2,k]+7*y[i+1,k]-4*y[i,k])/(2*(X[i+1]-X[i]))*jacob
@@ -511,6 +529,25 @@ function Der(y,i,k,X)
         
     return z
     
+end"""
+
+function Der(y,i,k,X)
+
+    if i==4 # left boundary LOP2, TEM
+        z = (-27*y[i,k]+58*y[i+1,k]-56*y[i+2,k]+36*y[i+3,k]-13*y[i+4,k]+2*y[i+5,k])/(12*(X[i+1]-X[i]))
+    elseif i==5 # left boundary LOP1, TEM
+        z = (-2*y[i-1,k]-15*y[i,k]+28*y[i+1,k]-16*y[i+2,k]+6*y[i+3,k]-y[i+4,k])/(12*(X[i+1]-X[i]))
+    elseif i==L-3 # right boundary TEM
+        z = (-27*y[i,k]+58*y[i-1,k]-56*y[i-2,k]+36*y[i-3,k]-13*y[i-4,k]+2*y[i-5,k])/(12*(X[i]-X[i-1])) #fixed this *-1
+    elseif i==L-4 # right boundary TEM
+        z = (-2*y[i+1,k]-15*y[i,k]+28*y[i-1,k]-16*y[i-2,k]+6*y[i-3,k]-y[i-4,k])/(12*(X[i+1]-X[i]))
+    else # central
+        z = (-y[i+2,k]+8*y[i+1,k]-8*y[i-1,k]+y[i-2,k])/(12*(X[i+1]-X[i]))
+    
+
+    end
+    
+    return z
 end
 
 # Finite difference approximation
@@ -551,6 +588,56 @@ end
     
     return z
 end"""
+
+
+#matrix
+function unevenDer(y,i,k,X,spls)
+
+    if k==4 #array of spline has variables m, beta and derpsi
+        spl=spls[3]
+    else
+        spl=spls[k]
+    end
+
+    #for L-3 AND L-4 USE CENTRAL 
+    
+
+    dx=X[i+1]-X[i] #shouldnt this dx be constant, for error of derivatives to match?
+
+    if i==4 # left boundary LOP1, TEM
+        dx=X[i+1]-X[i]
+        z = (-27*y[i,k]+58*y[i+1,k]-56*spl(X[i]+2*dx)+36*spl(X[i]+3*dx)-13*spl(X[i]+4*dx)+2*spl(X[i]+5*dx))/(12*(dx))
+    elseif i==5 # left boundary LOP1, TEM
+        dx=X[i+1]-X[i]
+        z = (-2*spl(X[i]-dx)-15*y[i,k]+28*y[i+1,k]-16*spl(X[i]+2*dx)+6*spl(X[i]+3*dx)-spl(X[i]+4*dx))/(12*(dx))
+    """elseif i==L-3
+        dx=X[i]-X[i-1]
+        z = -(-27*y[i,k]+58*y[i-1,k]-56*spl(X[i]-2*dx)+36*spl(X[i]-3*dx)-13*spl(X[i]-4*dx)+2*spl(X[i]-5*dx))/(12*(dx)) #12-06 i did *-1
+    elseif i==L-4 # right boundary TEM
+        dx=X[i+1]-X[i]
+        z = -(-2*y[i+1,k]-15*y[i]+28*spl(X[i]-dx)-16*spl(X[i]-2*dx)+6*spl(X[i]-3*dx)-spl(X[i]-4*dx))/(12*(dx)) #12-06 i did *-1"""
+    else
+        
+
+        if(X[i]-dx)<0.0||(X[i]-2*dx)<0.0 #avoid evaluating spline out of domain
+            dx=X[i+1]-X[i]
+            z = (-27*y[i,k]+58*y[i+1,k]-56*spl(X[i]+2*dx)+36*spl(X[i]+3*dx)-13*spl(X[i]+4*dx)+2*spl(X[i]+5*dx))/(12*(dx))
+            #println("warnign at ori, i is ", i)
+        """elseif(X[i]+dx)>1.0||(X[i]+2*dx)>1.0 #avoid evaluating spline out of domain
+            dx=X[i]-X[i-1]
+            #println("warning!, X[i]", X[i], "i is ", i)
+            #z = (spl(X[i]+3*dx)-4*spl(X[i]+2*dx)+7*y[i+1,k]-4*y[i,k])/(2*dx)
+            z = -(-27*y[i,k]+58*y[i-1,k]-56*spl(X[i]-2*dx)+36*spl(X[i]-3*dx)-13*spl(X[i]-4*dx)+2*spl(X[i]-5*dx))/(12*(dx))"""
+        else
+            dx=X[i+1]-X[i]
+            z = (-spl(X[i]+2dx)+8*y[i+1,k]-8*spl(X[i]-dx)+spl(X[i]-2*dx))/(12*(dx))
+        end
+    end
+        
+    return z
+    
+end
+
 
 
 
@@ -653,6 +740,24 @@ function bulkSF(y,i,X)
 end
 
 
+function bulkSF(y,i,X,spls)
+    
+    #psi,x
+    if compactified == false
+        r=X[i]
+        dy=(1/(2*r^3))*exp(2*y[i,2])*(-2*y[i,1]*y[i,3]+2*r*y[i,3]*Der(y,i,1,X)-2*r^2*y[i,3]*Der(y,i,2,X)+4*r*y[i,1]*y[i,3]*Der(y,i,2,X)+2*r*y[i,1]*y[i,4]-2*r^2*Der(y,i,1,X)*y[i,4]+2*r^3*Der(y,i,2,X)*y[i,4]-4*r^2*y[i,1]*Der(y,i,2,X)*y[i,4]+r^3*Der(y,i,4,X)-2*r^2*y[i,1]*Der(y,i,4,X))
+    else
+        ## psi,r evol equation
+        x=X[i]
+        r = x/(1-x)
+        dy=(1/(2*r^3))*exp(2*y[i,2])*(r^3*(1-x)^2*unevenDer(y,i,4,X,spls)-2*r^2*(1-x)^2*unevenDer(y,i,4,X,spls)*y[i,1]+2*r*y[i,1]*y[i,4]-2*y[i,1]*y[i,3]-2*r^2*(1-x)^2*y[i,4]*unevenDer(y,i,1,X,spls)+2*r*(1-x)^2*y[i,3]*unevenDer(y,i,1,X,spls)+2*r^3*(1-x)^2*y[i,4]*unevenDer(y,i,2,X,spls)-4*r^2*(1-x)^2*y[i,1]*y[i,4]*unevenDer(y,i,2,X,spls)-2*r^2*(1-x)^2*y[i,3]*unevenDer(y,i,2,X,spls)+4*r*(1-x)^2*y[i,1]*y[i,3]*unevenDer(y,i,2,X,spls))
+
+
+    end
+    return dy
+end
+
+
 function boundarySF(y,X)
 
     L=length(state_array[:,1])
@@ -722,9 +827,17 @@ function RHS(y0,x1,time,func,i,data)
                     z[3] = 0.0
                 end
             else
-                x = x1
-                z[1] = (2.0 .* h(x) .* (pi .* y0[3] + sqrt(-((-1+x) .* x)) .* h(x) .* (-pi .+ h(x)) .* z[3])^2)/(sqrt(-((-1+x) .* x)) .* (pi-h(x))^3) .* ((pi - h(x) .* (1.0 .+ 2.0 .* y0[1])))/h(x)
-                z[2] = (2.0 .* h(x) .* (pi .* y0[3] + sqrt(-((-1+x) .* x)) .* h(x) .* (-pi .+ h(x)) .* z[3])^2)/(sqrt(-((-1+x) .* x)) .* (pi-h(x))^3)
+                #x = x1
+                #z[1] = (2.0 .* h(x) .* (pi .* y0[3] + sqrt(-((-1+x) .* x)) .* h(x) .* (-pi .+ h(x)) .* z[3])^2)/(sqrt(-((-1+x) .* x)) .* (pi-h(x))^3) .* ((pi - h(x) .* (1.0 .+ 2.0 .* y0[1])))/h(x)
+                #z[2] = (2.0 .* h(x) .* (pi .* y0[3] + sqrt(-((-1+x) .* x)) .* h(x) .* (-pi .+ h(x)) .* z[3])^2)/(sqrt(-((-1+x) .* x)) .* (pi-h(x))^3)
+                x=x1
+                z[1] = - 2.0 .* pi .* (-1.0 .+ x) .* (y0[3] .+ (-1 + x) .* x .* z[3]) .^ 2.0 ./ x .^ 3.0 .* ( x ./ (1.0 .-x ) .- 2 .* y0[1])
+                z[2] = - 2.0 .* pi .* (-1.0 .+ x) .* (y0[3] .+ (-1 + x) .* x .* z[3]) .^ 2.0 ./ x .^ 3.0
+                if abs.(x1 .- 1.0)<10^(-15)
+                    z[1] = 0.0
+                    z[2] = 0.0
+                    z[3] = 0.0
+                end
             end
         end
 
@@ -747,22 +860,40 @@ function SF_RHS(data,t,X)
     
     # update m, beta and psi data
     y0=[0.0 0.0 0.0]
-    data[4:L-3,1:3] = twod_n_rk4wrapper(RHS,y0,X[4:L-3],t,derpsi_func,data[:,:])
+    data[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X[4:L-3],t,derpsi_func,data[:,:])
     
+    #NEW
+    if loggrid==true
+        m_func = Spline1D(X[4:L],data[4:L,1],k=4)
+        beta_func = Spline1D(X[4:L],data[4:L,2],k=4)
 
-    Threads.@threads for i in 4:L-3 #ORI
-        if X[i]<10^(-15) #left
-            dy[i,4]= 0.0 - dissipation4(data,i,0.02)[4];
-            
-        elseif abs.(X[i] .- 1.0)<10^(-15)
-            dy[i,4]= 0.0 - dissipation4(data,i,0.02)[4]
-            
-        else
-            dy[i,4]=bulkSF(data,i,X) - dissipation4(data,i,0.02)[4]
+        funcs=[m_func beta_func derpsi_func]
+    end
+
+    if loggrid==false
+        Threads.@threads for i in 4:L-3 #ORI
+            if X[i]<10^(-15) #left
+                dy[i,4]= +1.0/2.0 * (1/(1-X[i])^2 * Der(data,i,4,X) + 2/(1-X[i])^3*data[i,4])  - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4];
+                
+            elseif abs.(X[i] .- 1.0)<10^(-15)
+                dy[i,4]= 0.0 - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4]
+                
+            else
+                dy[i,4]=bulkSF(data,i,X) - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4]
+            end
         end
-
-    
-    
+    else
+        Threads.@threads for i in 4:L-3 #ORI
+            if X[i]<10^(-15) #left
+                dy[i,4]= +1.0/2.0 * (1/(1-X[i])^2 * unevenDer(data,i,4,X,funcs) + 2/(1-X[i])^3*data[i,4])  - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4];
+                
+            elseif abs.(X[i] .- 1.0)<10^(-15)
+                dy[i,4]= 0.0 - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4]
+                
+            else
+                dy[i,4]=bulkSF(data,i,X,funcs) - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4]
+            end
+        end
     end
     
     
@@ -843,7 +974,7 @@ function timeevolution(state_array,finaltime,dir,run)
     t=0.0
     T_array = [0.0]
     iter = 0
-    mesh = 0
+    
 
     while t<finaltime#@TRACK
 
@@ -866,7 +997,7 @@ function timeevolution(state_array,finaltime,dir,run)
         X1=X[4:L-3]
        
         #evolve psi,x
-        state_array[:,:] = twod_rungekutta4molstep(SF_RHS,state_array[:,:],T_array,iter,X) #evolve psi,x
+        state_array[:,:] = rungekutta4molstep(SF_RHS,state_array[:,:],T_array,iter,X) #evolve psi,x AQUII
         state_array=ghost(state_array)
     
         # update interpolation of psi,x
@@ -874,7 +1005,7 @@ function timeevolution(state_array,finaltime,dir,run)
 
         #evolve m and beta together, new
         y0=[0.0 0.0 0.0]
-        state_array[4:L-3,1:3] = twod_n_rk4wrapper(RHS,y0,X1,t,derpsi_func,state_array[:,:])
+        state_array[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X1,t,derpsi_func,state_array[:,:])
         state_array=ghost(state_array)
         
 
@@ -902,24 +1033,6 @@ function timeevolution(state_array,finaltime,dir,run)
         end
 
 
-        # Mesh refinement
-        """DDer_array=zeros(L)
-        for i in 5:L-4
-            DDer_array[i]=DDer(state_array,i,1,initX)
-        end
-
-        k = maximum(DDer_array)/maximum(state_array[5:L-4,1])"""
-        
-        """if k>10 && meshrefinement==true
-            
-            println("k is ", k)
-            if mesh%100==0
-                println("Global mesh refinement!")
-            end
-            mesh=mesh+1
-            state_array=doublegrid(state_array)
-            
-        end"""
 
         """if criticality == true
             break

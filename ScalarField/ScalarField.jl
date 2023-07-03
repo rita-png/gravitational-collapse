@@ -45,6 +45,8 @@ function init_gaussian_der(r,r0,sigma,A)
     else
         z=zeros(n);
         for i in 1:n
+
+            ## psi,r (correct)
             x=r[i]
             rr = x/(1-x)
             z[i] = A * (2 * exp(-(rr-r0)^2/sigma^2) * rr - 2 * exp(-(rr-r0)^2/sigma^2) * (rr-r0)*rr^2/sigma^2)
@@ -56,7 +58,7 @@ function init_gaussian_der(r,r0,sigma,A)
 
     return z
 end
-
+    
 
 # outputs xtilde(x)
 function gridfunc(x)
@@ -522,18 +524,20 @@ function bulkSF(y,i,X)
     #psi,x
     #dy=-1.0/2.0*exp(2.0*y[i,2])*(-(2*(X[i]-1)^3*y[i,3]*(X[i]*((X[i]-1)*Der(y,i,1,X)+X[i]*Der(y,i,2,X))+y[i,1]*(1+2*(X[i]-1)*X[i]*Der(y,i,2,X))))/X[i]^3 - (2*(X[i]-1)^4*(X[i]*((X[i]-1)*Der(y,i,1,X)+X[i]*Der(y,i,2,X))+y[i,1]*(1+2(X[i]-1)*X[i]*Der(y,i,2,X)))*y[i,4])/X[i]^2 - ((X[i]+2*(X[i]-1)*y[i,1])*Der(y,i,4,X))/X[i])
     
+    ## psi,r evol equation
     x=X[i]
-    dy=(1/(2*x^3))*exp(2*y[i,2])*(2*(-1+x)*y[i,1]*((-1+x)^2*y[i,3]*(1+2*(-1+x)*x*Der(y,i,2,X))+x*((-1+x)^3*(1+2*(-1+x)*x*Der(y,i,2,X))*y[i,4]+x*Der(y,i,4,X)))+x*(2*(-1+x)^3*y[i,3]*((-1+x)*Der(y,i,1,X)+x*Der(y,i,2,X))+x*(2*(-1+x)^5*Der(y,i,1,X)*y[i,4]+x*(2*(-1+x)^4*Der(y,i,2,X)*y[i,4]+Der(y,i,4,X)))))
-    return dy
+    r = x/(1-x)
+    dy=(1/(2*r^3))*exp(2*y[i,2])*(r^3*(1-x)^2*Der(y,i,4,X)-2*r^2*(1-x)^2*Der(y,i,4,X)*y[i,1]+2*r*y[i,1]*y[i,4]-2*y[i,1]*y[i,3]-2*r^2*(1-x)^2*y[i,4]*Der(y,i,1,X)+2*r*(1-x)^2*y[i,3]*Der(y,i,1,X)+2*r^3*(1-x)^2*y[i,4]*Der(y,i,2,X)-4*r^2*(1-x)^2*y[i,1]*y[i,4]*Der(y,i,2,X)-2*r^2*(1-x)^2*y[i,3]*Der(y,i,2,X)+4*r*(1-x)^2*y[i,1]*y[i,3]*Der(y,i,2,X))
+
 end
 
-function bulkSF(y,i,X,spls)
+"""function bulkSF(y,i,X,spls)
     
     #psi,x
     dy=-1.0/2.0*exp(2.0*y[i,2])*(-(2*(X[i]-1)^3*y[i,3]*(X[i]*((X[i]-1)*unevenDer(y,i,1,X,spls)+X[i]*unevenDer(y,i,2,X,spls))+y[i,1]*(1+2*(X[i]-1)*X[i]*unevenDer(y,i,2,X,spls))))/X[i]^3 - (2*(X[i]-1)^4*(X[i]*((X[i]-1)*unevenDer(y,i,1,X,spls)+X[i]*unevenDer(y,i,2,X,spls))+y[i,1]*(1+2(X[i]-1)*X[i]*unevenDer(y,i,2,X,spls)))*y[i,4])/X[i]^2 - ((X[i]+2*(X[i]-1)*y[i,1])*unevenDer(y,i,4,X,spls))/X[i])
 
     return dy
-end
+end"""
 
 function boundarySF(y,X)
 
@@ -570,30 +574,58 @@ function RHS(y0,x1,time,func,i,data)
     z=zeros(length(y0))
     derpsi = func
 
+    # psi,x
     z[3]=derpsi(x1)/(1-x1)^2
-    if abs.(x1 .- 1.0)<10^(-15)
+
+    """if abs.(x1 .- 1.0)<10^(-15)
         #z[1] = 0.0
         #z[2] = 0.0
         z[3] = 0.0
-    end
+    end"""
 
     #m and beta
-    if x1<10^(-15) #left
+    """if x1<10^(-15) #left
         z[1] = 0.0;
         z[2] = 0.0;
     elseif abs.(x1 .- 1.0)<10^(-15) #right
-        #z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;#2.0 .* pi .* (y0[3]) .^ 2.0
+        #z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;
         z[1] =( 2.0 .* (x1 .- 1.0) .* y0[1])#2.0 .* pi .* (y0[3]) .^ 2.0        
-        #z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0;#0.0
         z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0;#0.0
 
         
     else #bulk
-        #z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;
-        #z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0;
         z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0;
         z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0;
         
+    end"""
+
+    compactified = true
+    if x1<10^(-15) #left
+        z[1] = 0.0;
+        z[2] = 0.0;
+    else
+    
+        if compactified == false
+            r=x1
+            z[1] = (r - 2.0 * y0[1]) * 2.0 .* pi .* r * ((r*z[3]-y0[3])/r^2.0) ^ 2.0
+            z[2] = 2.0 .* pi .* r * ((r*z[3]-y0[3])/r^2.0) ^ 2.0
+        else
+            if loggrid==false
+                x=x1
+                z[1] = - 2.0 .* pi .* (-1.0 .+ x) .* (y0[3] .+ (-1 + x) .* x .* z[3]) .^ 2.0 ./ x .^ 3.0 .* ( x ./ (1.0 .-x ) .- 2 .* y0[1])
+                z[2] = - 2.0 .* pi .* (-1.0 .+ x) .* (y0[3] .+ (-1 + x) .* x .* z[3]) .^ 2.0 ./ x .^ 3.0
+                if abs.(x1 .- 1.0)<10^(-15)
+                    z[1] = 0.0
+                    z[2] = 0.0
+                    z[3] = 0.0
+                end
+            else
+                x = x1
+                z[1] = (2.0 .* h(x) .* (pi .* y0[3] + sqrt(-((-1+x) .* x)) .* h(x) .* (-pi .+ h(x)) .* z[3])^2)/(sqrt(-((-1+x) .* x)) .* (pi-h(x))^3) .* ((pi - h(x) .* (1.0 .+ 2.0 .* y0[1])))/h(x)
+                z[2] = (2.0 .* h(x) .* (pi .* y0[3] + sqrt(-((-1+x) .* x)) .* h(x) .* (-pi .+ h(x)) .* z[3])^2)/(sqrt(-((-1+x) .* x)) .* (pi-h(x))^3)
+            end
+        end
+
     end
 
     return z[:]
@@ -616,31 +648,44 @@ function SF_RHS(data,t,X)
     data=ghost(data)
 
     #NEW
-    if loggrid==true
+    """if loggrid==true
         m_func = Spline1D(X[4:L],data[4:L,1],k=4)
         beta_func = Spline1D(X[4:L],data[4:L,2],k=4)
 
         funcs=[m_func beta_func derpsi_func]
-    end
+    end"""
 
     Threads.@threads for i in 4:L-3
         if X[i]<10^(-15) #left
             if loggrid==true
                 dy[i,4]= +1.0/2.0*unevenDer(data,i,4,X,funcs) - dissipation6(data,i,0.0065)[4];
             else
-                dy[i,4]= +1.0/2.0*Der(data,i,4,X) - dissipation6(data,i,0.0065)[4];
+                #dy[i,4]= +1.0/2.0*Der(data,i,4,X) - dissipation6(data,i,0.0065)[4];
+                dy[i,4]= +1.0/2.0 * (1/(1-X[i])^2 * Der(data,i,4,X) + 2/(1-X[i])^3*data[i,4]) - dissipation6(data,i,0.0065)[4];
+                if isnan(dy[i,4])
+                    println("  ")
+                    println(" NAN HERE")
+                end
             end
-        elseif X[i] < (1-10^(-15)) #bulk
+        elseif abs.(X[i] .- 1.0)<10^(-15) #right
+            if loggrid==true
+                dy[i,4]= 0.0 - dissipation6(data,i,0.0065)[4] #bulkSF(data,i,X,funcs) - dissipation6(data,i,0.0065)[4]
+            else
+                dy[i,4]= 0.0 - dissipation6(data,i,0.0065)[4] #bulkSF(data,i,X) - dissipation6(data,i,0.0065)[4]
+            end
+            if isnan(dy[i,4])
+                println("  ")
+                println(" NAN acola,i = ", i, " t = ", t)
+            end
+        else #bulk
             if loggrid==true
                 dy[i,4]=bulkSF(data,i,X,funcs) - dissipation6(data,i,0.0065)[4]
             else
                 dy[i,4]=bulkSF(data,i,X) - dissipation6(data,i,0.0065)[4]
             end
-        else #right
-            if loggrid==true
-                dy[i,4]= bulkSF(data,i,X,funcs) - dissipation6(data,i,0.0065)[4]
-            else
-                dy[i,4]= bulkSF(data,i,X) - dissipation6(data,i,0.0065)[4]
+            if isnan(dy[i,4])
+                println("  ")
+                println(" NAN aqui ,i = ", i, " t = ", t)
             end
         end
     end
@@ -680,11 +725,11 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         
         #update time increment
 
-        if criticality!=true#||dt>0.00000001
+        """if criticality!=true#||dt>0.00000001
             global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)      
-        end
+        end"""
         t = t + dt
-        if iter%100==0
+        if iter%20==0
             println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
         end
         #println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
@@ -710,8 +755,8 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         
 
         run=int(run)
-        #if iter%20==0
-        if (iter%50==0&&t>0.3)||(t>0.85&&iter%2==0)
+        if iter%5==0
+        #if (iter%50==0&&t>0.3)||(t>0.85&&iter%2==0)
             print_muninn(files, t, state_array[:,1:5],res,"a")
 
         end
@@ -720,7 +765,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         #threshold for apparent black hole formation
         global monitor_ratio[5:L-4] = 2 .* state_array[5:L-4,1] ./ initX[5:L-4] .* (1 .- initX[5:L-4])
 
-        if maximum(monitor_ratio)>0.70&&k==0
+        if maximum(monitor_ratio)>0.7&&k==0
             global criticality = true
             k=k+1
             println("Supercritical evolution! At time ", t, ", iteration = ", iter)
