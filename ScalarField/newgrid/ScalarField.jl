@@ -25,8 +25,8 @@ function init_gaussian_der(r,r0,sigma,A)
         else
             z=zeros(n);
             for i in 1:n
-                r = r[i]
-                z[i] = A * (2 * exp(-(r-r0)^2/sigma^2) * r - 2 * exp(-(r-r0)^2/sigma^2) * (r-r0)*r^2/sigma^2)
+                rr = r[i]
+                z[i] = A * (2 * exp(-(rr-r0)^2/sigma^2) * rr - 2 * exp(-(rr-r0)^2/sigma^2) * (rr-r0)*rr^2/sigma^2)
             end
         end
     else # inputted argument r is actually an x
@@ -38,9 +38,17 @@ function init_gaussian_der(r,r0,sigma,A)
         else
             z=zeros(n);
             for i in 1:n
+
+                ## psi,r (corr?)
                 x=r[i]
                 rr = x/(1-x)
                 z[i] = A * (2 * exp(-(rr-r0)^2/sigma^2) * rr - 2 * exp(-(rr-r0)^2/sigma^2) * (rr-r0)*rr^2/sigma^2)
+
+
+                ## psi,x (correct)
+                #x=r[i]
+                #rr = x/(1-x)
+                #z[i] = A * (2 * exp(-(rr-r0)^2/sigma^2) * rr - 2 * exp(-(rr-r0)^2/sigma^2) * (rr-r0)*rr^2/sigma^2) / (1-x)^2
                 
             end
             z[n] = 0
@@ -49,7 +57,7 @@ function init_gaussian_der(r,r0,sigma,A)
 
     return z
 end
-
+"""
 function new_init_gaussian_der(x,r0,sigma,A)
     n=length(x);
     if n==1
@@ -65,7 +73,7 @@ function new_init_gaussian_der(x,r0,sigma,A)
         end
     end
     return z
-end
+end"""
 
 function create_range(ori,stop,dx,N)
 
@@ -618,18 +626,28 @@ end
 function bulkSF(y,i,X)
     
     #psi,x
-    #dy=-1.0/2.0*exp(2.0*y[i,2])*(-(2*(X[i]-1)^3*y[i,3]*(X[i]*((X[i]-1)*Der(y,i,1,X)+X[i]*Der(y,i,2,X))+y[i,1]*(1+2*(X[i]-1)*X[i]*Der(y,i,2,X))))/X[i]^3 - (2*(X[i]-1)^4*(X[i]*((X[i]-1)*Der(y,i,1,X)+X[i]*Der(y,i,2,X))+y[i,1]*(1+2(X[i]-1)*X[i]*Der(y,i,2,X)))*y[i,4])/X[i]^2 - ((X[i]+2*(X[i]-1)*y[i,1])*Der(y,i,4,X))/X[i])
-    #dy=-(1.0/(2.0 * pi^2.0*(pi-h(X[i]))^3.0))*exp(2.0*y[i,2]) *(-pi^2.0*h(X[i])^2.0*(pi-h(X[i])*(1.0+2.0*y[i,1]))*y[i,3]+pi*(pi-h(X[i]))*h(X[i])^2.0*y[i,3]*(pi-2.0*sqrt(-((-1.0+X[i])*X[i]))*h(X[i])^2.0*Der(y,i,1,X))+2.0*pi*sqrt(-((-1.0+X[i])*X[i]))*(pi-h(X[i]))*h(X[i])^3.0*(pi-h(X[i])*(1.0+2.0*y[i,1]))*y[i,3]*Der(y,i,2,X)+pi*sqrt(-((-1.0+X[i])*X[i]))*(pi-h(X[i]))*h(X[i])^3.0*(pi-h(X[i])*(1.0+2.0*y[i,1]))*y[i,4]-(1.0-X[i])*X[i]*(pi-h(X[i]))^2.0*h(X[i])^5.0*(1.0-2.0*Der(y,i,1,X)+2.0*(X[i]-2.0*y[i,1])*Der(y,i,2,X))*y[i,4]-pi^2.0*(pi-h(X[i]))^2.0*(pi-h(X[i])*(1.0+2.0*y[i,1]))*Der(y,i,4,X))
-    
-    #dy=-(1.0/2.0)*exp(2.0*y[i,2])*(-cot((pi*X[i])/2.0)^6.0*(-2.0*y[i,1]+tan((pi*X[i])/2.0)^2.0)*y[i,3]+(cot((pi*X[i])/2.0)^4.0*y[i,3]*(pi-2.0*cos((pi*X[i])/2.0)^2.0*cot((pi*X[i])/2.0)*Der(y,i,1,X)))/pi-(cot((pi*X[i])/2.0)^5.0*(-1.0+cos(pi*X[i])+2.0*(1.0+cos(pi*X[i]))*y[i,1])*y[i,3]*Der(y,i,2,X))/pi-(cot((pi*X[i])/2.0)^5.0*(-1.0+cos(pi*X[i])+2.0*(1.0+cos(pi*X[i]))*y[i,1])*y[i,4])/(2*pi)+(cos((pi*X[i])/2.0)^4.0*cot((pi*X[i])/2.0)^4.0*(-1.0+2.0*Der(y,i,1,X)-2.0*(X[i]-2.0*y[i,1])*Der(y,i,2,X))*y[i,4])/pi^2+(-1.0+2.0*cot((pi*X[i])/2.0)^2.0*y[i,1])*Der(y,i,4,X))
-    
-    #dy=-(1.0/2.0)*exp(2.0*y[i,2])*(cot((pi*X[i])/2)^4*(-1+2*cot((pi*X[i])/2)^2*y[i,1])*y[i,3]+(cot((pi*X[i])/2)^4*y[i,3]*(pi-2*cos((pi*X[i])/2)^2*cot((pi*X[i])/2)*Der(y,i,1,X)))/pi-(cot((pi*X[i])/2)^5*(-1+cos(pi*X[i])+2*(1+cos(pi*X[i]))*y[i,1])*y[i,3]*Der(y,i,2,X))/pi-(cot((pi*X[i])/2)^5*(-1+cos(pi*X[i])+2*(1+cos(pi*X[i]))*y[i,1])*y[i,4])/(2*pi)+(cos((pi*X[i])/2)^4*cot((pi*X[i])/2)^4*(-1+2*Der(y,i,1,X)-2*(X[i]-2*y[i,1])*Der(y,i,2,X))*y[i,4])/pi^2+(-1+2*cot((pi*X[i])/2)^2*y[i,1])*Der(y,i,4,X))
     if compactified == false
         r=X[i]
         dy=(1/(2*r^3))*exp(2*y[i,2])*(-2*y[i,1]*y[i,3]+2*r*y[i,3]*Der(y,i,1,X)-2*r^2*y[i,3]*Der(y,i,2,X)+4*r*y[i,1]*y[i,3]*Der(y,i,2,X)+2*r*y[i,1]*y[i,4]-2*r^2*Der(y,i,1,X)*y[i,4]+2*r^3*Der(y,i,2,X)*y[i,4]-4*r^2*y[i,1]*Der(y,i,2,X)*y[i,4]+r^3*Der(y,i,4,X)-2*r^2*y[i,1]*Der(y,i,4,X))
     else
+        ## psi,r evol equation
         x=X[i]
-        dy=(1/(2*x^3))*exp(2*y[i,2])*(2*(-1+x)*y[i,1]*((-1+x)^2*y[i,3]*(1+2*(-1+x)*x*Der(y,i,2,X))+x*((-1+x)^3*(1+2*(-1+x)*x*Der(y,i,2,X))*y[i,4]+x*Der(y,i,4,X)))+x*(2*(-1+x)^3*y[i,3]*((-1+x)*Der(y,i,1,X)+x*Der(y,i,2,X))+x*(2*(-1+x)^5*Der(y,i,1,X)*y[i,4]+x*(2*(-1+x)^4*Der(y,i,2,X)*y[i,4]+Der(y,i,4,X)))))
+        r = x/(1-x)
+        dy=(1/(2*r^3))*exp(2*y[i,2])*(r^3*(1-x)^2*Der(y,i,4,X)-2*r^2*(1-x)^2*Der(y,i,4,X)*y[i,1]+2*r*y[i,1]*y[i,4]-2*y[i,1]*y[i,3]-2*r^2*(1-x)^2*y[i,4]*Der(y,i,1,X)+2*r*(1-x)^2*y[i,3]*Der(y,i,1,X)+2*r^3*(1-x)^2*y[i,4]*Der(y,i,2,X)-4*r^2*(1-x)^2*y[i,1]*y[i,4]*Der(y,i,2,X)-2*r^2*(1-x)^2*y[i,3]*Der(y,i,2,X)+4*r*(1-x)^2*y[i,1]*y[i,3]*Der(y,i,2,X))
+
+
+
+        ## psi,x evolu equation
+        #x=X[i]
+        #dy=(1/(2*x^3))*exp(2*y[i,2])*(2*(-1+x)*y[i,1]*((-1+x)^2*y[i,3]*(1+2*(-1+x)*x*Der(y,i,2,X))+x*((-1+x)^3*(1+2*(-1+x)*x*Der(y,i,2,X))*y[i,4]+x*Der(y,i,4,X)))+x*(2*(-1+x)^3*y[i,3]*((-1+x)*Der(y,i,1,X)+x*Der(y,i,2,X))+x*(2*(-1+x)^5*Der(y,i,1,X)*y[i,4]+x*(2*(-1+x)^4*Der(y,i,2,X)*y[i,4]+Der(y,i,4,X)))))
+        
+        """if loggrid==false
+            x=X[i]
+            dy=(1/(2*x^3))*exp(2*y[i,2])*(2*(-1+x)*y[i,1]*((-1+x)^2*y[i,3]*(1+2*(-1+x)*x*Der(y,i,2,X))+x*((-1+x)^3*(1+2*(-1+x)*x*Der(y,i,2,X))*y[i,4]+x*Der(y,i,4,X)))+x*(2*(-1+x)^3*y[i,3]*((-1+x)*Der(y,i,1,X)+x*Der(y,i,2,X))+x*(2*(-1+x)^5*Der(y,i,1,X)*y[i,4]+x*(2*(-1+x)^4*Der(y,i,2,X)*y[i,4]+Der(y,i,4,X)))))
+        else
+            dy=(1/(4*pi^2*(pi-h(x))^3))*exp(2*y[i,2])*(-4*h(x)*y[i,1]*(pi*h(x)^2*y[i,3]*(pi-2*sqrt(-((-1+x)*x))*(pi-h(x))*h(x)*Der(y,i,2,X))-(pi-h(x))*(pi*sqrt(-((-1+x)*x))*h(x)^3*y[i,4]+2*(-1+x)*x*(pi-h(x))*h(x)^4*Der(y,i,2,X)*y[i,4]-pi^2*(pi-h(x))*Der(y,i,4,X)))+(pi-h(x))*(4*pi*sqrt(-((-1+x)*x))*h(x)^3*y[i,3]*(h(x)*Der(y,i,1,X)-(pi-h(x))*Der(y,i,2,X))-(pi-h(x))*(-4*(-1+xt)*x*h(x)^5*Der(y,i,1,X)*y[i,4]-(pi-h(x))*(-4*(-1+xt)*x*h(x)^4*Der(y,i,2,X)*y[i,4]+2*pi^2*Der(y,i,4,X)))))
+
+        end"""
     end
     return dy
 end
@@ -663,17 +681,21 @@ function boundarySF(y,X)
     return y
 end
 
+function h(x)
+    return acos(-1+2*x)
+end
 
 #EXACTLY THE SAME POINTS MUST BE CALCULATED THE SAME WAY
 function RHS(y0,x1,time,func,i,data)
     
     z=zeros(length(y0))
-    #z=Array{Float128}(undef, length(y0))
     derpsi = func
 
     if compactified==false
-        z[3]=derpsi(x1)
+        r=x1
+        z[3]=derpsi(r)
     else
+        #psi,x
         z[3]=derpsi(x1)/(1-x1)^2
     end
     
@@ -684,42 +706,30 @@ function RHS(y0,x1,time,func,i,data)
         z[1] = 0.0;
         z[2] = 0.0;
     else
-    """elseif abs.(x1 .- 1.0)<10^(-15) #right
-        #grid 1
-        #z[1] = 0.0#(4*pi^2*(-1+pi/h(x1)+2*(-2+pi/h(x1))*y0[1])*(y0[3]+(sqrt(1-(-1+2*x1)^2)*(-2+pi/h(x1))*(-1+pi/h(x1))*h(x1)^2*z[3])/(2*pi))^2)/(sqrt(1-(-1+2*x1)^2)*(-1+pi/h(x1))^3*h(x1)^2)
-        #z[2] = 0.0#-((2*(pi-2*h(x1))*(pi*y0[3]+sqrt(-((-1+x1)*x1))*(pi^2-3*pi*h(x1)+2*h(x1)^2)*(z[3]))^2)/(sqrt(-((-1+x1)*x1))*(pi-h(x1))^3))
-        #grid 2
-        #z[1] = ((-1.0+cos(pi*x1)+2.0(1.0+cos(pi*x1))*y0[1])*sin(pi*x1)*(-2.0*y0[3]+sin(pi*x1)*z[3])^2.0)/(-1.0+cos(pi*x1))^3.0
-        #z[2] = 1.0/16.0*csc((pi*x1)/2.0)^8.0*sin(pi*x1)^3.0*(-2.0*pi*y0[3]+sin(pi*x1)*z[3])^2"""
+    
         if compactified == false
             r=x1
             z[1] = (r - 2.0 * y0[1]) * 2.0 .* pi .* r * ((r*z[3]-y0[3])/r^2.0) ^ 2.0
             z[2] = 2.0 .* pi .* r * ((r*z[3]-y0[3])/r^2.0) ^ 2.0
         else
-            x=x1
-            z[1] = - 2.0 .* pi .* (-1.0 .+ x) .* (y0[3] .+ (-1 + x) .* x .* z[3]) .^ 2.0 ./ x .^ 3.0 .* ( x ./ (1.0 .-x ) .- 2 .* y0[1])
-            z[2] = - 2.0 .* pi .* (-1.0 .+ x) .* (y0[3] .+ (-1 + x) .* x .* z[3]) .^ 2.0 ./ x .^ 3.0
-            if abs.(x1 .- 1.0)<10^(-15)
-                z[1] = 0.0
-                z[2] = 0.0
-                z[3] = 0.0
+            if loggrid==false
+                x=x1
+                z[1] = - 2.0 .* pi .* (-1.0 .+ x) .* (y0[3] .+ (-1 + x) .* x .* z[3]) .^ 2.0 ./ x .^ 3.0 .* ( x ./ (1.0 .-x ) .- 2 .* y0[1])
+                z[2] = - 2.0 .* pi .* (-1.0 .+ x) .* (y0[3] .+ (-1 + x) .* x .* z[3]) .^ 2.0 ./ x .^ 3.0
+                if abs.(x1 .- 1.0)<10^(-15)
+                    z[1] = 0.0
+                    z[2] = 0.0
+                    z[3] = 0.0
+                end
+            else
+                x = x1
+                z[1] = (2.0 .* h(x) .* (pi .* y0[3] + sqrt(-((-1+x) .* x)) .* h(x) .* (-pi .+ h(x)) .* z[3])^2)/(sqrt(-((-1+x) .* x)) .* (pi-h(x))^3) .* ((pi - h(x) .* (1.0 .+ 2.0 .* y0[1])))/h(x)
+                z[2] = (2.0 .* h(x) .* (pi .* y0[3] + sqrt(-((-1+x) .* x)) .* h(x) .* (-pi .+ h(x)) .* z[3])^2)/(sqrt(-((-1+x) .* x)) .* (pi-h(x))^3)
             end
         end
 
-    """else #bulk
-        #grid 1
-        #z[1] = (4*pi^2*(-1+pi/h(x1)+2*(-2+pi/h(x1))*y0[1])*(y0[3]+(sqrt(1-(-1+2*x1)^2)*(-2+pi/h(x1))*(-1+pi/h(x1))*h(x1)^2*z[3])/(2*pi))^2)/(sqrt(1-(-1+2*x1)^2)*(-1+pi/h(x1))^3*h(x1)^2)
-        #z[2] = -((2*(pi-2*h(x1))*(pi*y0[3]+sqrt(-((-1+x1)*x1))*(pi^2-3*pi*h(x1)+2*h(x1)^2)*(z[3]))^2)/(sqrt(-((-1+x1)*x1))*(pi-h(x1))^3))
-        #grid 2
-        #z[1] = ((-1.0+cos(pi*x1)+2.0(1.0+cos(pi*x1))*y0[1])*sin(pi*x1)*(-2.0*y0[3]+sin(pi*x1)*z[3])^2.0)/(-1.0+cos(pi*x1))^3.0
-        #z[2] = 1.0/16.0*csc((pi*x1)/2.0)^8.0*sin(pi*x1)^3.0*(-2.0*pi*y0[3]+sin(pi*x1)*z[3])^2
-
-        z[1] = (r - 2.0 * y0[1]) * 2.0 .* pi .* r * ((r*z[3]-y0[3])/r^2.0) ^ 2.0
-        z[2] = 2.0 .* pi .* r * ((r*z[3]-y0[3])/r^2.0) ^ 2.0"""
     end
-    #println("   ")
-    #println("z[:] ", z[:], " x1 ", x1)
-    #println("   ")
+
     return z[:]
 end
 
@@ -876,7 +886,11 @@ function timeevolution(state_array,finaltime,dir,run)
         #print_muninn(files, t, state_array[:,1:5],res,"a")
 
         #threshold for apparent black hole formation
-        global monitor_ratio[5:L-4] = 2 .* state_array[5:L-4,1] ./ initX[5:L-4] #./ initX[5:L-4] .* (1 .- initX[5:L-4])
+        if compactified==false
+            global monitor_ratio[5:L-4] = 2 .* state_array[5:L-4,1] ./ initX[5:L-4]
+        else
+            global monitor_ratio[5:L-4] = 2 .* state_array[5:L-4,1] ./ initX[5:L-4] .* (1 .- initX[5:L-4])
+        end
 
 
        
@@ -907,9 +921,9 @@ function timeevolution(state_array,finaltime,dir,run)
             
         end"""
 
-        if criticality == true
+        """if criticality == true
             break
-        end
+        end"""
         
         if isnan(state_array[L-3,4])
             global explode = true
