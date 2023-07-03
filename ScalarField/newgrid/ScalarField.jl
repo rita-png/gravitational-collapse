@@ -97,38 +97,6 @@ function gridfunc(x)
     
 end;
 
-# outputs dxtilde/dx(x)
-function analytic_jacobian(x)
-
-    if length(x) == 1
-        if abs.(x .- 1.0)<10^(-15) #right
-            println("hallo at analytic jacobian")
-            return 0.0
-        else
-            return 0.9/2 * sin(pi * (1 - 0.9 * x)) #option6
-        end
-    else
-        z = zeros(length(x))
-        for i in 1:length(x)
-            
-            z[i] = 0.9 ./ 2 .* sin.(pi .* (1 .- 0.9 .* x[i])) #option6
-        end
-        
-        return z
-    end
-end;
-
-function inverse(x)
-    return x = 1/2+1/2*cos(pi*(1-x))#1-1/pi*acos(2x-1)#-(acos(2*x-1)-pi)/(0.9*pi)
-end
-
-# Interpolation
-
-function interpolate(x,x1,x2,y1,y2)
-    return y1+(y2-y1)*(x-x1)/(x2-x1)
-end
-
-
 # Extrapolation
 
 function extrapolate_out(y0,y1,y2,y3)
@@ -150,9 +118,7 @@ function speed(X, m, beta)
 
     g = zeros(int(L-5-ori))
     g=abs.((1.0 .- initX[ori+1:L-4]) .^ 3.0 .* exp.(2 .* state_array[ori+1:L-4,2]) .* (2 .* state_array[ori+1:L-4,1] .- initX[ori+1:L-4] ./ (1 .- initX[ori+1:L-4])) ./ (2 .* initX[ori+1:L-4]))
-    #println(g)
     
-    #println(g)
     z=maximum(g)
     if isnan(z)
         println("Error: Speed is NaN!")
@@ -176,11 +142,8 @@ function update_dt(X, m, beta,dt,ginit)
         dx=minimum(aux)
     end
 
-    """if dt*(ginit/g) < 0.00014
-        println("dt ", dt "\n g", g, " ginit ", ginit)
-    end"""
 
-    return  dx/g*0.5#dt*(ginit/g)
+    return  dx/g*0.5
 
 end
 
@@ -380,9 +343,15 @@ function print_muninn(files, t, data, res, mode)
             j=j+1
         end
     else
+        if loggrid==true
+            auxdir= dir*"/bisectionsearch/muninnDATA/uneven"
+        else
+            auxdir= dir*"/bisectionsearch/muninnDATA/even"
+        end
+
         for fl in files #bisection search
             
-            open(dir*"/muninnDATA/run$run/$fl.txt", mode) do file
+            open(auxdir*"/run$run/$fl.txt", mode) do file
                 @printf file "\"Time = %.10e\n" t
                 for i in 1:length(data[:,1])
                     @printf file "% .10e % .10e\n" data[i,5] data[i,j]
@@ -684,27 +653,6 @@ function chebyshev(N)
     return sort(X)
 end
 
-function chebyshev_weigth(X)
-    w=ones(length(X))
-    len=length(X)
-    for i in 1:len
-            
-        w[i]=w[i]=1/2+1/2*abs(cos((i-1)*pi/(len)))#1/2+1/2*(cos(1/2*(i-1)*pi/(len)))
-
-    end
-    return w
-end
-function chebyshev_cut(X)
-    N=length(X)
-    new_grid=zeros(int(N/4))
-    
-    new_grid[1:int(N/4)] = X[1:int(N/4)]
-    new_grid=vcat(new_grid, X[int(N/4):4:int(3*N/4)])
-    new_grid=vcat(new_grid, X[int(3*N/4):2:int(N)])
-    
-    #deleteat!(A, 2)
-    return new_grid
-end
 
 function h(z)
     return acos(-1 + 2*z)
@@ -790,7 +738,7 @@ function h(x)
     return acos(-1+2*x)
 end
 
-#EXACTLY THE SAME POINTS MUST BE CALCULATED THE SAME WAY
+
 function RHS(y0,x1,time,func,i,data)
     
     z=zeros(length(y0))
@@ -861,7 +809,8 @@ function SF_RHS(data,t,X)
     # update m, beta and psi data
     y0=[0.0 0.0 0.0]
     data[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X[4:L-3],t,derpsi_func,data[:,:])
-    
+    data=ghost(data)
+
     #NEW
     if loggrid==true
         m_func = Spline1D(X[4:L],data[4:L,1],k=4)
@@ -967,14 +916,13 @@ function doubleX(X)
     return new_grid
 end
 
-#using ProgressMeter
-using Term.Progress
-function timeevolution(state_array,finaltime,dir,run)
+
+function timeevolution(state_array,finaltime,run)
 
     t=0.0
     T_array = [0.0]
     iter = 0
-    
+    k=0
 
     while t<finaltime#@TRACK
 
@@ -991,8 +939,6 @@ function timeevolution(state_array,finaltime,dir,run)
 
         T_array = vcat(T_array,t)
 
-        #X = update_grid(state_array[:,:],T,t)
-        
         X=initX #state_array[:,5]
         X1=X[4:L-3]
        
@@ -1025,8 +971,9 @@ function timeevolution(state_array,finaltime,dir,run)
 
 
        
-        if maximum(monitor_ratio)>0.70
+        if maximum(monitor_ratio)>0.70&&k==0
             global criticality = true
+            k=k+1
             println("Supercritical evolution! At time ", t, ", iteration = ", iter)
             println("t = ", t, "iteration ", iter, " monitor ratio = ", maximum(monitor_ratio))
             global time = t
@@ -1039,17 +986,23 @@ function timeevolution(state_array,finaltime,dir,run)
         end"""
         
         if isnan(state_array[L-3,4])
-            global explode = true
-            println("boom at time=", t, " timestep = ", iter)
-            global timestep = iter
+            if criticality==false
+                global time = iter
+                global explode = true
+            end
+
+            println("boom at time=", t)
             break
+
         end
 
-        global time = t
+        #global time = t
         
     end
     
-    
+    if criticality==false
+        global time = t
+    end
 
     global evol_stats = [criticality A sigma r0 time explode run]
 
@@ -1066,17 +1019,4 @@ function epsilon(X,i,dt,dx)
         dx = X[i]-X[i-1]
     end
     return (dx/dt*(1/2)^(2*3+1))
-end
-
-function epsilon(dt,dx)
-    #minimum([dx/dt*(1/2)^(2*3), 10])
-    #println("dissipation epsilon is ", (dx/dt*(1/2)^(2*3)))
-    
-    return (dx/dt*(1/2)^(2*3+1))
-end
-
-function twod_epsilon(dt,dx)
-
-    
-    return (dx/dt*(1/2)^(2*2+1))
 end
