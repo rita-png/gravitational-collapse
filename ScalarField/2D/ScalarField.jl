@@ -76,7 +76,7 @@ end
 # outputs xtilde(x)
 function gridfunc(x)
 
-    return 1/2 .+ 1/2 .* cos.( pi .* (1 .- x)) #option 6
+    return 1/2 .+ 1/2 .* cos.( pi .* (0.9 .- x)) #option 6
     
 end;
 
@@ -669,9 +669,9 @@ function timeevolution(state_array,finaltime,dir,run)
 
         #update time increment
 
-        """if criticality!=true#||dt>0.00000001
+        if criticality!=true#||dt>0.00000001
             global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)      
-        end"""
+        end
         
         t = t + dt
         if iter%200==0
@@ -701,8 +701,8 @@ function timeevolution(state_array,finaltime,dir,run)
 
         run=int(run)
 
-        #if (iter%50==0&&t>0.3)||(t>0.85&&iter%2==0)
-        if iter%100==0
+        if (iter%50==0&&t>0.3)||(t>0.85&&iter%2==0)
+        #if iter%100==0
             print_muninn(files, t, state_array[:,1:5],res,"a")
         end
         #print_muninn(files, t, state_array[:,1:5],res,"a")
