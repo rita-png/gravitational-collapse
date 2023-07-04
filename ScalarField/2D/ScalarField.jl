@@ -654,7 +654,7 @@ function timeevolution(state_array,finaltime,dir,run)
     t=0.0
     T_array = [0.0]
     iter = 0
-    mesh = 0
+    k = 0
 
     while t<finaltime#@TRACK
 
@@ -709,8 +709,9 @@ function timeevolution(state_array,finaltime,dir,run)
 
 
        
-        if maximum(monitor_ratio)>0.70
+        if maximum(monitor_ratio)>0.70&&k=0
             global criticality = true
+            k=k+1
             println("Supercritical evolution! At time ", t, ", iteration = ", iter)
             println("t = ", t, "iteration ", iter, " monitor ratio = ", maximum(monitor_ratio))
             global time = t
