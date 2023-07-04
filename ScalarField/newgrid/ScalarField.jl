@@ -665,24 +665,21 @@ function bulkSF(y,i,X)
         r=X[i]
         dy=(1/(2*r^3))*exp(2*y[i,2])*(-2*y[i,1]*y[i,3]+2*r*y[i,3]*Der(y,i,1,X)-2*r^2*y[i,3]*Der(y,i,2,X)+4*r*y[i,1]*y[i,3]*Der(y,i,2,X)+2*r*y[i,1]*y[i,4]-2*r^2*Der(y,i,1,X)*y[i,4]+2*r^3*Der(y,i,2,X)*y[i,4]-4*r^2*y[i,1]*Der(y,i,2,X)*y[i,4]+r^3*Der(y,i,4,X)-2*r^2*y[i,1]*Der(y,i,4,X))
     else
-        ## psi,r evol equation
-        x=X[i]
-        r = x/(1-x)
-        dy=(1/(2*r^3))*exp(2*y[i,2])*(r^3*(1-x)^2*Der(y,i,4,X)-2*r^2*(1-x)^2*Der(y,i,4,X)*y[i,1]+2*r*y[i,1]*y[i,4]-2*y[i,1]*y[i,3]-2*r^2*(1-x)^2*y[i,4]*Der(y,i,1,X)+2*r*(1-x)^2*y[i,3]*Der(y,i,1,X)+2*r^3*(1-x)^2*y[i,4]*Der(y,i,2,X)-4*r^2*(1-x)^2*y[i,1]*y[i,4]*Der(y,i,2,X)-2*r^2*(1-x)^2*y[i,3]*Der(y,i,2,X)+4*r*(1-x)^2*y[i,1]*y[i,3]*Der(y,i,2,X))
-
-
-
-        ## psi,x evolu equation
-        #x=X[i]
-        #dy=(1/(2*x^3))*exp(2*y[i,2])*(2*(-1+x)*y[i,1]*((-1+x)^2*y[i,3]*(1+2*(-1+x)*x*Der(y,i,2,X))+x*((-1+x)^3*(1+2*(-1+x)*x*Der(y,i,2,X))*y[i,4]+x*Der(y,i,4,X)))+x*(2*(-1+x)^3*y[i,3]*((-1+x)*Der(y,i,1,X)+x*Der(y,i,2,X))+x*(2*(-1+x)^5*Der(y,i,1,X)*y[i,4]+x*(2*(-1+x)^4*Der(y,i,2,X)*y[i,4]+Der(y,i,4,X)))))
         
-        """if loggrid==false
+        if loggrid==false
+            ## psi,r evol equation
             x=X[i]
-            dy=(1/(2*x^3))*exp(2*y[i,2])*(2*(-1+x)*y[i,1]*((-1+x)^2*y[i,3]*(1+2*(-1+x)*x*Der(y,i,2,X))+x*((-1+x)^3*(1+2*(-1+x)*x*Der(y,i,2,X))*y[i,4]+x*Der(y,i,4,X)))+x*(2*(-1+x)^3*y[i,3]*((-1+x)*Der(y,i,1,X)+x*Der(y,i,2,X))+x*(2*(-1+x)^5*Der(y,i,1,X)*y[i,4]+x*(2*(-1+x)^4*Der(y,i,2,X)*y[i,4]+Der(y,i,4,X)))))
+            r = x/(1-x)
+            dy=(1/(2*r^3))*exp(2*y[i,2])*(r^3*(1-x)^2*Der(y,i,4,X)-2*r^2*(1-x)^2*Der(y,i,4,X)*y[i,1]+2*r*y[i,1]*y[i,4]-2*y[i,1]*y[i,3]-2*r^2*(1-x)^2*y[i,4]*Der(y,i,1,X)+2*r*(1-x)^2*y[i,3]*Der(y,i,1,X)+2*r^3*(1-x)^2*y[i,4]*Der(y,i,2,X)-4*r^2*(1-x)^2*y[i,1]*y[i,4]*Der(y,i,2,X)-2*r^2*(1-x)^2*y[i,3]*Der(y,i,2,X)+4*r*(1-x)^2*y[i,1]*y[i,3]*Der(y,i,2,X))
         else
-            dy=(1/(4*pi^2*(pi-h(x))^3))*exp(2*y[i,2])*(-4*h(x)*y[i,1]*(pi*h(x)^2*y[i,3]*(pi-2*sqrt(-((-1+x)*x))*(pi-h(x))*h(x)*Der(y,i,2,X))-(pi-h(x))*(pi*sqrt(-((-1+x)*x))*h(x)^3*y[i,4]+2*(-1+x)*x*(pi-h(x))*h(x)^4*Der(y,i,2,X)*y[i,4]-pi^2*(pi-h(x))*Der(y,i,4,X)))+(pi-h(x))*(4*pi*sqrt(-((-1+x)*x))*h(x)^3*y[i,3]*(h(x)*Der(y,i,1,X)-(pi-h(x))*Der(y,i,2,X))-(pi-h(x))*(-4*(-1+xt)*x*h(x)^5*Der(y,i,1,X)*y[i,4]-(pi-h(x))*(-4*(-1+xt)*x*h(x)^4*Der(y,i,2,X)*y[i,4]+2*pi^2*Der(y,i,4,X)))))
 
-        end"""
+            ##psi,x evol equation
+            xtilde=X[i]
+            x=1-acos(2*xtilde-1)/pi
+            r=x/(1-x)
+            dy=???
+
+
     end
     return dy
 end
@@ -748,8 +745,8 @@ function RHS(y0,x1,time,func,i,data)
         r=x1
         z[3]=derpsi(r)
     else
-        #psi,x
-        z[3]=derpsi(x1)/(1-x1)^2
+        #psi,r
+        z[3]=derpsi(x1)*pi/(sqrt(x1*(1-x1))*acos(2*x1-1)^2)#(1-x1)^2
     end
     
     
@@ -775,12 +772,12 @@ function RHS(y0,x1,time,func,i,data)
                     z[3] = 0.0
                 end
             else
-                #x = x1
-                #z[1] = (2.0 .* h(x) .* (pi .* y0[3] + sqrt(-((-1+x) .* x)) .* h(x) .* (-pi .+ h(x)) .* z[3])^2)/(sqrt(-((-1+x) .* x)) .* (pi-h(x))^3) .* ((pi - h(x) .* (1.0 .+ 2.0 .* y0[1])))/h(x)
-                #z[2] = (2.0 .* h(x) .* (pi .* y0[3] + sqrt(-((-1+x) .* x)) .* h(x) .* (-pi .+ h(x)) .* z[3])^2)/(sqrt(-((-1+x) .* x)) .* (pi-h(x))^3)
-                x=x1
-                z[1] = - 2.0 .* pi .* (-1.0 .+ x) .* (y0[3] .+ (-1 + x) .* x .* z[3]) .^ 2.0 ./ x .^ 3.0 .* ( x ./ (1.0 .-x ) .- 2 .* y0[1])
-                z[2] = - 2.0 .* pi .* (-1.0 .+ x) .* (y0[3] .+ (-1 + x) .* x .* z[3]) .^ 2.0 ./ x .^ 3.0
+                x = x1
+                z[1] = (2.0 .* h(x) .* (pi .* y0[3] + sqrt(-((-1+x) .* x)) .* h(x) .* (-pi .+ h(x)) .* z[3])^2)/(sqrt(-((-1+x) .* x)) .* (pi-h(x))^3) .* ((pi - h(x) .* (1.0 .+ 2.0 .* y0[1])))/h(x)
+                z[2] = (2.0 .* h(x) .* (pi .* y0[3] + sqrt(-((-1+x) .* x)) .* h(x) .* (-pi .+ h(x)) .* z[3])^2)/(sqrt(-((-1+x) .* x)) .* (pi-h(x))^3)
+                #x=x1
+                #z[1] = - 2.0 .* pi .* (-1.0 .+ x) .* (y0[3] .+ (-1 + x) .* x .* z[3]) .^ 2.0 ./ x .^ 3.0 .* ( x ./ (1.0 .-x ) .- 2 .* y0[1])
+                #z[2] = - 2.0 .* pi .* (-1.0 .+ x) .* (y0[3] .+ (-1 + x) .* x .* z[3]) .^ 2.0 ./ x .^ 3.0
                 if abs.(x1 .- 1.0)<10^(-15)
                     z[1] = 0.0
                     z[2] = 0.0
@@ -834,7 +831,9 @@ function SF_RHS(data,t,X)
     else
         Threads.@threads for i in 4:L-3 #ORI
             if X[i]<10^(-15) #left
-                dy[i,4]= +1.0/2.0 * (1/(1-X[i])^2 * unevenDer(data,i,4,X,funcs) + 2/(1-X[i])^3*data[i,4])  - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4];
+                xtilde=X[i]
+                x=1-acos(2*xtilde-1)/pi
+                dy[i,4]= +1.0/2.0 * (1/(1-x)^2 * pi/2.0 * sin(pi*(1-x)) * Der(data,i,4,X) + 2/(1-x)^3*data[i,4])  - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4];
                 
             elseif abs.(X[i] .- 1.0)<10^(-15)
                 dy[i,4]= 0.0 - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4]
