@@ -73,7 +73,7 @@ state_array=ghost(state_array)
 derpsi_func = Spline1D(initX[4:L-3], state_array[4:L-3,4],  k=4)
 
 # m, beta, psi
-y0=[0 0 0]
+y0=[0.0 0.0 0.0]
 
 state_array[4:L-3,1:3] = n_rk4wrapper(RHS,y0,initX[4:L-3],0,derpsi_func,state_array[:,:]);
 
@@ -103,7 +103,7 @@ end
 
 ginit=speed(initX,state_array[:,1],state_array[:,2])
 
-finaltime=1.3
+finaltime=3.0
 stats,T_interp=timeevolution(state_array,finaltime,run)#timeevolution(state_array,finaltime,dir,run)
 
 if bisection==true

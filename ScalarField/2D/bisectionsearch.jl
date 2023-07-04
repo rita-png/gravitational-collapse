@@ -3,34 +3,56 @@
 # ---------------------------------------------------------------------------
 
 
-#Searching for A* between 0.05 and 0.20
 
-using CSV, Tables, DataFrames, ProgressBars, Plots
+using CSV, Tables, DataFrames, Plots, Printf
 
-global low_bound = 0.04922#0.04926157283782959#0.04925#0.04922733163833619
-global high_bound = 0.05#0.049261573076248164#0.0495#0.04922733211517334
+include("./ScalarField.jl");
+
+
+
+#### CONFIG ####
+
+global low_bound = 0.10
+global high_bound = 0.16
+
+global N=8000.0
+
+global bisection = true
+global loggrid = false
+global compactified = true
+
+#global dir = "/home/ritapsantos/data/ritapsantos/1000"
+global dir = "/home/ritapsantos/data/ritapsantos"
+#global dir = "/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA"
+
+#### CONFIG ####
+
+
+
 global run = 1
-global runmax = 30
-
+global runmax = 40
 
 plt_A_crit = Vector{Float64}()
 plt_A_non_crit = Vector{Float64}()
 plt_x1 = Vector{Int64}()
 plt_x2 = Vector{Int64}()
 
-
 while(run <= runmax)
 
     A = (low_bound + high_bound) / 2
 
     println("\n########")
-    println("\nBisection search run ##", run, "\nLow bound = ",low_bound,"; High bound = ", high_bound,"; A = ", A,"\n")
+    println("\nBisection search run ##", run, "\nLow bound = ",low_bound,"; High bound = ", high_bound,"; A = ", A," N = ", N,"\n")
 
-    global ARGS = [A,run]
+    global ARGS = [A,run,N]
     include("./Evolution_ScalarField.jl");
-    df = CSV.read("./DATA/bisectionsearch/parameters.csv", DataFrame)
+    if loggrid==true
+        df = CSV.read(dir*"/bisectionsearch/muninnDATA/uneven/parameters.csv", DataFrame)
+    else
+        df = CSV.read(dir*"/bisectionsearch/muninnDATA/even/parameters.csv", DataFrame)
+    end
 
-    if (df[run+1, :criticality]) == 0.0
+    if (df[run+1, :Column1]) == 0.0 #:criticality
         println("\nNon critical!")
         push!(plt_A_non_crit, A)
         push!(plt_x1, run)
@@ -39,14 +61,14 @@ while(run <= runmax)
         push!(plt_A_crit, A)
         push!(plt_x2, run)
     end
-    println("\nA = ",df[run+1, :A], " sigma = ", df[run+1, :sigma], " r0 = ", df[run+1, :r0], " Final time = ", df[run+1, :time], " explode = ", df[run+1, :explode])
+    println("\nA = ",df[run+1, :Column2], " sigma = ", df[run+1, :Column3], " r0 = ", df[run+1, :Column4], " Final time = ", df[run+1, :Column5], " explode = ", df[run+1, :Column6])
 
     #println(df[1, :explode])
-    if (df[run+1, :explode]) == 1.0
-        println("Found a NaN at time ",df[run+1, :time])
+    if (df[run+1, :Column6]) == 1.0 #:explode
+        println("Found a NaN")
     end
     
-    if (df[run+1, :criticality]) == 1.0
+    if (df[run+1, :Column1]) == 1.0 #:criticality
         global high_bound = A
     else
         global low_bound = A
