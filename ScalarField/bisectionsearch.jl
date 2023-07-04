@@ -17,7 +17,7 @@ global N=1000.0
 
 global bisection = true
 global loggrid = true
-global compactied = true
+global compactified = true
 
 #global dir = "/home/ritapsantos/data/ritapsantos/1000"
 global dir = "/home/ritapsantos/data/ritapsantos"
