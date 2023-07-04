@@ -12,8 +12,6 @@ global loggrid=true
 
 global bisection=false
 
-using Quadmath, Printf
-
 res=m;
 N=2.0^m*200.0/2.0
 
