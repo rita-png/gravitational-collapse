@@ -57,23 +57,6 @@ function init_gaussian_der(r,r0,sigma,A)
 
     return z
 end
-"""
-function new_init_gaussian_der(x,r0,sigma,A)
-    n=length(x);
-    if n==1
-        z = A * exp(-((x/(1-x)-r0)/sigma)^2) * x^2/((x-1)^6*sigma^2) * (3*sigma^2 - 6*x*sigma^2 + x^2*(-2+3*sigma^2) - 2*r0*(x-1)*x)
-        #z= A * exp(-((x/(1-x)-r0)/sigma)^2) * (3 * x^2 / (1-x) ^4 - (x/(1-x))^3 * (2*(x-r0*(-x+1)))/(sigma^2*(1-x)^3))
-    else
-        z=zeros(n);
-        for i in 1:n
-            if i<n-3 #avoid NaN for x=1, otherwise, it's 0
-                #z[i] = 2*A * x[i]/(1-x[i])^3 * exp(-((x[i]/(1-x[i])-r0)/sigma)^2) * (1 - x[i]/(1-x[i]) * (x[i]/(1-x[i]) - r0) / sigma^2)
-                z[i]=A * exp(-((x[i]/(1-x[i])-r0)/sigma)^2) * (3 * x[i]^2 / (1-x[i]) ^4 - (x[i]/(1-x[i]))^3 * (2*(x[i]-r0*(-x[i]+1)))/(sigma^2*(1-x[i])^3))
-            end
-        end
-    end
-    return z
-end"""
 
 function create_range(ori,stop,dx,N)
 
@@ -93,7 +76,7 @@ end
 # outputs xtilde(x)
 function gridfunc(x)
 
-    return 1/2 .+ 1/2 .* cos.( pi .* (1 .- 0.9 .* x)) #option 6
+    return 1/2 .+ 1/2 .* cos.( pi .* (1 .- x)) #option 6
     
 end;
 
@@ -173,22 +156,6 @@ function find_origin(X)
     return origin_i
 end
 
-# Updating Grid
-function update_grid(data,T,k)
-    
-    dx = data[2,5]-data[1,5]
-
-    #evolve grid
-    data = twod_rungekutta4molstep(Grid_RHS,data,T,k,data[:,5]) #evolve X
-    #data=ghost(data)
-    
-    X = data[:,5]
-
-    
-
-    return X
-
-end
     
 #Building initial data with a Runge-Kutta integrator for the constraint
 
@@ -212,25 +179,6 @@ end
 
 # Runge Kutta integrator used for the method of lines
 
-function rungekutta4molstep(f,y00,T,w::Int64,X)
-    y = y00;
-    X=collect(X)
-        h = T[w+1]-T[w]
-        #print("\n\nh = ", h, " \n")
-        #h = dt; # only for equally spaced grid in time and space, otherwise (T[w+1] - T[w])
-        k1 = f(y[:,:], T[w],X)
-        k1=ghost(k1)
-        k2 = f(y[:,:] .+ k1 .* h/2, T[w] + h/2,X)
-        k2=ghost(k2)
-        k3 = f(y[:,:] .+ k2 .* h/2, T[w] + h/2,X)
-        k3=ghost(k3)
-        k4 = f(y[:,:] .+ k3 .* h, T[w] + h,X)
-        k4=ghost(k4)
-        y[:,:] = y[:,:] .+ (h/6) .* (k1 .+ 2 * k2 .+ 2 * k3 .+ k4)
-        
-    return ghost(y[:,:])
-end
-
 function twod_rungekutta4molstep(f,y00,T,w::Int64,X)
     y = y00;
     X=collect(X)
@@ -247,37 +195,6 @@ function twod_rungekutta4molstep(f,y00,T,w::Int64,X)
 end
 
 
-function rk4wrapper(f,y0,x,u,spl_funcs,data) # u depicts T array, or M!!
-    n = length(x)
-    y = zeros(n)
-    y[1] = y0;
-    for i in 1:n-1
-        h = x[i+1] .- x[i]
-        k1 = f(y[i], x[i],u,spl_funcs,i,data)
-        k2 = f(y[i] .+ k1 * h/2, x[i] .+ h/2,u,spl_funcs,i,data)
-        k3 = f(y[i] .+ k2 * h/2, x[i] .+ h/2,u,spl_funcs,i,data)
-        k4 = f(y[i] .+ k3 * h, x[i] .+ h,u,spl_funcs,i,data)
-        y[i+1] = y[i] .+ (h/6) * (k1 .+ 2*k2 .+ 2*k3 .+ k4)
-    end
-    return y
-end
-
-function n_rk4wrapper(f,y0,x,u,spl_funcs,data) # u depicts T array, or M!!
-    L = length(x)
-    n = length(y0)
-    y = zeros(L,n)
-    y[1,:] = y0;
-    for i in 1:L-1
-        h = x[i+1] .- x[i]
-        k1 = f(y[i,:], x[i],u,spl_funcs,i,data)
-        k2 = f(y[i,:] .+ k1 * h/2, x[i] .+ h/2,u,spl_funcs,i,data)
-        k3 = f(y[i,:] .+ k2 * h/2, x[i] .+ h/2,u,spl_funcs,i,data)
-        k4 = f(y[i,:] .+ k3 * h, x[i] .+ h,u,spl_funcs,i,data)
-        y[i+1,:] = y[i,:] .+ (h/6) * (k1 .+ 2*k2 .+ 2*k3 .+ k4)
-    end
-    return y[:,:]
-end
-
 function twod_n_rk4wrapper(f,y0,x,u,spl_funcs,data) # u depicts T array, or M!!
     L = length(x)
     n = length(y0)
@@ -292,49 +209,6 @@ function twod_n_rk4wrapper(f,y0,x,u,spl_funcs,data) # u depicts T array, or M!!
     return y[:,:]
 end
 
-function integrator(X,derpsi_func,data)
-
-    L=length(X)
-    ori=find_origin(X)
-
-    integral = zeros(L)
-
-    #taylor
-    auxdata=zeros(L,4)
-    auxdata[4:L-3,4]=DDer_array(state_array,4,initX)
-    
-    D3phi = auxdata[4,4]
-
-    auxdata2=zeros(L,4)
-    auxdata2[4:L-3,4]=DDer_array(auxdata,4,initX)
-    D5phi = auxdata2[4,4]
-    
-
-
-    for i in ori:L-3
-
-        if i == 4
-            integral[i] = 0.0
-        elseif i == 5
-            h = X[i]-X[i-1]
-            #integral[i] = h * (55/24*derpsi_func(X[i])-59/24*derpsi_func(X[i+1])+37/24*derpsi_func(X[i+2])-9/24*derpsi_func(X[i+3]))
-            integral[i] = data[4,4] + 3*D3phi*X[i]^2/(3*2) + 5*D5phi*X[i]^4/(5*4*3*2)
-        elseif i == 6
-            h = X[i] - X[i-2]
-            #integral[i] = h * (55/24*derpsi_func(X[i])-59/24*derpsi_func(X[i+1])+37/24*derpsi_func(X[i+2])-9/24*derpsi_func(X[i+3]))
-            integral[i] = data[4,4] + 3*D3phi*X[i]^2/(3*2) + 5*D5phi*X[i]^4/(5*4*3*2)
-        elseif i == 7
-            h = X[i] - X[i-3]
-            integral[i] = data[4,4] + 3*D3phi*X[i]^2/(3*2) + 5*D5phi*X[i]^4/(5*4*3*2)
-            #integral[i] = h * (55/24*derpsi_func(X[i])-59/24*derpsi_func(X[i+1])+37/24*derpsi_func(X[i+2])-9/24*derpsi_func(X[i+3]))
-        else
-            h = X[i]-X[i-1]
-            integral[i] = integral[i-1] + h * (55/24*derpsi_func(X[i-1]) - 59/24*derpsi_func(X[i-2]) + 37/24*derpsi_func(X[i-3]) - 9/24*derpsi_func(X[i-4]))
-        end
-    end
-
-    return integral
-end
 
 
 using Printf
@@ -436,44 +310,6 @@ function dissipation2(y,i)
     return (-1)^1*epsilon*1/(dx)*delta2
 end
 
-"""#calculate dx~/dx at known gridpoints
-function jacobian(y,X,i)
-    if i==4
-        z = (y[i+3]-4*y[i+2]+7*y[i+1]-4*y[i])/(2*(X[i+1]-X[i]))
-    elseif i==L-3
-        z = (-y[i-3]+4*y[i-2]-7*y[i-1]+4*y[i])/(2*(X[i]-X[i-1]))
-    else
-        z = (y[i+1]-y[i-1])/(2*(X[i+1]-X[i]))
-    end
-
-    return z
-end
-
-function jacobian(y,X)
-    z=zeros(length(y))
-
-    for i in 4:L-3
-        if i==4
-            z[i] = (y[i+3]-4*y[i+2]+7*y[i+1]-4*y[i])/(2*(X[i+1]-X[i]))
-        elseif i==L-3
-            z[i] = (-y[i-3]+4*y[i-2]-7*y[i-1]+4*y[i])/(2*(X[i]-X[i-1]))
-        elseif i<L-3||i>4
-            z[i] = (y[i+1]-y[i-1])/(2*(X[i+1]-X[i]))
-        end
-    end
-
-    return z
-end
-
-#calculate dx~/dx at unknown gridpoints
-function der_grid(X)
-    
-    aux = jacobian(X,originalX)
-    
-    dergrid_func = Spline1D(X[4:L-3],aux[4:L-3],k=4, bc="extrapolate")
-
-    return dergrid_func
-end"""
 
 # Finite difference approximation
 function Der(y,i,k,X)
@@ -832,8 +668,11 @@ function timeevolution(state_array,finaltime,dir,run)
         iter = iter + 1
 
         #update time increment
-        global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)
-        #global dt=0.0000000001
+
+        """if criticality!=true#||dt>0.00000001
+            global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)      
+        end"""
+        
         t = t + dt
         if iter%200==0
             println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
@@ -862,8 +701,8 @@ function timeevolution(state_array,finaltime,dir,run)
 
         run=int(run)
 
-        if (iter%50==0&&t>0.3)||(t>0.85&&iter%2==0)
-        #if iter%5==0
+        #if (iter%50==0&&t>0.3)||(t>0.85&&iter%2==0)
+        if iter%100==0
             print_muninn(files, t, state_array[:,1:5],res,"a")
         end
         #print_muninn(files, t, state_array[:,1:5],res,"a")
@@ -882,6 +721,7 @@ function timeevolution(state_array,finaltime,dir,run)
             println("Supercritical evolution! At time ", t, ", iteration = ", iter)
             println("t = ", t, "iteration ", iter, " monitor ratio = ", maximum(monitor_ratio))
             global time = t
+            break
         end
 
         if isnan(state_array[L-3,4])
