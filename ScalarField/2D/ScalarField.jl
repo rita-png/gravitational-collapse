@@ -694,7 +694,7 @@ function timeevolution(state_array,finaltime,dir,run)
 
         run=int(run)
 
-        if (iter%50==0&&t>0.3)||(t>0.85&&iter%2==0)
+        if (iter%50==0&&t>0.3)||(t>0.85&&iter%10==0)
         #if iter%100==0
             print_muninn(files, t, state_array[:,1:5],res,"a")
         end
