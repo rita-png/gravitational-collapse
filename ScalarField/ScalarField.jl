@@ -746,11 +746,11 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         
         #update time increment
 
-        """if criticality!=true#||dt>0.00000001
+        if criticality!=true#||dt>0.00000001
             global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)      
-        end"""
+        end
         t = t + dt
-        if iter%20==0
+        if iter%200==0
             println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
         end
         #println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
@@ -777,8 +777,8 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
 
         run=int(run)
 
-        if iter%5==0
-        #if (iter%50==0&&t>0.3)||(t>0.85&&iter%2==0)
+        #if iter%5==0
+        if (iter%50==0&&t>0.3)||(t>0.85&&iter%2==0)
             print_muninn(files, t, state_array[:,1:5],res,"a")
 
         end

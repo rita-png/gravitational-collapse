@@ -10,13 +10,14 @@ include("./ScalarField.jl");
 
 #### CONFIG ####
 
-global low_bound = 0.10
+global low_bound = 0.12
 global high_bound = 0.16
 
-global N=10000.0
+global N=1000.0
 
 global bisection = true
-global loggrid = false
+global loggrid = true
+global compactied = true
 
 #global dir = "/home/ritapsantos/data/ritapsantos/1000"
 global dir = "/home/ritapsantos/data/ritapsantos"
