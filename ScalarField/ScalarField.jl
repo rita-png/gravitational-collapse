@@ -614,7 +614,11 @@ function RHS(y0,x1,time,func,i,data)
         z[3]=derpsi(r)
     else
         #psi,x
-        z[3]=derpsi(x1)/(1-x1)^2
+        if abs.(x1 .- 1.0)<10^(-15)
+            z[3]=0.0
+        else
+            z[3]=derpsi(x1)/(1-x1)^2
+        end
     end
     
     
@@ -791,7 +795,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         end
 
         
-        if maximum(monitor_ratio)>0.7&&k==0
+        if maximum(monitor_ratio)>0.8&&k==0
             global criticality = true
             k=k+1
             println("Supercritical evolution! At time ", t, ", iteration = ", iter)
@@ -799,9 +803,9 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
             global time = t
         end
 
-        if criticality == true
+        """if criticality == true
             break
-        end
+        end"""
         
         if isnan(state_array[L-3,4])
             if criticality==false

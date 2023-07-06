@@ -29,29 +29,56 @@ function init_gaussian_der(r,r0,sigma,A)
                 z[i] = A * (2 * exp(-(rr-r0)^2/sigma^2) * rr - 2 * exp(-(rr-r0)^2/sigma^2) * (rr-r0)*rr^2/sigma^2)
             end
         end
-    else # inputted argument r is actually an x
+    else
+        if loggrid==false # inputted argument r is actually an x
+            if n==1
+                x=r
+                r=x/(1-x)
+                z= A * (2 * exp(-(r-r0)^2/sigma^2) * r - 2 * exp(-(r-r0)^2/sigma^2) * (r-r0)*r^2/sigma^2)#exp(-((x/(1-x)-r0)/sigma)^2) * (3 * x^2 / (1-x) ^4 - (x/(1-x))^3 * (2*(x-r0*(-x+1)))/(sigma^2*(1-x)^3))
+            else
+                z=zeros(n);
+                for i in 1:n
 
-        if n==1
-            x=r
-            r=x/(1-x)
-            z= A * (2 * exp(-(r-r0)^2/sigma^2) * r - 2 * exp(-(r-r0)^2/sigma^2) * (r-r0)*r^2/sigma^2)#exp(-((x/(1-x)-r0)/sigma)^2) * (3 * x^2 / (1-x) ^4 - (x/(1-x))^3 * (2*(x-r0*(-x+1)))/(sigma^2*(1-x)^3))
-        else
-            z=zeros(n);
-            for i in 1:n
-
-                ## psi,r (corr?)
-                x=r[i]
-                rr = x/(1-x)
-                z[i] = A * (2 * exp(-(rr-r0)^2/sigma^2) * rr - 2 * exp(-(rr-r0)^2/sigma^2) * (rr-r0)*rr^2/sigma^2)
+                    ## psi,r (corr?)
+                    x=r[i]
+                    rr = x/(1-x)
+                    z[i] = A * (2 * exp(-(rr-r0)^2/sigma^2) * rr - 2 * exp(-(rr-r0)^2/sigma^2) * (rr-r0)*rr^2/sigma^2)
 
 
-                ## psi,x (correct)
-                #x=r[i]
-                #rr = x/(1-x)
-                #z[i] = A * (2 * exp(-(rr-r0)^2/sigma^2) * rr - 2 * exp(-(rr-r0)^2/sigma^2) * (rr-r0)*rr^2/sigma^2) / (1-x)^2
-                
+                    ## psi,x (correct)
+                    #x=r[i]
+                    #rr = x/(1-x)
+                    #z[i] = A * (2 * exp(-(rr-r0)^2/sigma^2) * rr - 2 * exp(-(rr-r0)^2/sigma^2) * (rr-r0)*rr^2/sigma^2) / (1-x)^2
+                    
+                end
+                z[n] = 0
             end
-            z[n] = 0
+        else # inputted argument r is actually an xtilde
+            if n==1
+                xtilde=r
+                x= 1/2*(1 + cos(pi*(-1 + xtilde)))
+                r=x/(1-x)
+                z= A * (2 * exp(-(r-r0)^2/sigma^2) * r - 2 * exp(-(r-r0)^2/sigma^2) * (r-r0)*r^2/sigma^2)#exp(-((x/(1-x)-r0)/sigma)^2) * (3 * x^2 / (1-x) ^4 - (x/(1-x))^3 * (2*(x-r0*(-x+1)))/(sigma^2*(1-x)^3))
+            else
+                z=zeros(n);
+                for i in 1:n
+
+                    ## psi,r (corr?)
+                    xtilde=r[i]
+                    x= 1/2*(1 + cos(pi*(-1 + xtilde)))
+                    rr=x/(1-x)
+            
+                    z[i] = A * (2 * exp(-(rr-r0)^2/sigma^2) * rr - 2 * exp(-(rr-r0)^2/sigma^2) * (rr-r0)*rr^2/sigma^2)
+
+
+                    ## psi,x (correct)
+                    #x=r[i]
+                    #rr = x/(1-x)
+                    #z[i] = A * (2 * exp(-(rr-r0)^2/sigma^2) * rr - 2 * exp(-(rr-r0)^2/sigma^2) * (rr-r0)*rr^2/sigma^2) / (1-x)^2
+                    
+                end
+                z[n] = 0
+            end
         end
     end
 
@@ -674,11 +701,13 @@ function bulkSF(y,i,X)
         else
 
             ##psi,x evol equation
-            xtilde=X[i]
+            xt=X[i] #xtilde
             x=1-acos(2*xtilde-1)/pi
             r=x/(1-x)
-            dy=???
+            dy=(1/(8*pi*r^3))*exp(2*y[i,2])*csc((pi*xt)/2)*(4*r^2*cos((pi*xt)/2)^3*Der[y,i,4,X]*(r-2*y[i,1])+2*(r*y[i,4]-y[i,3])*(4*r*cos((pi*xt)/2)^3*(-Der(y,i,1,X)+r*Der(y,i,2,X))+4*y[i,1]*(pi*sin((pi*xt)/2)-2*r*cos((pi*xt)/2)^3*Der(y,i,2,X))))
 
+            #dy=1/(2*pi*r^3)*exp(2*y[i,2])*(r^2*sqrt(-((-1+xt)*xt))*acos(-1+2*xt)^2*Der[y,i,4,X]*(r-2*y[i,1])+2*(r*y[i,4]-y[i,3])*(r*sqrt(-((-1+xt)*xt))*acos(-1+2*xt)^2*(-Der(y,i,1,X)+r*Der(y,i,2,X))+y[i,1]*(pi-2*r*sqrt(-((-1+xt)*xt))*acos(-1+2*xt)^2*Der(y,i,2,X))))
+        end
 
     end
     return dy
@@ -746,7 +775,10 @@ function RHS(y0,x1,time,func,i,data)
         z[3]=derpsi(r)
     else
         #psi,r
-        z[3]=derpsi(x1)*pi/(sqrt(x1*(1-x1))*acos(2*x1-1)^2)#(1-x1)^2
+        z[3]=derpsi(x1)#*(-pi/2*sin(pi*(x1-1))/(x1-1)^2) # == dpsi/dr*dr/dxtilde
+        if abs.(x1 .- 1.0)<10^(-15)
+            z[3]=0.0
+        end
     end
     
     
@@ -772,9 +804,9 @@ function RHS(y0,x1,time,func,i,data)
                     z[3] = 0.0
                 end
             else
-                x = x1
-                z[1] = (2.0 .* h(x) .* (pi .* y0[3] + sqrt(-((-1+x) .* x)) .* h(x) .* (-pi .+ h(x)) .* z[3])^2)/(sqrt(-((-1+x) .* x)) .* (pi-h(x))^3) .* ((pi - h(x) .* (1.0 .+ 2.0 .* y0[1])))/h(x)
-                z[2] = (2.0 .* h(x) .* (pi .* y0[3] + sqrt(-((-1+x) .* x)) .* h(x) .* (-pi .+ h(x)) .* z[3])^2)/(sqrt(-((-1+x) .* x)) .* (pi-h(x))^3)
+                xt = x1
+                z[1] = -1/16*csc((pi*xt)/2)^8*sin(pi*xt)^3*(-2*pi*y0[3]+sin(pi*xt)*z[3]) * (((-1+cos(pi*xt)+2*(1+cos(pi*xt))*y0[1]))/(1+cos(pi*xt))) #(2.0 .* h(x) .* (pi .* y0[3] + sqrt(-((-1+x) .* x)) .* h(x) .* (-pi .+ h(x)) .* z[3])^2)/(sqrt(-((-1+x) .* x)) .* (pi-h(x))^3) .* ((pi - h(x) .* (1.0 .+ 2.0 .* y0[1])))/h(x)
+                z[2] = 1/16*csc((pi*xt)/2)^8*sin(pi*xt)^3*(-2*pi*y0[3]+sin(pi*xt)*z[3]) #(2.0 .* h(x) .* (pi .* y0[3] + sqrt(-((-1+x) .* x)) .* h(x) .* (-pi .+ h(x)) .* z[3])^2)/(sqrt(-((-1+x) .* x)) .* (pi-h(x))^3)
                 #x=x1
                 #z[1] = - 2.0 .* pi .* (-1.0 .+ x) .* (y0[3] .+ (-1 + x) .* x .* z[3]) .^ 2.0 ./ x .^ 3.0 .* ( x ./ (1.0 .-x ) .- 2 .* y0[1])
                 #z[2] = - 2.0 .* pi .* (-1.0 .+ x) .* (y0[3] .+ (-1 + x) .* x .* z[3]) .^ 2.0 ./ x .^ 3.0
