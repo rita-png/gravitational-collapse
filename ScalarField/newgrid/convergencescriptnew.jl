@@ -141,12 +141,20 @@ Threads.nthreads()
 
 #global dt=5e-5
 
-if m==1
+"""if m==1
     global dt=2e-5
 elseif m==2
     global dt=1e-5
 else
     global dt=1e-5/2
+end"""
+
+if m==1
+    global dt=2e-5/5
+elseif m==2
+    global dt=1e-5/5
+else
+    global dt=1e-5/2/5
 end
 
 

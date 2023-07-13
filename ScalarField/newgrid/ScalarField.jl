@@ -855,7 +855,7 @@ function timeevolution(state_array,finaltime,run)
         iter = iter + 1
 
         #update time increment
-        #dt=2e-5
+        #dt=2e-5/2
         #global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt)
         
         t = t + dt
