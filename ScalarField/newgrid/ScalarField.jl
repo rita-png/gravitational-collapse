@@ -65,9 +65,9 @@ function init_gaussian_der(r,r0,sigma,A)
 
                     ## psi,r (corr?)
                     xtilde=r[i]
-                    x= 1/2*(1 + cos(pi*(-1 + xtilde)))
+                    x= 2(1/2+1/2*cos(pi*(1-xtilde/2)))
                     rr=x/(1-x)
-            
+
                     z[i] = A * (2 * exp(-(rr-r0)^2/sigma^2) * rr - 2 * exp(-(rr-r0)^2/sigma^2) * (rr-r0)*rr^2/sigma^2)
 
 
@@ -120,7 +120,10 @@ end
 # outputs xtilde(x)
 function gridfunc(x)
 
-    return 1/2 .+ 1/2 .* cos.( pi .* (1 .- 0.9 .* x)) #option 6
+    #return (1/2 .+ 1/2 .* cos.( pi .* (1 .- x)) )
+
+    return (1/2 .+ 1/2 .* cos.( pi .* (1 .- x ./ 2)) )
+    
     
 end;
 
@@ -143,9 +146,20 @@ function speed(X, m, beta)
     
     ori=find_origin(X)
 
+    X = zeros(L)
+    X[4:L-3]=inverse.(initX1)
     g = zeros(int(L-5-ori))
-    g=abs.((1.0 .- initX[ori+1:L-4]) .^ 3.0 .* exp.(2 .* state_array[ori+1:L-4,2]) .* (2 .* state_array[ori+1:L-4,1] .- initX[ori+1:L-4] ./ (1 .- initX[ori+1:L-4])) ./ (2 .* initX[ori+1:L-4]))
+    g=abs.((1.0 .- X[ori+1:L-4]) .^ 3.0 .* exp.(2 .* state_array[ori+1:L-4,2]) .* (2 .* state_array[ori+1:L-4,1] .- X[ori+1:L-4] ./ (1 .- X[ori+1:L-4])) ./ (2 .* X[ori+1:L-4]))
     
+
+    """g = zeros(int(L-5-ori))
+    g=abs.((1.0 .- initX[ori+1:L-4]) .^ 3.0 .* exp.(2 .* state_array[ori+1:L-4,2]) .* (2 .* state_array[ori+1:L-4,1] .- initX[ori+1:L-4] ./ (1 .- initX[ori+1:L-4])) ./ (2 .* initX[ori+1:L-4]))
+    """
+    if loggrid==true
+        g = g .* jacobian.(initX[ori+1:L-4])
+    end
+    
+    #println("\n\ng is ",g)
     z=maximum(g)
     if isnan(z)
         println("Error: Speed is NaN!")
@@ -153,13 +167,14 @@ function speed(X, m, beta)
     return z
 end
 
-function update_dt(X, m, beta,dt,ginit)
+function update_dt(X, m, beta,dt)
 
     monitor_ratio = zeros(L)
     
     g=speed(X,m,beta)
 
-    if loggrid==false
+    dx=initX[5]-initX[4]
+    """if loggrid==false
         dx=X[5]-X[4]
     else
         aux=zeros(L-7)
@@ -167,10 +182,10 @@ function update_dt(X, m, beta,dt,ginit)
             aux[i]=initX1[i+1]-initX1[i]
         end
         dx=minimum(aux)
-    end
+    end"""
 
 
-    return  dx/g*0.5
+    return  dx/g*0.01
 
 end
 
@@ -363,7 +378,11 @@ function print_muninn(files, t, data, res, mode)
             open(dir*"/muninnDATA/res$res/$fl.txt", mode) do file
                 @printf file "\"Time = %.10e\n" t
                 for i in 1:length(data[:,1])
-                    @printf file "% .10e % .10e\n" data[i,5] data[i,j]
+                    if loggrid==true&&i>=4&&i<=L-3
+                        @printf file "% .10e % .10e\n" inverse(data[i,5]) data[i,j]
+                    else
+                        @printf file "% .10e % .10e\n" data[i,5] data[i,j]
+                    end
                 end
                 println(file) # insert empty line to indicate end of data set
                 end
@@ -381,7 +400,11 @@ function print_muninn(files, t, data, res, mode)
             open(auxdir*"/run$run/$fl.txt", mode) do file
                 @printf file "\"Time = %.10e\n" t
                 for i in 1:length(data[:,1])
-                    @printf file "% .10e % .10e\n" data[i,5] data[i,j]
+                    if loggrid==true&&i>=4&&i<=L-3
+                        @printf file "% .10e % .10e\n" inverse(data[i,5]) data[i,j]
+                    else
+                        @printf file "% .10e % .10e\n" data[i,5] data[i,j]
+                    end
                 end
                 println(file) # insert empty line to indicate end of data set
                 end
@@ -390,6 +413,18 @@ function print_muninn(files, t, data, res, mode)
     end
 end
 
+function inverse(x)
+    return (1 .+ 1 .* cos.( pi .* (1 .- x ./ 2)) )
+end
+
+function transform(x)
+    return 2 .- 2 .* acos.( x .- 1) ./ pi
+end
+
+function jacobian(x) #dx/dx~
+    return pi/2 .* sin.(pi .* (1 .- x/2))
+    
+end
 #ghosts
 
 function ghost(y)
@@ -467,44 +502,6 @@ function dissipation2(y,i)
     return (-1)^1*epsilon*1/(dx)*delta2
 end
 
-"""#calculate dx~/dx at known gridpoints
-function jacobian(y,X,i)
-    if i==4
-        z = (y[i+3]-4*y[i+2]+7*y[i+1]-4*y[i])/(2*(X[i+1]-X[i]))
-    elseif i==L-3
-        z = (-y[i-3]+4*y[i-2]-7*y[i-1]+4*y[i])/(2*(X[i]-X[i-1]))
-    else
-        z = (y[i+1]-y[i-1])/(2*(X[i+1]-X[i]))
-    end
-
-    return z
-end
-
-function jacobian(y,X)
-    z=zeros(length(y))
-
-    for i in 4:L-3
-        if i==4
-            z[i] = (y[i+3]-4*y[i+2]+7*y[i+1]-4*y[i])/(2*(X[i+1]-X[i]))
-        elseif i==L-3
-            z[i] = (-y[i-3]+4*y[i-2]-7*y[i-1]+4*y[i])/(2*(X[i]-X[i-1]))
-        elseif i<L-3||i>4
-            z[i] = (y[i+1]-y[i-1])/(2*(X[i+1]-X[i]))
-        end
-    end
-
-    return z
-end
-
-#calculate dx~/dx at unknown gridpoints
-function der_grid(X)
-    
-    aux = jacobian(X,originalX)
-    
-    dergrid_func = Spline1D(X[4:L-3],aux[4:L-3],k=4, bc="extrapolate")
-
-    return dergrid_func
-end"""
 
 # Finite difference approximation
 """function Der(y,i,k,X)
@@ -586,57 +583,6 @@ end
 end"""
 
 
-#matrix
-function unevenDer(y,i,k,X,spls)
-
-    if k==4 #array of spline has variables m, beta and derpsi
-        spl=spls[3]
-    else
-        spl=spls[k]
-    end
-
-    #for L-3 AND L-4 USE CENTRAL 
-    
-
-    dx=X[i+1]-X[i] #shouldnt this dx be constant, for error of derivatives to match?
-
-    if i==4 # left boundary LOP1, TEM
-        dx=X[i+1]-X[i]
-        z = (-27*y[i,k]+58*y[i+1,k]-56*spl(X[i]+2*dx)+36*spl(X[i]+3*dx)-13*spl(X[i]+4*dx)+2*spl(X[i]+5*dx))/(12*(dx))
-    elseif i==5 # left boundary LOP1, TEM
-        dx=X[i+1]-X[i]
-        z = (-2*spl(X[i]-dx)-15*y[i,k]+28*y[i+1,k]-16*spl(X[i]+2*dx)+6*spl(X[i]+3*dx)-spl(X[i]+4*dx))/(12*(dx))
-    """elseif i==L-3
-        dx=X[i]-X[i-1]
-        z = -(-27*y[i,k]+58*y[i-1,k]-56*spl(X[i]-2*dx)+36*spl(X[i]-3*dx)-13*spl(X[i]-4*dx)+2*spl(X[i]-5*dx))/(12*(dx)) #12-06 i did *-1
-    elseif i==L-4 # right boundary TEM
-        dx=X[i+1]-X[i]
-        z = -(-2*y[i+1,k]-15*y[i]+28*spl(X[i]-dx)-16*spl(X[i]-2*dx)+6*spl(X[i]-3*dx)-spl(X[i]-4*dx))/(12*(dx)) #12-06 i did *-1"""
-    else
-        
-
-        if(X[i]-dx)<0.0||(X[i]-2*dx)<0.0 #avoid evaluating spline out of domain
-            dx=X[i+1]-X[i]
-            z = (-27*y[i,k]+58*y[i+1,k]-56*spl(X[i]+2*dx)+36*spl(X[i]+3*dx)-13*spl(X[i]+4*dx)+2*spl(X[i]+5*dx))/(12*(dx))
-            #println("warnign at ori, i is ", i)
-        """elseif(X[i]+dx)>1.0||(X[i]+2*dx)>1.0 #avoid evaluating spline out of domain
-            dx=X[i]-X[i-1]
-            #println("warning!, X[i]", X[i], "i is ", i)
-            #z = (spl(X[i]+3*dx)-4*spl(X[i]+2*dx)+7*y[i+1,k]-4*y[i,k])/(2*dx)
-            z = -(-27*y[i,k]+58*y[i-1,k]-56*spl(X[i]-2*dx)+36*spl(X[i]-3*dx)-13*spl(X[i]-4*dx)+2*spl(X[i]-5*dx))/(12*(dx))"""
-        else
-            dx=X[i+1]-X[i]
-            z = (-spl(X[i]+2dx)+8*y[i+1,k]-8*spl(X[i]-dx)+spl(X[i]-2*dx))/(12*(dx))
-        end
-    end
-        
-    return z
-    
-end
-
-
-
-
 function DDer_array(y,k,X)
 
     aux=zeros(L-6)
@@ -702,9 +648,14 @@ function bulkSF(y,i,X)
 
             ##psi,x evol equation
             xt=X[i] #xtilde
-            x=1-acos(2*xtilde-1)/pi
+            x=inverse(xt)
             r=x/(1-x)
-            dy=(1/(8*pi*r^3))*exp(2*y[i,2])*csc((pi*xt)/2)*(4*r^2*cos((pi*xt)/2)^3*Der[y,i,4,X]*(r-2*y[i,1])+2*(r*y[i,4]-y[i,3])*(4*r*cos((pi*xt)/2)^3*(-Der(y,i,1,X)+r*Der(y,i,2,X))+4*y[i,1]*(pi*sin((pi*xt)/2)-2*r*cos((pi*xt)/2)^3*Der(y,i,2,X))))
+            
+            #half cheby
+            dy=(1/(pi*r^3))exp(2*y[i,2])*(r^2*cos((pi*xt)/2)^2*cot((pi*xt)/2)*Der(y,i,4,X)*(r-2*y[i,1])+(r*y[i,4]-y[i,3])*(2*r*cos((pi*xt)/2)^2*cot((pi*xt)/2)*(-Der(y,i,1,X)+r*Der(y,i,2,X))+y[i,1]*(pi-4*r*cos((pi*xt)/2)*cot((pi*xt)/2)*Der(y,i,2,X))))
+
+            #full cheby
+            #dy=(1/(8*pi*r^3))*exp(2*y[i,2])*csc((pi*xt)/2)*(4*r^2*cos((pi*xt)/2)^3*Der[y,i,4,X]*(r-2*y[i,1])+2*(r*y[i,4]-y[i,3])*(4*r*cos((pi*xt)/2)^3*(-Der(y,i,1,X)+r*Der(y,i,2,X))+4*y[i,1]*(pi*sin((pi*xt)/2)-2*r*cos((pi*xt)/2)^3*Der(y,i,2,X))))
 
             #dy=1/(2*pi*r^3)*exp(2*y[i,2])*(r^2*sqrt(-((-1+xt)*xt))*acos(-1+2*xt)^2*Der[y,i,4,X]*(r-2*y[i,1])+2*(r*y[i,4]-y[i,3])*(r*sqrt(-((-1+xt)*xt))*acos(-1+2*xt)^2*(-Der(y,i,1,X)+r*Der(y,i,2,X))+y[i,1]*(pi-2*r*sqrt(-((-1+xt)*xt))*acos(-1+2*xt)^2*Der(y,i,2,X))))
         end
@@ -714,7 +665,7 @@ function bulkSF(y,i,X)
 end
 
 
-function bulkSF(y,i,X,spls)
+"""function bulkSF(y,i,X,spls)
     
     #psi,x
     if compactified == false
@@ -729,7 +680,7 @@ function bulkSF(y,i,X,spls)
 
     end
     return dy
-end
+end"""
 
 
 function boundarySF(y,X)
@@ -774,10 +725,17 @@ function RHS(y0,x1,time,func,i,data)
         r=x1
         z[3]=derpsi(r)
     else
-        #psi,r
-        z[3]=derpsi(x1)#*(-pi/2*sin(pi*(x1-1))/(x1-1)^2) # == dpsi/dr*dr/dxtilde
-        if abs.(x1 .- 1.0)<10^(-15)
-            z[3]=0.0
+        if loggrid==false
+
+            #psi,r
+            z[3]=derpsi(x1)/(1-x1)^2 # == dpsi/dr*dr/dx
+        else
+            #psi,r
+            z[3]=derpsi(inverse(x1))*2*pi*csc(pi*x1)^2*sin((pi*x1)/2)^3# == dpsi/dr*dr/dxtilde 
+        
+            if abs.(x1)<10^(-15)
+                z[3]=0.0
+            end
         end
     end
     
@@ -805,12 +763,19 @@ function RHS(y0,x1,time,func,i,data)
                 end
             else
                 xt = x1
-                z[1] = -1/16*csc((pi*xt)/2)^8*sin(pi*xt)^3*(-2*pi*y0[3]+sin(pi*xt)*z[3]) * (((-1+cos(pi*xt)+2*(1+cos(pi*xt))*y0[1]))/(1+cos(pi*xt))) #(2.0 .* h(x) .* (pi .* y0[3] + sqrt(-((-1+x) .* x)) .* h(x) .* (-pi .+ h(x)) .* z[3])^2)/(sqrt(-((-1+x) .* x)) .* (pi-h(x))^3) .* ((pi - h(x) .* (1.0 .+ 2.0 .* y0[1])))/h(x)
-                z[2] = 1/16*csc((pi*xt)/2)^8*sin(pi*xt)^3*(-2*pi*y0[3]+sin(pi*xt)*z[3]) #(2.0 .* h(x) .* (pi .* y0[3] + sqrt(-((-1+x) .* x)) .* h(x) .* (-pi .+ h(x)) .* z[3])^2)/(sqrt(-((-1+x) .* x)) .* (pi-h(x))^3)
+
+                #half cheby
+                z[1]= (-1-2*y0[1]+sec((pi*xt)/2)) * 1/2*cot((pi*xt)/2)*csc((pi*xt)/4)^2*(pi*cot((pi*xt)/4)*y0[3]-2*cos((pi*xt)/2)*z[3])^2
+                z[2]= 1/2*cot((pi*xt)/2)*csc((pi*xt)/4)^2*(pi*cot((pi*xt)/4)*y0[3]-2*cos((pi*xt)/2)*z[3])^2
+                
+                
+                #complete cheby
+                #z[1] = -1/16*csc((pi*xt)/2)^8*sin(pi*xt)^3*(-2*pi*y0[3]+sin(pi*xt)*z[3]) * (((-1+cos(pi*xt)+2*(1+cos(pi*xt))*y0[1]))/(1+cos(pi*xt))) #(2.0 .* h(x) .* (pi .* y0[3] + sqrt(-((-1+x) .* x)) .* h(x) .* (-pi .+ h(x)) .* z[3])^2)/(sqrt(-((-1+x) .* x)) .* (pi-h(x))^3) .* ((pi - h(x) .* (1.0 .+ 2.0 .* y0[1])))/h(x)
+                #z[2] = 1/16*csc((pi*xt)/2)^8*sin(pi*xt)^3*(-2*pi*y0[3]+sin(pi*xt)*z[3]) #(2.0 .* h(x) .* (pi .* y0[3] + sqrt(-((-1+x) .* x)) .* h(x) .* (-pi .+ h(x)) .* z[3])^2)/(sqrt(-((-1+x) .* x)) .* (pi-h(x))^3)
                 #x=x1
                 #z[1] = - 2.0 .* pi .* (-1.0 .+ x) .* (y0[3] .+ (-1 + x) .* x .* z[3]) .^ 2.0 ./ x .^ 3.0 .* ( x ./ (1.0 .-x ) .- 2 .* y0[1])
                 #z[2] = - 2.0 .* pi .* (-1.0 .+ x) .* (y0[3] .+ (-1 + x) .* x .* z[3]) .^ 2.0 ./ x .^ 3.0
-                if abs.(x1 .- 1.0)<10^(-15)
+                if abs.(x1 .- 1.0)<10^(-15)||abs.(x1)<10^(-15)
                     z[1] = 0.0
                     z[2] = 0.0
                     z[3] = 0.0
@@ -833,120 +798,46 @@ function SF_RHS(data,t,X)
     dy=zeros((L,length(data[1,:])));
 
     # update interpolation of psi,x
-    derpsi_func = Spline1D(X[4:L-3],data[4:L-3,4],k=4)
+    derpsi_func = Spline1D(inverse.(X[4:L-3]),data[4:L-3,4],k=4)
     
     # update m, beta and psi data
     y0=[0.0 0.0 0.0]
     data[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X[4:L-3],t,derpsi_func,data[:,:])
     data=ghost(data)
 
-    #NEW
-    if loggrid==true
-        m_func = Spline1D(X[4:L],data[4:L,1],k=4)
-        beta_func = Spline1D(X[4:L],data[4:L,2],k=4)
 
-        funcs=[m_func beta_func derpsi_func]
-    end
-
-    if loggrid==false
-        Threads.@threads for i in 4:L-3 #ORI
-            if X[i]<10^(-15) #left
-                dy[i,4]= +1.0/2.0 * (1/(1-X[i])^2 * Der(data,i,4,X) + 2/(1-X[i])^3*data[i,4])  - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4];
-                
-            elseif abs.(X[i] .- 1.0)<10^(-15)
-                dy[i,4]= 0.0 - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4]
-                
+    Threads.@threads for i in 4:L-3 #ORI
+        if X[i]<10^(-15) #left
+            if loggrid==false
+                if compactified==true
+                    dy[i,4] = 1.0/2.0 * (1/(1-X[i])^2 * Der(data,i,4,X) + 2/(1-X[i])^3*data[i,4])  - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4];
+                else # X[i] is actually an r
+                    dy[i,4] = 1.0/2.0 * ((1+X[i])^4 * Der(data,i,4,X) + 2*(1+X[i])^3*data[i,4])  - dissipation6(data,i,0.0065)[4]
+                end
             else
-                dy[i,4]=bulkSF(data,i,X) - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4]
-            end
-        end
-    else
-        Threads.@threads for i in 4:L-3 #ORI
-            if X[i]<10^(-15) #left
+                
+                #dy[i,4]= (data[i,4]) - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4];
+                
                 xtilde=X[i]
-                x=1-acos(2*xtilde-1)/pi
+                x=inverse(xtilde)
+               
                 dy[i,4]= +1.0/2.0 * (1/(1-x)^2 * pi/2.0 * sin(pi*(1-x)) * Der(data,i,4,X) + 2/(1-x)^3*data[i,4])  - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4];
-                
-            elseif abs.(X[i] .- 1.0)<10^(-15)
-                dy[i,4]= 0.0 - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4]
-                
-            else
-                dy[i,4]=bulkSF(data,i,X,funcs) - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4]
             end
+            
+            
+        elseif abs.(X[i] .- 1.0)<10^(-15)
+            dy[i,4]= 0.0 - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4]
+            
+        else
+            dy[i,4]=bulkSF(data,i,X) - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4]
         end
     end
-    
     
     dy[4,4]=extrapolate_in(dy[5,4], dy[6,4], dy[7,4], dy[8,4])
   
-    #dy=ghost(dy)
     return dy
 
 end
-
-
-function Grid_RHS(y,t,X)
-    
-    L=length(X)
-    dy=zeros((L,length(y[1,:])));
-
-    for i in 4:(L-3)
-        if X[i]<10^(-7) #left
-
-            dy[i,5]=-1.0/2.0*exp(2.0*y[i,2]);
-
-        else #bulk
-            dy[i,5]=-1.0/2.0*(1-X[i])^2*exp(2.0*y[i,2])*(1-2*y[i,1]*(1-X[i])/X[i]);#dissipation4
-        end
-    end
-    
-    dy=ghost(dy)
-    return dy
-end
-
-#double the grid and get the data there
-function doublegrid(y)
-    
-    L1=length(y[:,5])
-    newX = y[1:3,5]
-    newX = vcat(newX,doubleX(y[4:L1-3,5]))
-    newX =vcat(newX,y[L1-2:L1,5])
-    
-    m_func = Spline1D(y[4:L1-3,5],y[4:L1-3,1],k=4)
-    beta_func = Spline1D(y[4:L1-3,5],y[4:L1-3,2],k=4)
-    psi_func = Spline1D(y[4:L1-3,5],y[4:L1-3,3],k=4)
-    derspi_func = Spline1D(y[4:L1-3,5],y[4:L1-3,4],k=4)
-
-    L = length(newX)
-
-    z = zeros(L,5)
-
-    z[:,5] = newX
-    z[:,1] = m_func(newX)
-    z[:,2] = beta_func(newX)
-    z[:,3] = psi_func(newX)
-    z[:,4] = derpsi_func(newX)
-
-    return z
-
-end
-
-# double only the grid
-function doubleX(X)
-    new_grid=[X[1]]
-
-    L = length(X)
-
-    for i in 1:(L-1)
-        h = X[i+1]-X[i]
-        
-        new_grid = vcat(new_grid, X[i]+h/2)
-        new_grid = vcat(new_grid, X[i+1])
-    end
-
-    return new_grid
-end
-
 
 function timeevolution(state_array,finaltime,run)
 
@@ -955,15 +846,20 @@ function timeevolution(state_array,finaltime,run)
     iter = 0
     k=0
 
+    aa=1
     while t<finaltime#@TRACK
-
+        
+        """if aa > 2
+            break
+        end"""
         iter = iter + 1
 
         #update time increment
-        #global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)
-        #global dt=0.0000000001
+        #dt=2e-5
+        #global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt)
+        
         t = t + dt
-        if iter%20==0
+        if iter%300==0
             println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
         end
         #println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
@@ -972,26 +868,26 @@ function timeevolution(state_array,finaltime,run)
 
         X=initX #state_array[:,5]
         X1=X[4:L-3]
-       
+        
         #evolve psi,x
         state_array[:,:] = rungekutta4molstep(SF_RHS,state_array[:,:],T_array,iter,X) #evolve psi,x AQUII
         state_array=ghost(state_array)
     
+        
         # update interpolation of psi,x
-        derpsi_func = Spline1D(X[4:L-3],state_array[4:L-3,4],k=4)#new
+        derpsi_func = Spline1D(inverse.(X[4:L-3]),state_array[4:L-3,4],k=4)#new
 
         #evolve m and beta together, new
         y0=[0.0 0.0 0.0]
         state_array[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X1,t,derpsi_func,state_array[:,:])
         state_array=ghost(state_array)
         
-
-        run=int(run)
         
-        if iter%5==0
-            print_muninn(files, t, state_array[:,1:5],res,"a")
+        run=int(run)
+
+        if iter%300==0
+        print_muninn(files, t, state_array[:,1:5],res,"a")
         end
-        #print_muninn(files, t, state_array[:,1:5],res,"a")
 
         #threshold for apparent black hole formation
         if compactified==false
@@ -1001,7 +897,7 @@ function timeevolution(state_array,finaltime,run)
         end
 
 
-       
+        
         if maximum(monitor_ratio)>0.70&&k==0
             global criticality = true
             k=k+1
@@ -1010,7 +906,7 @@ function timeevolution(state_array,finaltime,run)
             global time = t
         end
 
-
+        
 
         """if criticality == true
             break
@@ -1027,8 +923,7 @@ function timeevolution(state_array,finaltime,run)
 
         end
 
-        #global time = t
-        
+        aa=aa+1
     end
     
     if criticality==false
@@ -1037,6 +932,7 @@ function timeevolution(state_array,finaltime,run)
 
     global evol_stats = [criticality A sigma r0 time explode run]
 
+    
     return evol_stats, T_array
 
 end    
