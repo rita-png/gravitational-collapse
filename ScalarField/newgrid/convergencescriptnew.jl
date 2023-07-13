@@ -43,8 +43,8 @@ Tf=Nt*dt; #final time
 #print(Tf)
 
 
-
-global dir = "/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA"
+global dir = "/home/ritapsantos/data/ritapsantos"
+#global dir = "/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA"
 
 using Printf
 include("./ScalarField.jl");
