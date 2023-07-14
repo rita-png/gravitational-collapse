@@ -36,8 +36,6 @@ Nt=N
 Tf=Nt*dt; #final time
 #print(Tf)
 
-global dir = "/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA"
-
 using Printf
 include("./ScalarField.jl");
 #include("/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/myspline.jl");
