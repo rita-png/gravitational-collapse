@@ -858,7 +858,7 @@ function timeevolution(state_array,finaltime,run)
         global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt)
         
         t = t + dt
-        if iter%500==0
+        if iter%2000==0
             println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
         end
         #println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
@@ -899,8 +899,8 @@ function timeevolution(state_array,finaltime,run)
         end
         
 
-        if iter%500==0
-            print_muninn(files, t, [state_array[:,1:5] monitor_ratio],res,"a")
+        if iter%1000==0||(t>1.0&&iter%500==0)
+            print_muninn(files, t, state_array[:,1:5],res,"a")
         end
 
 
@@ -913,9 +913,7 @@ function timeevolution(state_array,finaltime,run)
             break
         end
 
-        """if criticality == true
-            break
-        end"""
+ 
         
         if isnan(state_array[L-3,4])
             if criticality==false
