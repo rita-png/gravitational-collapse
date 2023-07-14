@@ -36,11 +36,6 @@ Nt=N
 Tf=Nt*dt; #final time
 #print(Tf)
 
-iter=1
-"/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA/res1/monitor_ratio$iter.csv"
-
-print(N)
-
 global dir = "/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA"
 
 using Printf
