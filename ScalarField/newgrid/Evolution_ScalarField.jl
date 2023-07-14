@@ -3,7 +3,7 @@ using Dierckx
 
 
 A = ARGS[1]
-run = ARGS[2]
+run = trunc(Int, ARGS[2])
 N = ARGS[3]
 
 
