@@ -147,16 +147,17 @@ function speed(X, m, beta)
     ori=find_origin(X)
 
     X = zeros(L)
-    X[4:L-3]=inverse.(initX1)
     g = zeros(int(L-5-ori))
-    g=abs.((1.0 .- X[ori+1:L-4]) .^ 3.0 .* exp.(2 .* state_array[ori+1:L-4,2]) .* (2 .* state_array[ori+1:L-4,1] .- X[ori+1:L-4] ./ (1 .- X[ori+1:L-4])) ./ (2 .* X[ori+1:L-4]))
-    
 
-    """g = zeros(int(L-5-ori))
-    g=abs.((1.0 .- initX[ori+1:L-4]) .^ 3.0 .* exp.(2 .* state_array[ori+1:L-4,2]) .* (2 .* state_array[ori+1:L-4,1] .- initX[ori+1:L-4] ./ (1 .- initX[ori+1:L-4])) ./ (2 .* initX[ori+1:L-4]))
-    """
+    
     if loggrid==true
-        g = g .* jacobian.(initX[ori+1:L-4])
+        X[4:L-3]=inverse.(initX1)
+        #dx/du
+        g=abs.((1.0 .- X[ori+1:L-4]) .^ 3.0 .* exp.(2 .* state_array[ori+1:L-4,2]) .* (2 .* state_array[ori+1:L-4,1] .- X[ori+1:L-4] ./ (1 .- X[ori+1:L-4])) ./ (2 .* X[ori+1:L-4]))
+        #dxtilde/du=dx/du / (dx/dxtilde) #this is wrong
+        #g = g ./ jacobian.(initX[ori+1:L-4])
+    else
+        g=abs.((1.0 .- initX[ori+1:L-4]) .^ 3.0 .* exp.(2 .* state_array[ori+1:L-4,2]) .* (2 .* state_array[ori+1:L-4,1] .- initX[ori+1:L-4] ./ (1 .- initX[ori+1:L-4])) ./ (2 .* initX[ori+1:L-4]))
     end
     
     #println("\n\ng is ",g)
@@ -173,20 +174,21 @@ function update_dt(X, m, beta,dt)
     
     g=speed(X,m,beta)
 
-    dx=initX[5]-initX[4]
-    """if loggrid==false
+    #dx=initX[5]-initX[4]
+    if loggrid==false
         dx=X[5]-X[4]
     else
         aux=zeros(L-7)
         for i in 1:L-7
-            aux[i]=initX1[i+1]-initX1[i]
+            aux[i]=inverse(initX1[i+1])-inverse(initX1[i])
         end
         dx=minimum(aux)
-    end"""
+    end
 
 
-    return  dx/g*0.01
+    #return  dx/g*0.01
 
+    return dx/g*0.5
 end
 
 function find_origin(X)
@@ -846,17 +848,14 @@ function timeevolution(state_array,finaltime,run)
     iter = 0
     k=0
 
-    aa=1
     while t<finaltime#@TRACK
         
-        """if aa > 2
-            break
-        end"""
+        
         iter = iter + 1
 
         #update time increment
-        #dt=2e-5/2
-        #global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt)
+        #dt=2e-5
+        global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt)
         
         t = t + dt
         if iter%500==0
@@ -885,28 +884,34 @@ function timeevolution(state_array,finaltime,run)
         
         run=int(run)
 
-        if iter%500==0
-        print_muninn(files, t, state_array[:,1:5],res,"a")
-        end
+        
 
         #threshold for apparent black hole formation
+        monitor_ratio=zeros(L)
         if compactified==false
             global monitor_ratio[5:L-4] = 2 .* state_array[5:L-4,1] ./ initX[5:L-4]
         else
-            global monitor_ratio[5:L-4] = 2 .* state_array[5:L-4,1] ./ initX[5:L-4] .* (1 .- initX[5:L-4])
+            if loggrid==false
+                global monitor_ratio[5:L-4] = 2 .* state_array[5:L-4,1] ./ initX[5:L-4] .* (1 .- initX[5:L-4])
+            else
+                global monitor_ratio[5:L-4] = 2 .* state_array[5:L-4,1] ./ inverse(initX[5:L-4]) .* (1 .- inverse(initX[5:L-4]))
+            end
+        end
+        
+
+        if iter%500==0
+            print_muninn(files, t, [state_array[:,1:5] monitor_ratio],res,"a")
         end
 
 
-        
-        if maximum(monitor_ratio)>0.70&&k==0
+        if maximum(monitor_ratio)>0.6&&k==0
             global criticality = true
             k=k+1
             println("Supercritical evolution! At time ", t, ", iteration = ", iter)
             println("t = ", t, "iteration ", iter, " monitor ratio = ", maximum(monitor_ratio))
             global time = t
+            break
         end
-
-        
 
         """if criticality == true
             break
@@ -923,7 +928,6 @@ function timeevolution(state_array,finaltime,run)
 
         end
 
-        aa=aa+1
     end
     
     if criticality==false
