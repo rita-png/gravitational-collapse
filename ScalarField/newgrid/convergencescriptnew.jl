@@ -1,5 +1,8 @@
-A = ARGS[1]
-res = trunc(Int, ARGS[2])
+#A = ARGS[1]
+#res = trunc(Int, ARGS[2])
+A=0.1
+m=1
+res=m
 println("running for resolution ", res, " N1 = 200", ", A = ", A)
 m=res
 
@@ -24,7 +27,7 @@ global bisection=false
 using Printf
 
 res=m;
-N=2.0^m*200.0/2.0
+N=2.0^m*1600.0/2.0
 
 if compactified==true
     Xf=1.0
@@ -38,7 +41,7 @@ if loggrid==false
 else
     dt=0.1*round(dx,digits=10)
 end
-Nt=2.0^m*200.0/2.0
+Nt=2.0^m*1600.0/2.0
 Tf=Nt*dt; #final time
 #print(Tf)
 
@@ -139,23 +142,17 @@ ginit=speed(initX,state_array[:,1],state_array[:,2])
 using Base.Threads
 Threads.nthreads()
 
-#global dt=5e-5
+global dt=1e-5/2/5/2
+
+
 
 """if m==1
-    global dt=2e-5
-elseif m==2
-    global dt=1e-5
-else
-    global dt=1e-5/2
-end"""
-
-if m==1
     global dt=2e-5/5
 elseif m==2
     global dt=1e-5/5
 else
     global dt=1e-5/2/5
-end
+end"""
 
 
 finaltime=5.0
