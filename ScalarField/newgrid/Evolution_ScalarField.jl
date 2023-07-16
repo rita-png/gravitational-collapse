@@ -37,7 +37,7 @@ Tf=Nt*dt; #final time
 #print(Tf)
 
 using Printf
-include("./ScalarField.jl");
+
 #include("/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/myspline.jl");
 
 ori=0.0#Float128(0.0)#0.0;
