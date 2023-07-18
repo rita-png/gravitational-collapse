@@ -811,9 +811,8 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
 
         run=int(run)
 
-        if iter%10==0
-            println("\n\nprintingggg\n\n")
-        #if (iter%100==0&&t>0.5)||(t>1.5&&iter%5==0)
+        #if iter%500==0
+        if (iter%100==0&&t>0.5)||(t>1.5&&iter%5==0)
             if zeroformat==true
                 zero_print_muninn(files, t, state_array[:,1:5],res,"a")
             else
