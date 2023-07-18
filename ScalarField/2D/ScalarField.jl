@@ -732,7 +732,10 @@ function timeevolution(state_array,finaltime,dir,run)
         
     end
     
-    
+    if t>2.9
+        global time = 3.0
+        global criticality = false
+    end    
 
     global evol_stats = [criticality A sigma r0 time explode run]
 
