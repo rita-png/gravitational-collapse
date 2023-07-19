@@ -8,10 +8,11 @@ include("./ScalarField.jl");
 
 
 
+
 #### CONFIG ####
 
-global low_bound = 0.150625#0.14875#0.145
-global high_bound = 0.1525
+global low_bound = 0.15109375#0.150625#0.14875#0.145
+global high_bound = 0.1515625#0.1525
 
 global N=800.0
 
