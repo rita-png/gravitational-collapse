@@ -415,21 +415,17 @@ function print_muninn(files, t, data, res, mode)
     end
 end
 
+
 # 0 dimension output, save every variable at the ori and scri+
 function zero_print_muninn(files, t, data, res, mode)
     #mode is "a" for append or "w" for write
     j=1
+    
     if bisection==false
         for fl in files #normal run
             
-            open(dir*"/muninnDATA/res$res/$fl.txt", mode) do file
-                aux=[]
-                for i in 1:length(data[:,1])
-                    if (i==4||i==L-3)
-                        aux=vcat(aux,data[i,j])
-                    end
-                end 
-                @printf file "% .10e % .10e % .10e\n" t aux[1] aux[2]
+            open(dir*"/muninnDATA/res$res/$fl.txt", mode) do file                
+                @printf file "% .10e % .10e % .10e\n" t data[4,j] data[L-3,j]
             end
             j=j+1
         end
@@ -443,13 +439,7 @@ function zero_print_muninn(files, t, data, res, mode)
         for fl in files #bisection search
             
             open(auxdir*"/run$run/$fl.txt", mode) do file
-                for i in 1:length(data[:,1])
-                    aux=[]
-                    if (i==4||i==L-3)
-                        aux=vcat(aux,data[i,j])
-                    end    
-                end
-                @printf file "% .10e % .10e % .10e\n" t aux[1] aux[2]   
+                @printf file "% .10e % .10e % .10e\n" t data[4,j] data[L-3,j]
             end
             j=j+1
         end
