@@ -83,7 +83,12 @@ run=int(run)
 
 global files=["m", "beta", "psi", "derpsi"]
 
-print_muninn(files, 0, state_array[:,1:5],res,"w")
+if zeroformat==true
+    zero_print_muninn(files, 0, state_array[:,1:5],res,"w")
+else
+    print_muninn(files, 0, state_array[:,1:5],res,"w")
+end
+
 
 time=0
 criticality=0.0
