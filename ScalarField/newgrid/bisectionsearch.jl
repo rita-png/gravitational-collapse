@@ -27,7 +27,7 @@ global twod = false
 if twod==false
     global dir = "/home/ritapsantos/data/ritapsantos"
 else
-    global dir = "/home/ritapsantos/data/ritapsantos"
+    global dir = "/home/ritapsantos/data/ritapsantos/2nduneven"
 end
 #global dir = "/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA"
 
