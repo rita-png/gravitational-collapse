@@ -80,10 +80,6 @@ initm=zeros(L)
 initbeta=zeros(L)
 initpsi=zeros(L)
 initderpsi=zeros(L)
-#initm=Array{Float128}(undef, L)
-#initbeta=Array{Float128}(undef, L)
-#initpsi=Array{Float128}(undef, L)
-#initderpsi=Array{Float128}(undef, L)
 
 state_array=[initm initbeta initpsi initderpsi initX];
 
@@ -114,7 +110,11 @@ end;
 
 y0=[0.0 0.0 0.0]
 
-state_array[4:L-3,1:3] = n_rk4wrapper(RHS,y0,initX[4:L-3],0,derpsi_func,state_array[:,:]);
+if twod==false
+    state_array[4:L-3,1:3] = n_rk4wrapper(RHS,y0,initX[4:L-3],0,derpsi_func,state_array[:,:]);
+else
+    state_array[4:L-3,1:3] = twod_n_rk4wrapper(RHS,y0,initX[4:L-3],0,derpsi_func,state_array[:,:]);
+end
 
 state_array = ghost(state_array);
 
@@ -141,17 +141,16 @@ ginit=speed(initX,state_array[:,1],state_array[:,2])
 using Base.Threads
 Threads.nthreads()
 
-global dt=1e-5/2/5/2
 
 
 
-"""if m==1
+if m==1
     global dt=2e-5/5
 elseif m==2
     global dt=1e-5/5
 else
     global dt=1e-5/2/5
-end"""
+end
 
 
 finaltime=5.0
