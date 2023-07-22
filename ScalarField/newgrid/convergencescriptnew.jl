@@ -2,7 +2,7 @@ A = ARGS[1]
 res = trunc(Int, ARGS[2])
 #A=0.1
 #m=1
-res=m
+#res=m
 
 m=res
 
