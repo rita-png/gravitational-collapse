@@ -1,14 +1,11 @@
-#A = ARGS[1]
-#res = trunc(Int, ARGS[2])
-A=0.1
-m=1
+A = ARGS[1]
+res = trunc(Int, ARGS[2])
+#A=0.1
+#m=1
 res=m
-println("running for resolution ", res, " N1 = 200", ", A = ", A)
+
 m=res
 
-
-#m = 1
-#A = 0.10#872627258300784#0.12872631072998048#9#0.001#0.049261572870865834#0.0495#0.04922733211517334#0.04926157287086606#0.049261573076248164#0.04925#55#0.05#0.049375#0.07#0.05#0.1124921875#0.125
 run = 1
 
 function compactify(r)
@@ -21,13 +18,14 @@ end
 
 global compactified=true
 global loggrid=true
-
+global zeroformat = false
+global twod = true
 global bisection=false
 
 using Printf
 
 res=m;
-N=2.0^m*1600.0/2.0
+N=2.0^m*200.0/2.0
 
 if compactified==true
     Xf=1.0
@@ -41,10 +39,11 @@ if loggrid==false
 else
     dt=0.1*round(dx,digits=10)
 end
-Nt=2.0^m*1600.0/2.0
+Nt=N
 Tf=Nt*dt; #final time
 #print(Tf)
 
+println("running for resolution ", res, " N1 = ", N, ", A = ", A)
 
 global dir = "/home/ritapsantos/data/ritapsantos"
 #global dir = "/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA"

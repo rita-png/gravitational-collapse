@@ -559,18 +559,26 @@ end"""
 
 function Der(y,i,k,X)
 
-    if i==4 # left boundary LOP2, TEM
-        z = (-27*y[i,k]+58*y[i+1,k]-56*y[i+2,k]+36*y[i+3,k]-13*y[i+4,k]+2*y[i+5,k])/(12*(X[i+1]-X[i]))
-    elseif i==5 # left boundary LOP1, TEM
-        z = (-2*y[i-1,k]-15*y[i,k]+28*y[i+1,k]-16*y[i+2,k]+6*y[i+3,k]-y[i+4,k])/(12*(X[i+1]-X[i]))
-    elseif i==L-3 # right boundary TEM
-        z = (-27*y[i,k]+58*y[i-1,k]-56*y[i-2,k]+36*y[i-3,k]-13*y[i-4,k]+2*y[i-5,k])/(12*(X[i]-X[i-1])) #fixed this *-1
-    elseif i==L-4 # right boundary TEM
-        z = (-2*y[i+1,k]-15*y[i,k]+28*y[i-1,k]-16*y[i-2,k]+6*y[i-3,k]-y[i-4,k])/(12*(X[i+1]-X[i]))
-    else # central
-        z = (-y[i+2,k]+8*y[i+1,k]-8*y[i-1,k]+y[i-2,k])/(12*(X[i+1]-X[i]))
-    
-
+    if twod == false
+        if i==4 # left boundary LOP2, TEM
+            z = (-27*y[i,k]+58*y[i+1,k]-56*y[i+2,k]+36*y[i+3,k]-13*y[i+4,k]+2*y[i+5,k])/(12*(X[i+1]-X[i]))
+        elseif i==5 # left boundary LOP1, TEM
+            z = (-2*y[i-1,k]-15*y[i,k]+28*y[i+1,k]-16*y[i+2,k]+6*y[i+3,k]-y[i+4,k])/(12*(X[i+1]-X[i]))
+        elseif i==L-3 # right boundary TEM
+            z = (-27*y[i,k]+58*y[i-1,k]-56*y[i-2,k]+36*y[i-3,k]-13*y[i-4,k]+2*y[i-5,k])/(12*(X[i]-X[i-1])) #fixed this *-1
+        elseif i==L-4 # right boundary TEM
+            z = (-2*y[i+1,k]-15*y[i,k]+28*y[i-1,k]-16*y[i-2,k]+6*y[i-3,k]-y[i-4,k])/(12*(X[i+1]-X[i]))
+        else # central
+            z = (-y[i+2,k]+8*y[i+1,k]-8*y[i-1,k]+y[i-2,k])/(12*(X[i+1]-X[i]))
+        end
+    else
+        if i==4 # left boundary LOP1, TEM
+            z = (y[i+3,k]-4*y[i+2,k]+7*y[i+1,k]-4*y[i,k])/(2*(X[i+1]-X[i]))
+        elseif i==L-3
+            z = (-y[i-3,k]+4*y[i-2,k]-7*y[i-1,k]+4*y[i,k])/(2*(X[i]-X[i-1]))
+        else
+            z = (y[i+1,k]-y[i-1,k])/(2*(X[i+1]-X[i]))
+        end
     end
     
     return z
@@ -835,7 +843,12 @@ function SF_RHS(data,t,X)
     
     # update m, beta and psi data
     y0=[0.0 0.0 0.0]
-    data[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X[4:L-3],t,derpsi_func,data[:,:])
+    if twod == false
+        data[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X[4:L-3],t,derpsi_func,data[:,:])
+    else
+        data[4:L-3,1:3] = twod_n_rk4wrapper(RHS,y0,X[4:L-3],t,derpsi_func,data[:,:])
+    end
+
     data=ghost(data)
 
 
@@ -901,7 +914,12 @@ function timeevolution(state_array,finaltime,run)
         X1=X[4:L-3]
         
         #evolve psi,x
-        state_array[:,:] = rungekutta4molstep(SF_RHS,state_array[:,:],T_array,iter,X) #evolve psi,x AQUII
+        if twod==false
+            state_array[:,:] = rungekutta4molstep(SF_RHS,state_array[:,:],T_array,iter,X)
+        else
+            state_array[:,:] = twod_rungekutta4molstep(SF_RHS,state_array[:,:],T_array,iter,X)
+        end
+        
         state_array=ghost(state_array)
     
         
@@ -910,7 +928,12 @@ function timeevolution(state_array,finaltime,run)
 
         #evolve m and beta together, new
         y0=[0.0 0.0 0.0]
-        state_array[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X1,t,derpsi_func,state_array[:,:])
+
+        if twod==false
+            state_array[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X1,t,derpsi_func,state_array[:,:])
+        else
+            state_array[4:L-3,1:3] = twod_n_rk4wrapper(RHS,y0,X1,t,derpsi_func,state_array[:,:])
+        end
         state_array=ghost(state_array)
         
         

@@ -20,9 +20,15 @@ global bisection = true
 global loggrid = true
 global compactified = true
 global zeroformat = true
+global twod = false
 
 #global dir = "/home/ritapsantos/data/ritapsantos/4theven"
-global dir = "/home/ritapsantos/data/ritapsantos"
+
+if twod==false
+    global dir = "/home/ritapsantos/data/ritapsantos"
+else
+    global dir = "/home/ritapsantos/data/ritapsantos"
+end
 #global dir = "/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA"
 
 #### CONFIG ####
