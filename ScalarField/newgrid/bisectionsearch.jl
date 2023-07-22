@@ -14,7 +14,11 @@ include("./ScalarField.jl");
 global low_bound = 0.15109375#0.150625#0.14875#0.145
 global high_bound = 0.1515625#0.1525
 
-global N=800.0
+if twod==false
+    global N=800.0
+else
+    global N=1000.0
+end
 
 global bisection = true
 global loggrid = true
