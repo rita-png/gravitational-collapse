@@ -19,7 +19,7 @@ global bisection = true
 global loggrid = true
 global compactified = true
 global zeroformat = true
-global twod = false
+global twod = true
 
 #global dir = "/home/ritapsantos/data/ritapsantos/4theven"
 
