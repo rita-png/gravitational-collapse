@@ -22,7 +22,7 @@ global high_bound = 0.15154052734375#0.1515625
 global bisection = true
 global loggrid = true
 global compactified = true
-global zeroformat = true
+global zeroformat = false
 global twod = false
 
 #global dir = "/home/ritapsantos/data/ritapsantos/4theven"
