@@ -475,6 +475,16 @@ function ghost(y)
    
     return y
 end
+
+function dissipation(y,i,eps)
+
+    if twod==true
+        return dissipation4(y,i,eps)
+    else
+        return dissipation6(y,i,eps) 
+    end
+end
+
 function dissipation6(y,i,eps)
     if i==4
         delta6= (19*y[i,:]-142*y[i+1,:]+464*y[i+2,:]-866*y[i+3,:]+1010*y[i+4,:]-754*y[i+5,:]+352*y[i+6,:]-94*y[i+7,:]+11*y[i+8,:])/2;
@@ -852,13 +862,19 @@ function SF_RHS(data,t,X)
     data=ghost(data)
 
 
+    if twod==true
+        epsilon=0.02
+    else
+        epsilon=0.0065
+    end
+
     Threads.@threads for i in 4:L-3 #ORI
         if X[i]<10^(-15) #left
             if loggrid==false
                 if compactified==true
-                    dy[i,4] = 1.0/2.0 * (1/(1-X[i])^2 * Der(data,i,4,X) + 2/(1-X[i])^3*data[i,4])  - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4];
+                    dy[i,4] = 1.0/2.0 * (1/(1-X[i])^2 * Der(data,i,4,X) + 2/(1-X[i])^3*data[i,4])  - dissipation(data,i,epsilon)[4]#- dissipation4(data,i,0.02)[4];
                 else # X[i] is actually an r
-                    dy[i,4] = 1.0/2.0 * ((1+X[i])^4 * Der(data,i,4,X) + 2*(1+X[i])^3*data[i,4])  - dissipation6(data,i,0.0065)[4]
+                    dy[i,4] = 1.0/2.0 * ((1+X[i])^4 * Der(data,i,4,X) + 2*(1+X[i])^3*data[i,4])  - dissipation(data,i,epsilon)[4]
                 end
             else
                 
@@ -867,15 +883,15 @@ function SF_RHS(data,t,X)
                 xtilde=X[i]
                 x=inverse(xtilde)
                
-                dy[i,4]= +1.0/2.0 * (1/(1-x)^2 * pi/2.0 * sin(pi*(1-x)) * Der(data,i,4,X) + 2/(1-x)^3*data[i,4])  - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4];
+                dy[i,4]= +1.0/2.0 * (1/(1-x)^2 * pi/2.0 * sin(pi*(1-x)) * Der(data,i,4,X) + 2/(1-x)^3*data[i,4])  - dissipation(data,i,epsilon)[4]#- dissipation4(data,i,0.02)[4];
             end
             
             
         elseif abs.(X[i] .- 1.0)<10^(-15)
-            dy[i,4]= 0.0 - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4]
+            dy[i,4]= 0.0 - dissipation(data,i,epsilon)[4]#- dissipation4(data,i,0.02)[4]
             
         else
-            dy[i,4]=bulkSF(data,i,X) - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4]
+            dy[i,4]=bulkSF(data,i,X) - dissipation(data,i,epsilon)[4]#- dissipation4(data,i,0.02)[4]
         end
     end
     
@@ -898,12 +914,12 @@ function timeevolution(state_array,finaltime,run)
         iter = iter + 1
 
         #update time increment
-        
-        global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt)
-        
+        if bisection==true
+            global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt)
+        end
+
         t = t + dt
-        if iter%2000==0
-        #if iter%500==0
+        if ((iter%2000==0)&&(bisection==true))||((if iter%500==0)&&(bisection==false))
             println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
         end
         #println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
@@ -954,8 +970,8 @@ function timeevolution(state_array,finaltime,run)
         end
         
 
-        if iter%1000==0||(t>1.0&&iter%50==0)||(t>2.0&&iter%5==0)
-        #if iter%500==0
+
+        if ((bisection==true)&&(iter%1000==0||(t>1.0&&iter%50==0)||(t>2.0&&iter%5==0)))||((bisection==falce)&&(if iter%500==0))
             if zeroformat==true
                 zero_print_muninn(files, t, state_array[:,1:5],res,"a")
             else

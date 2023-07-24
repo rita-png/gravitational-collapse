@@ -82,7 +82,12 @@ end;
 
 y0=[0.0, 0.0, 0.0]
 
-state_array[4:L-3,1:3] = n_rk4wrapper(RHS,y0,initX[4:L-3],0,derpsi_func,state_array[:,:]);
+if twod==false
+    state_array[4:L-3,1:3] = n_rk4wrapper(RHS,y0,initX[4:L-3],0,derpsi_func,state_array[:,:]);
+else
+    state_array[4:L-3,1:3] = twod_n_rk4wrapper(RHS,y0,initX[4:L-3],0,derpsi_func,state_array[:,:]);
+end
+
 
 state_array = ghost(state_array);
 
@@ -120,7 +125,22 @@ Threads.nthreads()
 
 #global dt=5e-5
 
-finaltime=3.0
+if bisection==false
+    if m==1
+        #global dt=2e-5/5
+        global dt=0.000006
+    elseif m==2
+        #global dt=2e-5/5/2
+        global dt=0.000006/2
+    else
+        #global dt=2e-5/5/2/2
+        global dt=0.000006/2/2
+    end
+    finaltime=5.0
+else
+    finaltime=3.0
+end
+
 stats, T_interp = timeevolution(state_array,finaltime,run);
 
 if bisection==true

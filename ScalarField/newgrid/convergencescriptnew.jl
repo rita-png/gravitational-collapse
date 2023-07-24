@@ -25,7 +25,7 @@ global bisection=false
 using Printf
 
 res=m;
-N=2.0^m*200.0/2.0
+N=2.0^m*300.0/2.0
 
 if compactified==true
     Xf=1.0
@@ -142,16 +142,21 @@ using Base.Threads
 Threads.nthreads()
 
 
-
-
-if m==1
-    global dt=2e-5/5
-elseif m==2
-    global dt=1e-5/5
+if bisection==false
+    if m==1
+        #global dt=2e-5/5
+        global dt=0.000006
+    elseif m==2
+        #global dt=2e-5/5/2
+        global dt=0.000006/2
+    else
+        #global dt=2e-5/5/2/2
+        global dt=0.000006/2/2
+    end
+    finaltime=5.0
 else
-    global dt=1e-5/2/5
+    finaltime=3.0
 end
 
 
-finaltime=5.0
 evol_stats, T_interp = timeevolution(state_array,finaltime,run);
