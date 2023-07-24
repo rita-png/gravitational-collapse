@@ -12,19 +12,19 @@ include("./ScalarField.jl");
 #### CONFIG ####
 
 #2nd
-#global low_bound = 0.15109375
-#global high_bound = 0.1515625
+global low_bound = 0.15109375
+global high_bound = 0.15132812499999998#0.1515625
 
 ## 4th
-global low_bound = 0.15151855468749997
-global high_bound = 0.1515625
+#global low_bound = 0.15151855468749997
+#global high_bound = 0.1515625
 
 
 global bisection = true
 global loggrid = true
 global compactified = true
 global zeroformat = true
-global twod = false
+global twod = true
 
 #global dir = "/home/ritapsantos/data/ritapsantos/4theven"
 
