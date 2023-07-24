@@ -920,7 +920,7 @@ function timeevolution(state_array,finaltime,run)
 
         t = t + dt
         if ((iter%2000==0)&&(bisection==true))||((iter%500==0)&&(bisection==false))
-            println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt, " monitor ratio is ", maximum(monitor_ratio))
+            println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
         end
         #println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
 
@@ -975,7 +975,7 @@ function timeevolution(state_array,finaltime,run)
             end
         end
         
-
+        print(" monitor ratio is ", maximum(monitor_ratio))
 
         if ((bisection==true)&&(iter%1000==0||(t>1.0&&iter%50==0)||(t>2.0&&iter%5==0)))||((bisection==false)&&(iter%500==0))
             if zeroformat==true
