@@ -971,7 +971,7 @@ function timeevolution(state_array,finaltime,run)
         
 
 
-        if ((bisection==true)&&(iter%1000==0||(t>1.0&&iter%50==0)||(t>2.0&&iter%5==0)))||((bisection==falce)&&(iter%500==0))
+        if ((bisection==true)&&(iter%1000==0||(t>1.0&&iter%50==0)||(t>2.0&&iter%5==0)))||((bisection==false)&&(iter%500==0))
             if zeroformat==true
                 zero_print_muninn(files, t, state_array[:,1:5],res,"a")
             else
