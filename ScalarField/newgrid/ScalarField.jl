@@ -924,7 +924,7 @@ function timeevolution(state_array,finaltime,run)
         end
         #println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
 
-        if speed(initX, state_array[:,1], state_array[:,2])>1e(9)
+        if speed(initX, state_array[:,1], state_array[:,2])>10^(9)
             println("Speed is ", speed(initX, state_array[:,1], state_array[:,2])>1e(9))
             global criticality=1
             break
