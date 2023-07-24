@@ -974,8 +974,10 @@ function timeevolution(state_array,finaltime,run)
                 global monitor_ratio[5:L-4] = 2 .* state_array[5:L-4,1] ./ inverse(initX[5:L-4]) .* (1 .- inverse(initX[5:L-4]))
             end
         end
-        
-        print(" monitor ratio is ", maximum(monitor_ratio))
+
+        if (iter%2000==0)&&(bisection==true)
+            print(" monitor ratio is ", maximum(monitor_ratio))
+        end
 
         if ((bisection==true)&&(iter%1000==0||(t>1.0&&iter%50==0)||(t>2.0&&iter%5==0)))||((bisection==false)&&(iter%500==0))
             if zeroformat==true
