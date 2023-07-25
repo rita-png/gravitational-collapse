@@ -863,7 +863,7 @@ function SF_RHS(data,t,X)
 
 
     if twod==true
-        epsilon=0.02
+        epsilon=0.025
     else
         epsilon=0.0065
     end
