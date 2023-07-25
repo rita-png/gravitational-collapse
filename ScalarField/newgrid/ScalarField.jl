@@ -925,7 +925,7 @@ function timeevolution(state_array,finaltime,run)
         #println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
 
         if speed(initX, state_array[:,1], state_array[:,2])>10^(9)
-            println("Speed is ", speed(initX, state_array[:,1], state_array[:,2])>1e(9))
+            println("Speed is ", speed(initX, state_array[:,1], state_array[:,2]))
             global criticality=1
             break
         end
@@ -996,6 +996,12 @@ function timeevolution(state_array,finaltime,run)
             global time = t
             #break
         end
+        if maximum(monitor_ratio)>0.9
+            print(" monitor ratio is ", maximum(monitor_ratio))
+            global criticality = true
+            break
+        end
+
 
  
         
