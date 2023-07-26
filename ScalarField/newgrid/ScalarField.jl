@@ -479,7 +479,7 @@ end
 function dissipation(y,i,eps)
 
     if twod==true
-        return dissipation4(y,i,eps)
+        return dissipation6(y,i,eps)
     else
         return dissipation6(y,i,eps) 
     end
@@ -863,7 +863,7 @@ function SF_RHS(data,t,X)
 
 
     if twod==true
-        epsilon=0.025
+        epsilon=0.02
     else
         epsilon=0.0065
     end
