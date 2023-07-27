@@ -19,13 +19,13 @@ end
 global compactified=true
 global loggrid=true
 global zeroformat = false
-global twod = true
+global twod = false
 global bisection=false
 
 using Printf
 
 res=m;
-N=2.0^m*100.0/2.0
+N=2.0^m*300.0/2.0
 
 if compactified==true
     Xf=1.0
@@ -145,16 +145,16 @@ Threads.nthreads()
 if bisection==false
     if m==1
         #global dt=2e-5/5 #N=200
-        #global dt=0.000006 #N=300
-        global dt=0.000018 #N=100
+        global dt=0.000006 #N=300
+        #global dt=0.000018 #N=100
     elseif m==2
-        #global dt=2e-5/5/2
-        #global dt=0.000006/2
-        global dt=0.000018/2 #N=100
+        #global dt=2e-5/5/2 #N=200
+        global dt=0.000006/2 #N=300
+        #global dt=0.000018/2 #N=100
     else
-        #global dt=2e-5/5/2/2
-        #global dt=0.000006/2/2
-        global dt=0.000018/2/2 #N=100
+        #global dt=2e-5/5/2/2 #N=200
+        global dt=0.000006/2/2 #N=300
+        #global dt=0.000018/2/2 #N=100
     end
     finaltime=5.0
 else
