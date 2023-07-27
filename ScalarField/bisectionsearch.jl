@@ -6,7 +6,7 @@ using CSV, Tables, DataFrames, Plots, Printf
 
 include("./ScalarField.jl");
 
-
+0.12465050144332965<A*<0.12465050144332981
 
 #### CONFIG ####
 
@@ -22,8 +22,8 @@ global high_bound = 0.12465049985275255#0.12465049985283985#0.12465049985796213#
 global N=10000.0
 global dir = "/home/ritapsantos/data/ritapsantos"
 
-global low_bound = 0.12465049985051155
-global high_bound = 0.12465050251698608#0.125
+global low_bound = 0.12465050144332965#0.12465049985051155
+global high_bound = 0.12465050144332981#0.12465050251698608#0.125
 
 ####
 
