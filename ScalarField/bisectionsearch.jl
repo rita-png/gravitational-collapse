@@ -6,8 +6,6 @@ using CSV, Tables, DataFrames, Plots, Printf
 
 include("./ScalarField.jl");
 
-0.12465050144332965<A*<0.12465050144332981
-
 #### CONFIG ####
 
 """global N=6000.0
