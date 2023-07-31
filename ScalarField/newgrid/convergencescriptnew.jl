@@ -144,17 +144,20 @@ Threads.nthreads()
 
 if bisection==false
     if m==1
+        #global dt=8e-6 #N=100
         #global dt=2e-5/5 #N=200
-        global dt=0.000006 #N=300
-        #global dt=0.000018 #N=100
+        global dt=0.000002 #N=300
+        
     elseif m==2
+        #global dt=8e-6/2 #N=100
         #global dt=2e-5/5/2 #N=200
-        global dt=0.000006/2 #N=300
-        #global dt=0.000018/2 #N=100
+        global dt=0.000002/2 #N=300
+        
     else
+        #global dt=8e-6/2/2 #N=100
         #global dt=2e-5/5/2/2 #N=200
-        global dt=0.000006/2/2 #N=300
-        #global dt=0.000018/2/2 #N=100
+        global dt=0.000002/2/2 #N=300
+        
     end
     finaltime=5.0
 else

@@ -1007,10 +1007,10 @@ function timeevolution(state_array,finaltime,run)
         
         if isnan(state_array[L-3,4])
             if criticality==false
-                global time = iter
+                global time = t
                 global explode = true
             end
-
+            global time = t
             println("boom at time=", t, " monitor ratio of ", maximum(monitor_ratio))
             break
 
