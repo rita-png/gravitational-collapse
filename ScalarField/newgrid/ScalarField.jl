@@ -481,7 +481,7 @@ function dissipation(y,i,eps)
     if twod==true
         return dissipation6(y,i,0.0065)
     else
-        return dissipation6(y,i,eps) 
+        return dissipation4(y,i,eps) 
     end
 end
 
