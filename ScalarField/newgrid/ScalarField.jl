@@ -979,7 +979,7 @@ function timeevolution(state_array,finaltime,run)
             print(" monitor ratio is ", maximum(monitor_ratio))
         end
 
-        if ((bisection==true)&&(iter%1000==0||(t>1.1&&iter%500==0)||(t>2.0&&iter%5==0)))||((bisection==false)&&(iter%500==0))
+        if ((bisection==true)&&(iter%1000==0||(t>1.1&&iter%500==0)||((bisection==false)&&(iter%500==0))
             if zeroformat==true
                 zero_print_muninn(files, t, state_array[:,1:5],res,"a")
             else
