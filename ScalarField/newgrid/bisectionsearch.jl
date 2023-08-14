@@ -13,32 +13,25 @@ include("./ScalarField.jl");
 
 #2nd
 global low_bound = 0.09#0.10#0.1244#0.140#0.14#0.15109374999#0.15109375
-global high_bound = 0.12440009765624999#0.1246#0.141#0.16#0.15109375#0.15109375000698494#0.15121093749999998#0.15132812499999998#0.1515625
+global high_bound = 0.15#0.12440009765624999#0.1246#0.141#0.16#0.15109375#0.15109375000698494#0.15121093749999998#0.15132812499999998#0.1515625
 
-## 4th
-#global low_bound = 0.151529541015625#0.15151855468749997
-#global high_bound = 0.1515350341796875#0.15154052734375#0.1515625
 
 global bisection = true
 global loggrid = true
 global compactified = true
-global zeroformat = true
+global zeroformat = false
 global twod = true
 
 #global dir = "/home/ritapsantos/data/ritapsantos/4theven"
 
-if twod==false
-    global dir = "/home/ritapsantos/data/ritapsantos"
-else
-    global dir = "/home/ritapsantos/data/ritapsantos/2nduneven"
-end
-#global dir = "/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA"
+#N=800.0
+#global dir = "/home/ritapsantos/data/ritapsantos/2nduneven"
 
-if twod==false
-    global N=800.0
-else
-    global N=800.0 #N=1000.0
-end
+##OR##
+
+N=400.0
+global dir = "/home/ritapsantos/data/ritapsantos"
+
 
 #### CONFIG ####
 
