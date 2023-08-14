@@ -57,7 +57,7 @@ for var in vars:
     #dir = "/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/StoredDATA/08-06/res1/{}.txt".format(var)
     
     #dir="/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/StoredDATA/30-05/run20/res1/{}.txt".format(var)
-    dir = "/home/rita13santos/Desktop/run18/{}.txt".format(var)
+    dir = "/home/rita13santos/Desktop/run9/{}.txt".format(var)
 
     #dir = "/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/StoredDATA/28-06/N200,dt=2.5e-5/res1/{}.txt".format(var)
     print(dir)
