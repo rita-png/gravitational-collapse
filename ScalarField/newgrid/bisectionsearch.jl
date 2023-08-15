@@ -12,9 +12,6 @@ include("./ScalarField.jl");
 #### CONFIG ####
 
 #2nd
-global low_bound = 0.10822010410140215#0.09#0.10#0.1244#0.140#0.14#0.15109374999#0.15109375
-global high_bound = 0.10822010410941155#0.15#0.12440009765624999#0.1246#0.141#0.16#0.15109375#0.15109375000698494#0.15121093749999998#0.15132812499999998#0.1515625
-
 
 global bisection = true
 global loggrid = true
@@ -24,14 +21,17 @@ global twod = true
 
 #global dir = "/home/ritapsantos/data/ritapsantos/4theven"
 
-N=800.0
-global dir = "/home/ritapsantos/data/ritapsantos/2nduneven"
+#N=800.0
+#global dir = "/home/ritapsantos/data/ritapsantos/2nduneven"
+#global low_bound = 0.10822010410140215#0.10#0.1244#0.140#0.14#0.15109374999#0.15109375
+#global high_bound = 0.10822010410941155#0.12440009765624999#0.1246#0.141#0.16#0.15109375#0.15109375000698494#0.15121093749999998#0.15132812499999998#0.1515625
 
 ##OR##
 
-#N=400.0
-#global dir = "/home/ritapsantos/data/ritapsantos"
-
+N=400.0
+global dir = "/home/ritapsantos/data/ritapsantos"
+global low_bound = 0.105
+global high_bound = 0.12
 
 #### CONFIG ####
 
