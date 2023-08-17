@@ -703,12 +703,8 @@ function bulkSF(y,i,X)
             r=x/(1-x)
             
             #half cheby
-            dy=(1/(pi*r^3))exp(2*y[i,2])*(r^2*cos((pi*xt)/2)^2*cot((pi*xt)/2)*Der(y,i,4,X)*(r-2*y[i,1])+(r*y[i,4]-y[i,3])*(2*r*cos((pi*xt)/2)^2*cot((pi*xt)/2)*(-Der(y,i,1,X)+r*Der(y,i,2,X))+y[i,1]*(pi-4*r*cos((pi*xt)/2)*cot((pi*xt)/2)*Der(y,i,2,X))))
+            dy=(1/(pi*r^3))exp(2*y[i,2])*(r^2*cos((pi*xt)/2)*cot((pi*xt)/2)*Der(y,i,4,X)*(r-2*y[i,1])+(r*y[i,4]-y[i,3])*(2*r*cos((pi*xt)/2)*cot((pi*xt)/2)*(-Der(y,i,1,X)+r*Der(y,i,2,X))+y[i,1]*(pi-4*r*cos((pi*xt)/2)*cot((pi*xt)/2)*Der(y,i,2,X))))
 
-            #full cheby
-            #dy=(1/(8*pi*r^3))*exp(2*y[i,2])*csc((pi*xt)/2)*(4*r^2*cos((pi*xt)/2)^3*Der[y,i,4,X]*(r-2*y[i,1])+2*(r*y[i,4]-y[i,3])*(4*r*cos((pi*xt)/2)^3*(-Der(y,i,1,X)+r*Der(y,i,2,X))+4*y[i,1]*(pi*sin((pi*xt)/2)-2*r*cos((pi*xt)/2)^3*Der(y,i,2,X))))
-
-            #dy=1/(2*pi*r^3)*exp(2*y[i,2])*(r^2*sqrt(-((-1+xt)*xt))*acos(-1+2*xt)^2*Der[y,i,4,X]*(r-2*y[i,1])+2*(r*y[i,4]-y[i,3])*(r*sqrt(-((-1+xt)*xt))*acos(-1+2*xt)^2*(-Der(y,i,1,X)+r*Der(y,i,2,X))+y[i,1]*(pi-2*r*sqrt(-((-1+xt)*xt))*acos(-1+2*xt)^2*Der(y,i,2,X))))
         end
 
     end
@@ -782,10 +778,17 @@ function RHS(y0,x1,time,func,i,data)
             z[3]=derpsi(x1)/(1-x1)^2 # == dpsi/dr*dr/dx
         else
             #psi,r
-            z[3]=derpsi(inverse(x1))*2*pi*csc(pi*x1)^2*sin((pi*x1)/2)^3# == dpsi/dr*dr/dxtilde 
+            xt=x1
+            z[3]=derpsi(inverse(xt))*2*pi*csc(pi*xt)^2*sin((pi*xt)/2)^3# == dpsi/dr*dr/dxtilde 
         
             if abs.(x1)<10^(-15)
-                z[3]=0.0
+                z[3]=0.0 #old
+
+                #new
+                """xt=x1
+                x=inverse(xt)
+                z[3]=derpsi(x)/(1-x)^2 # == dpsi/dr*dr/dx #new"""
+                
             end
         end
     end
@@ -820,12 +823,6 @@ function RHS(y0,x1,time,func,i,data)
                 z[2]= 1/2*cot((pi*xt)/2)*csc((pi*xt)/4)^2*(pi*cot((pi*xt)/4)*y0[3]-2*cos((pi*xt)/2)*z[3])^2
                 
                 
-                #complete cheby
-                #z[1] = -1/16*csc((pi*xt)/2)^8*sin(pi*xt)^3*(-2*pi*y0[3]+sin(pi*xt)*z[3]) * (((-1+cos(pi*xt)+2*(1+cos(pi*xt))*y0[1]))/(1+cos(pi*xt))) #(2.0 .* h(x) .* (pi .* y0[3] + sqrt(-((-1+x) .* x)) .* h(x) .* (-pi .+ h(x)) .* z[3])^2)/(sqrt(-((-1+x) .* x)) .* (pi-h(x))^3) .* ((pi - h(x) .* (1.0 .+ 2.0 .* y0[1])))/h(x)
-                #z[2] = 1/16*csc((pi*xt)/2)^8*sin(pi*xt)^3*(-2*pi*y0[3]+sin(pi*xt)*z[3]) #(2.0 .* h(x) .* (pi .* y0[3] + sqrt(-((-1+x) .* x)) .* h(x) .* (-pi .+ h(x)) .* z[3])^2)/(sqrt(-((-1+x) .* x)) .* (pi-h(x))^3)
-                #x=x1
-                #z[1] = - 2.0 .* pi .* (-1.0 .+ x) .* (y0[3] .+ (-1 + x) .* x .* z[3]) .^ 2.0 ./ x .^ 3.0 .* ( x ./ (1.0 .-x ) .- 2 .* y0[1])
-                #z[2] = - 2.0 .* pi .* (-1.0 .+ x) .* (y0[3] .+ (-1 + x) .* x .* z[3]) .^ 2.0 ./ x .^ 3.0
                 if abs.(x1 .- 1.0)<10^(-15)||abs.(x1)<10^(-15)
                     z[1] = 0.0
                     z[2] = 0.0
@@ -922,7 +919,9 @@ function timeevolution(state_array,finaltime,run)
         if ((iter%2000==0)&&(bisection==true))||((iter%500==0)&&(bisection==false))
             println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
         end
-        #println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
+        if iter%1000==true
+            println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
+        end
 
         if speed(initX, state_array[:,1], state_array[:,2])>10^(9)
             println("Speed is ", speed(initX, state_array[:,1], state_array[:,2]))
@@ -979,12 +978,15 @@ function timeevolution(state_array,finaltime,run)
             print(" monitor ratio is ", maximum(monitor_ratio))
         end
 
-        if ((bisection==true)&&(iter%1000==0||(t>1.1&&iter%500==0)))||((bisection==false)&&(iter%500==0))
+        """if ((bisection==true)&&(iter%1000==0||(t>1.1&&iter%500==0)))||((bisection==false)&&(iter%500==0))
             if zeroformat==true
                 zero_print_muninn(files, t, state_array[:,1:5],res,"a")
             else
                 print_muninn(files, t, state_array[:,1:5],res,"a")
             end
+        end"""
+        if (iter%1000==0)
+            print_muninn(files, t, state_array[:,1:5],res,"a")
         end
 
 
