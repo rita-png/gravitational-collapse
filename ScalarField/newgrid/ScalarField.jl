@@ -919,9 +919,9 @@ function timeevolution(state_array,finaltime,run)
         if ((iter%2000==0)&&(bisection==true))||((iter%500==0)&&(bisection==false))
             println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
         end
-        if iter%1000==true
+        """if iter%1000==true
             println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
-        end
+        end"""
 
         if speed(initX, state_array[:,1], state_array[:,2])>10^(9)
             println("Speed is ", speed(initX, state_array[:,1], state_array[:,2]))
@@ -978,16 +978,16 @@ function timeevolution(state_array,finaltime,run)
             print(" monitor ratio is ", maximum(monitor_ratio))
         end
 
-        """if ((bisection==true)&&(iter%1000==0||(t>1.1&&iter%500==0)))||((bisection==false)&&(iter%500==0))
+        if ((bisection==true)&&(iter%1000==0||(t>1.1&&iter%500==0)))||((bisection==false)&&(iter%500==0))
             if zeroformat==true
                 zero_print_muninn(files, t, state_array[:,1:5],res,"a")
             else
                 print_muninn(files, t, state_array[:,1:5],res,"a")
             end
-        end"""
-        if (iter%1000==0)
-            print_muninn(files, t, state_array[:,1:5],res,"a")
         end
+        """if (iter%1000==0)
+            print_muninn(files, t, state_array[:,1:5],res,"a")
+        end"""
 
 
         if maximum(monitor_ratio)>0.7&&k==0
