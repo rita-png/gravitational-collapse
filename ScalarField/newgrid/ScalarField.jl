@@ -779,15 +779,16 @@ function RHS(y0,x1,time,func,i,data)
         else
             #psi,r
             xt=x1
-            z[3]=derpsi(inverse(xt))*2*pi*csc(pi*xt)^2*sin((pi*xt)/2)^3# == dpsi/dr*dr/dxtilde 
-        
+            z[3]=derpsi(inverse(xt))*2*pi*csc(pi*xt)^2*sin((pi*xt)/2)^3# == dpsi/dr*dr/dxtilde old
+            
+            
             if abs.(x1)<10^(-15)
                 z[3]=0.0 #old
 
                 #new
-                """xt=x1
+                "xt=x1
                 x=inverse(xt)
-                z[3]=derpsi(x)/(1-x)^2 # == dpsi/dr*dr/dx #new"""
+                z[3]=derpsi(x)/(1-x)^2" # == dpsi/dr*dr/dx #new
                 
             end
         end
@@ -877,10 +878,12 @@ function SF_RHS(data,t,X)
                 
                 #dy[i,4]= (data[i,4]) - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4];
                 
-                xtilde=X[i]
-                x=inverse(xtilde)
-               
-                dy[i,4]= +1.0/2.0 * (1/(1-x)^2 * pi/2.0 * sin(pi*(1-x)) * Der(data,i,4,X) + 2/(1-x)^3*data[i,4])  - dissipation(data,i,epsilon)[4]#- dissipation4(data,i,0.02)[4];
+                xt=X[i]
+                x=inverse(xt)
+                #new
+                dy[i,4]= 1/2*Der(data,i,4,X)*exp(2*data[i,2])/(2*pi*csc(pi*xt)^2*sin((pi*xt)/2)^3) - dissipation(data,i,epsilon)[4]#- dissipation4(data,i,0.02)[4]
+                #old
+                #dy[i,4]= +1.0/2.0 * (1/(1-x)^2 * pi/2.0 * sin(pi*(1-x)) * Der(data,i,4,X) + 2/(1-x)^3*data[i,4])  - dissipation(data,i,epsilon)[4]#- dissipation4(data,i,0.02)[4];
             end
             
             
@@ -892,7 +895,7 @@ function SF_RHS(data,t,X)
         end
     end
     
-    dy[4,4]=extrapolate_in(dy[5,4], dy[6,4], dy[7,4], dy[8,4])
+    #dy[4,4]=extrapolate_in(dy[5,4], dy[6,4], dy[7,4], dy[8,4])
   
     return dy
 
