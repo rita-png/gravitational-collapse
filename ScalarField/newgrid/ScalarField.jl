@@ -778,18 +778,10 @@ function RHS(y0,x1,time,func,i,data)
             z[3]=derpsi(x1)/(1-x1)^2 # == dpsi/dr*dr/dx
         else
             #psi,r
-            xt=x1
-            z[3]=derpsi(inverse(xt))*2*pi*csc(pi*xt)^2*sin((pi*xt)/2)^3# == dpsi/dr*dr/dxtilde old
-            
-            
+            z[3]=derpsi(inverse(x1))*2*pi*csc(pi*x1)^2*sin((pi*x1)/2)^3# == dpsi/dr*dr/dxtilde 
+        
             if abs.(x1)<10^(-15)
-                z[3]=0.0 #old
-
-                #new
-                "xt=x1
-                x=inverse(xt)
-                z[3]=derpsi(x)/(1-x)^2" # == dpsi/dr*dr/dx #new
-                
+                z[3]=0.0
             end
         end
     end
@@ -824,6 +816,12 @@ function RHS(y0,x1,time,func,i,data)
                 z[2]= 1/2*cot((pi*xt)/2)*csc((pi*xt)/4)^2*(pi*cot((pi*xt)/4)*y0[3]-2*cos((pi*xt)/2)*z[3])^2
                 
                 
+                #complete cheby
+                #z[1] = -1/16*csc((pi*xt)/2)^8*sin(pi*xt)^3*(-2*pi*y0[3]+sin(pi*xt)*z[3]) * (((-1+cos(pi*xt)+2*(1+cos(pi*xt))*y0[1]))/(1+cos(pi*xt))) #(2.0 .* h(x) .* (pi .* y0[3] + sqrt(-((-1+x) .* x)) .* h(x) .* (-pi .+ h(x)) .* z[3])^2)/(sqrt(-((-1+x) .* x)) .* (pi-h(x))^3) .* ((pi - h(x) .* (1.0 .+ 2.0 .* y0[1])))/h(x)
+                #z[2] = 1/16*csc((pi*xt)/2)^8*sin(pi*xt)^3*(-2*pi*y0[3]+sin(pi*xt)*z[3]) #(2.0 .* h(x) .* (pi .* y0[3] + sqrt(-((-1+x) .* x)) .* h(x) .* (-pi .+ h(x)) .* z[3])^2)/(sqrt(-((-1+x) .* x)) .* (pi-h(x))^3)
+                #x=x1
+                #z[1] = - 2.0 .* pi .* (-1.0 .+ x) .* (y0[3] .+ (-1 + x) .* x .* z[3]) .^ 2.0 ./ x .^ 3.0 .* ( x ./ (1.0 .-x ) .- 2 .* y0[1])
+                #z[2] = - 2.0 .* pi .* (-1.0 .+ x) .* (y0[3] .+ (-1 + x) .* x .* z[3]) .^ 2.0 ./ x .^ 3.0
                 if abs.(x1 .- 1.0)<10^(-15)||abs.(x1)<10^(-15)
                     z[1] = 0.0
                     z[2] = 0.0
@@ -878,8 +876,9 @@ function SF_RHS(data,t,X)
                 
                 #dy[i,4]= (data[i,4]) - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4];
                 
-                xt=X[i]
-                x=inverse(xt)
+                xtilde=X[i]
+                x=inverse(xtilde)
+               
                 #new
                 dy[i,4]= 1/2*Der(data,i,4,X)*exp(2*data[i,2])/(2*pi*csc(pi*xt)^2*sin((pi*xt)/2)^3) - dissipation(data,i,epsilon)[4]#- dissipation4(data,i,0.02)[4]
                 #old
@@ -922,9 +921,7 @@ function timeevolution(state_array,finaltime,run)
         if ((iter%2000==0)&&(bisection==true))||((iter%500==0)&&(bisection==false))
             println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
         end
-        """if iter%1000==true
-            println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
-        end"""
+        #println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
 
         if speed(initX, state_array[:,1], state_array[:,2])>10^(9)
             println("Speed is ", speed(initX, state_array[:,1], state_array[:,2]))
@@ -988,9 +985,6 @@ function timeevolution(state_array,finaltime,run)
                 print_muninn(files, t, state_array[:,1:5],res,"a")
             end
         end
-        """if (iter%1000==0)
-            print_muninn(files, t, state_array[:,1:5],res,"a")
-        end"""
 
 
         if maximum(monitor_ratio)>0.7&&k==0
