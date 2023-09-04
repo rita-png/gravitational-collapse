@@ -954,7 +954,8 @@ function timeevolution(state_array,finaltime,run)
         end
 
         t = t + dt
-        if ((iter%2000==0)&&(bisection==true))||((iter%500==0)&&(bisection==false))
+        #if ((iter%2000==0)&&(bisection==true))||((iter%500==0)&&(bisection==false))
+        if (iter%100==0)&&(bisection==true)
             println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
         end
         #println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
@@ -1010,11 +1011,11 @@ function timeevolution(state_array,finaltime,run)
             end
         end
 
-        if (iter%2000==0)&&(bisection==true)
+        if (iter%1000==0)&&(bisection==true)
             print(" monitor ratio is ", maximum(monitor_ratio))
         end
 
-        if ((bisection==true)&&(iter%50==0))||((bisection==false)&&(iter%500==0))
+        if ((bisection==true)&&(iter%100==0))||((bisection==false)&&(iter%500==0))
         #if iter%1==0
             if zeroformat==true
                 zero_print_muninn(files, t, state_array[:,1:5],res,"a")
