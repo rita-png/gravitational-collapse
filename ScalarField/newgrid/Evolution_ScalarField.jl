@@ -56,7 +56,7 @@ end
 dx=(Xf-ori)/N
 
 initX1 = nothing
-N=int(N)
+
 initX1=range(ori, stop=Xf, step=dx);
 #initX1=create_range(ori,Xf,dx,N)
 initX = range(round(ori-3.0*dx,digits=10), stop=Xf+3.0*dx, step=dx)
@@ -79,7 +79,7 @@ r0=0.7#Float128(0.7)#0.01#0.7#0.01#0.7#0.7#0.7#0.01#0.7#0.3
 sigma=0.3#Float128(0.3)
 
 
-#PSI,X FROM PSI
+#PSI,R FROM PSI
 initderpsi[4:L-3] = init_gaussian_der(initX1,r0,sigma,A)
 
 
