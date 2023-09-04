@@ -10,6 +10,11 @@ N = ARGS[3]
 m = 1
 res=m
 
+## grid
+Agrid=0.35
+kgrid=0.7
+mgrid=0.5#0.55
+fgrid=5
 
 function compactify(r)
     return r/(1+r)
@@ -40,7 +45,16 @@ using Printf
 
 #include("/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/myspline.jl");
 
-ori=0.0#Float128(0.0)#0.0;
+if loggrid==true
+    ori=(tan(-mgrid/Agrid)/fgrid+kgrid)#0.0#Float128(0.0)#0.0;
+    Xf=(tan((1-mgrid)/Agrid)/fgrid+kgrid)
+else
+    ori=0.0
+    Xf=1.0
+end
+
+dx=(Xf-ori)/N
+
 initX1 = nothing
 N=int(N)
 initX1=range(ori, stop=Xf, step=dx);

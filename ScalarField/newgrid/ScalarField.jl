@@ -893,7 +893,7 @@ function SF_RHS(data,t,X)
         else
             xx=X[i]
         end
-        
+
         if xx<10^(-15) #left
             if loggrid==false
                 if compactified==true
@@ -949,8 +949,7 @@ function timeevolution(state_array,finaltime,run)
         end
 
         t = t + dt
-        #if ((iter%2000==0)&&(bisection==true))||((iter%500==0)&&(bisection==false))
-        if (iter%100==0)
+        if ((iter%2000==0)&&(bisection==true))||((iter%500==0)&&(bisection==false))
             println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
         end
         #println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
