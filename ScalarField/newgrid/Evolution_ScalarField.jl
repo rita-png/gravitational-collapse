@@ -59,10 +59,12 @@ initX1 = nothing
 
 initX1=range(ori, stop=Xf, step=dx);
 #initX1=create_range(ori,Xf,dx,N)
-initX = range(round(ori-3.0*dx,digits=10), stop=Xf+3.0*dx, step=dx)
+#initX = range(round(ori-3.0*dx,digits=10), stop=Xf+3.0*dx, step=dx)
 #initX=create_range(ori-3.0*dx,Xf+3.0*dx,dx,N+6)
 
-L=length(initX);
+L=length(initX1)+6;#length(initX)
+
+initX=[ori-3*dx; ori-2*dx; ori-dx; collect(initX1); ori+dx; ori+2*dx; ori+3*dx]
 
 ####
 
