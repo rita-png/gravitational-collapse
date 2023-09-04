@@ -64,7 +64,7 @@ initX1=range(ori, stop=Xf, step=dx);
 
 L=length(initX1)+6;#length(initX)
 
-initX=[ori-3*dx; ori-2*dx; ori-dx; collect(initX1); ori+dx; ori+2*dx; ori+3*dx]
+initX=[ori-3*dx; ori-2*dx; ori-dx; collect(initX1); Xf+dx; Xf+2*dx; Xf+3*dx];
 
 ####
 

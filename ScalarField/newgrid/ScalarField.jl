@@ -797,7 +797,9 @@ function RHS(y0,x1,time,func,i,data)
             x=inverse(xt)
             z[3]=derpsi(x)/(1-x)^2*jacobian(xt) # == dpsi/dr*dr/dxtilde == dpsi/dr*dr/dx*dx/dxtilde 
 
-            
+            if abs.(x .- 1.0)<10^(-15)
+                z[3] = 0.0
+            end
         end
     end
     
@@ -847,6 +849,9 @@ function RHS(y0,x1,time,func,i,data)
                     z[2] = 0.0
                     z[3] = 0.0
                 end"""
+                if abs.(x .- 1.0)<10^(-15)
+                    z[1] = 0.0
+                end
             end
         end
 
@@ -1009,8 +1014,8 @@ function timeevolution(state_array,finaltime,run)
             print(" monitor ratio is ", maximum(monitor_ratio))
         end
 
-        #if ((bisection==true)&&(iter%1000==0||(t>1.1&&iter%500==0)))||((bisection==false)&&(iter%500==0))
-        if iter%100==0
+        if ((bisection==true)&&(iter%1000==0||(t>1.1&&iter%500==0)))||((bisection==false)&&(iter%500==0))
+        #if iter%1==0
             if zeroformat==true
                 zero_print_muninn(files, t, state_array[:,1:5],res,"a")
             else
