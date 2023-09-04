@@ -56,7 +56,8 @@ function init_gaussian_der(r,r0,sigma,A)
         else # inputted argument r is actually an xtilde
             if n==1
                 xtilde=r
-                x= 1/2*(1 + cos(pi*(-1 + xtilde)))
+                #x= 1/2*(1 + cos(pi*(-1 + xtilde)))
+                x=inverse(xtilde)
                 r=x/(1-x)
                 z= A * (2 * exp(-(r-r0)^2/sigma^2) * r - 2 * exp(-(r-r0)^2/sigma^2) * (r-r0)*r^2/sigma^2)#exp(-((x/(1-x)-r0)/sigma)^2) * (3 * x^2 / (1-x) ^4 - (x/(1-x))^3 * (2*(x-r0*(-x+1)))/(sigma^2*(1-x)^3))
             else
@@ -65,7 +66,8 @@ function init_gaussian_der(r,r0,sigma,A)
 
                     ## psi,r (corr?)
                     xtilde=r[i]
-                    x= 2(1/2+1/2*cos(pi*(1-xtilde/2)))
+                    #x= 2(1/2+1/2*cos(pi*(1-xtilde/2)))
+                    x=inverse(xtilde)
                     rr=x/(1-x)
 
                     z[i] = A * (2 * exp(-(rr-r0)^2/sigma^2) * rr - 2 * exp(-(rr-r0)^2/sigma^2) * (rr-r0)*rr^2/sigma^2)
@@ -447,17 +449,26 @@ function zero_print_muninn(files, t, data, res, mode)
 end
 
 function inverse(x)
-    return (1 .+ 1 .* cos.( pi .* (1 .- x ./ 2)) )
+    #return (1 .+ 1 .* cos.( pi .* (1 .- x ./ 2)) )
+    """A=0.35
+    k=0.7
+    m=0.5#0.55
+    f=5"""
+    return Agrid.* atan.(fgrid .* ( x.- kgrid)) .+ mgrid
 end
 
-function transform(x)
+function jacobian(xt)#dx/dx~
+    return (Agrid*fgrid)/(1 + fgrid^2 * (-kgrid + xt)^2)
+end
+
+"""function transform(x)
     return 2 .- 2 .* acos.( x .- 1) ./ pi
 end
 
 function jacobian(x) #dx/dx~
     return pi/2 .* sin.(pi .* (1 .- x/2))
     
-end
+end"""
 #ghosts
 
 function ghost(y)
@@ -703,7 +714,10 @@ function bulkSF(y,i,X)
             r=x/(1-x)
             
             #half cheby
-            dy=(1/(pi*r^3))exp(2*y[i,2])*(r^2*cos((pi*xt)/2)*cot((pi*xt)/2)*Der(y,i,4,X)*(r-2*y[i,1])+(r*y[i,4]-y[i,3])*(2*r*cos((pi*xt)/2)*cot((pi*xt)/2)*(-Der(y,i,1,X)+r*Der(y,i,2,X))+y[i,1]*(pi-4*r*cos((pi*xt)/2)*cot((pi*xt)/2)*Der(y,i,2,X))))
+            #dy=(1/(pi*r^3))exp(2*y[i,2])*(r^2*cos((pi*xt)/2)*cot((pi*xt)/2)*Der(y,i,4,X)*(r-2*y[i,1])+(r*y[i,4]-y[i,3])*(2*r*cos((pi*xt)/2)*cot((pi*xt)/2)*(-Der(y,i,1,X)+r*Der(y,i,2,X))+y[i,1]*(pi-4*r*cos((pi*xt)/2)*cot((pi*xt)/2)*Der(y,i,2,X))))
+
+            #arctan
+            dy=-(1/(2*r^2))*(-((exp(2*y[i,2])*r*(1+fgrid^2*(kgrid-xt)^2)*(1-mgrid+Agrid*atan(fgrid*(kgrid-xt)))^2*Der(y,i,4,X)*(r-2*y[i,1]))/(Agrid*fgrid))-(2*exp(2*y[i,2])*(1+fgrid^2*(kgrid-xt)^2)*(1-mgrid+Agrid*atan(fgrid*(kgrid-xt)))^2*y[i,3]*(Der(y,i,1,X)-r*Der(y,i,2,X)))/(Agrid*fgrid)-(2*exp(2*y[i,2])*r*(1+fgrid^2*(kgrid-xt)^2)*(1-mgrid+Agrid*atan(fgrid*(kgrid-xt)))^2*y[i,4]*(-Der(y,i,1,X)+r*Der(y,i,2,X)))/(Agrid*fgrid)+(1/(Agrid*fgrid*r))*2*exp(2*y[i,2])*y[i,1]*(y[i,3]*(Agrid*fgrid-2*r*(1+fgrid^2*(kgrid-xt)^2)*(1-mgrid+Agrid*atan(fgrid*(kgrid-xt)))^2*Der(y,i,2,X))+r*y[i,4]*(-Agrid*fgrid+2*r*(1+fgrid^2*(kgrid-xt)^2)*((-1+mgrid)^2-2*Agrid*(-1+mgrid)*atan(fgrid*(kgrid-xt))+Agrid^2*atan(fgrid*(-kgrid+xt))^2)*Der(y,i,2,X))))
 
         end
 
@@ -778,11 +792,12 @@ function RHS(y0,x1,time,func,i,data)
             z[3]=derpsi(x1)/(1-x1)^2 # == dpsi/dr*dr/dx
         else
             #psi,r
-            z[3]=derpsi(inverse(x1))*2*pi*csc(pi*x1)^2*sin((pi*x1)/2)^3# == dpsi/dr*dr/dxtilde 
-        
-            if abs.(x1)<10^(-15)
-                z[3]=0.0
-            end
+            #z[3]=derpsi(inverse(x1))*2*pi*csc(pi*x1)^2*sin((pi*x1)/2)^3# == dpsi/dr*dr/dxtilde 
+            xt=x1
+            x=inverse(xt)
+            z[3]=derpsi(x)/(1-x)^2*jacobian(xt) # == dpsi/dr*dr/dxtilde == dpsi/dr*dr/dx*dx/dxtilde 
+
+            
         end
     end
     
@@ -811,9 +826,14 @@ function RHS(y0,x1,time,func,i,data)
             else
                 xt = x1
 
+                #arctan grid
+                
+                z[2]=-((2*Agrid*fgrid*pi*(-1+inverse(xt))*(y0[3]+((1+fgrid^2*(kgrid-xt)^2)*(-1+inverse(xt))*(inverse(xt))*z[3])/(Agrid*fgrid))^2)/((1+fgrid^2*(kgrid-xt)^2)*(inverse(xt))^3))
+                z[1]=(mgrid+Agrid*atan(fgrid*(-kgrid + xt)) + 2*(-1 + mgrid + Agrid* atan(fgrid*(-kgrid + xt)))*y0[1])/(1 - mgrid + Agrid*atan(fgrid*(kgrid - xt))) * z[2]
+
                 #half cheby
-                z[1]= (-1-2*y0[1]+sec((pi*xt)/2)) * 1/2*cot((pi*xt)/2)*csc((pi*xt)/4)^2*(pi*cot((pi*xt)/4)*y0[3]-2*cos((pi*xt)/2)*z[3])^2
-                z[2]= 1/2*cot((pi*xt)/2)*csc((pi*xt)/4)^2*(pi*cot((pi*xt)/4)*y0[3]-2*cos((pi*xt)/2)*z[3])^2
+                #z[1]= (-1-2*y0[1]+sec((pi*xt)/2)) * 1/2*cot((pi*xt)/2)*csc((pi*xt)/4)^2*(pi*cot((pi*xt)/4)*y0[3]-2*cos((pi*xt)/2)*z[3])^2
+                #z[2]= 1/2*cot((pi*xt)/2)*csc((pi*xt)/4)^2*(pi*cot((pi*xt)/4)*y0[3]-2*cos((pi*xt)/2)*z[3])^2
                 
                 
                 #complete cheby
@@ -822,11 +842,11 @@ function RHS(y0,x1,time,func,i,data)
                 #x=x1
                 #z[1] = - 2.0 .* pi .* (-1.0 .+ x) .* (y0[3] .+ (-1 + x) .* x .* z[3]) .^ 2.0 ./ x .^ 3.0 .* ( x ./ (1.0 .-x ) .- 2 .* y0[1])
                 #z[2] = - 2.0 .* pi .* (-1.0 .+ x) .* (y0[3] .+ (-1 + x) .* x .* z[3]) .^ 2.0 ./ x .^ 3.0
-                if abs.(x1 .- 1.0)<10^(-15)||abs.(x1)<10^(-15)
+                """if abs.(x1 .- 1.0)<10^(-15)||abs.(x1)<10^(-15)
                     z[1] = 0.0
                     z[2] = 0.0
                     z[3] = 0.0
-                end
+                end"""
             end
         end
 
@@ -864,11 +884,20 @@ function SF_RHS(data,t,X)
         epsilon=0.0065
     end
 
+    
+
     Threads.@threads for i in 4:L-3 #ORI
-        if X[i]<10^(-15) #left
+        if compactified==true
+            xtilde=X[i]
+            xx=inverse(xtilde)
+        else
+            xx=X[i]
+        end
+        
+        if xx<10^(-15) #left
             if loggrid==false
                 if compactified==true
-                    dy[i,4] = 1.0/2.0 * (1/(1-X[i])^2 * Der(data,i,4,X) + 2/(1-X[i])^3*data[i,4])  - dissipation(data,i,epsilon)[4]#- dissipation4(data,i,0.02)[4];
+                    dy[i,4] = 1.0/2.0 * (1/(1-X[i])^2 * Der(data,i,4,X) + 2/(1-X[i])^3*data[i,4])  - dissipation(data,i,epsilon)[4]#- dissipation4(data,i,0.02)[4]; #correct according to scalarfield.nb
                 else # X[i] is actually an r
                     dy[i,4] = 1.0/2.0 * ((1+X[i])^4 * Der(data,i,4,X) + 2*(1+X[i])^3*data[i,4])  - dissipation(data,i,epsilon)[4]
                 end
@@ -879,14 +908,16 @@ function SF_RHS(data,t,X)
                 xtilde=X[i]
                 x=inverse(xtilde)
                
-                #new
-                dy[i,4]= 1/2*Der(data,i,4,X)*exp(2*data[i,2])/(2*pi*csc(pi*xt)^2*sin((pi*xt)/2)^3) - dissipation(data,i,epsilon)[4]#- dissipation4(data,i,0.02)[4]
-                #old
+                #new half cheby
+                #dy[i,4]= 1/2*Der(data,i,4,X)*exp(2*data[i,2])/(2*pi*csc(pi*xt)^2*sin((pi*xt)/2)^3) - dissipation(data,i,epsilon)[4]#- dissipation4(data,i,0.02)[4]
+                #old half cheby
                 #dy[i,4]= +1.0/2.0 * (1/(1-x)^2 * pi/2.0 * sin(pi*(1-x)) * Der(data,i,4,X) + 2/(1-x)^3*data[i,4])  - dissipation(data,i,epsilon)[4]#- dissipation4(data,i,0.02)[4];
+                dy[i,4]= 1.0/2.0 * 2.0 / (1.0 - x)^3.0*data[i,4] + 1.0/2.0 / (1.0 - x)^2.0 / ((Agrid*fgrid)/(1 + fgrid^2.0 * (-kgrid + xtilde)^2.0)) * Der(data,i,4,X)
+            
             end
             
             
-        elseif abs.(X[i] .- 1.0)<10^(-15)
+        elseif abs.(xx .- 1.0)<10^(-15)
             dy[i,4]= 0.0 - dissipation(data,i,epsilon)[4]#- dissipation4(data,i,0.02)[4]
             
         else
@@ -918,7 +949,8 @@ function timeevolution(state_array,finaltime,run)
         end
 
         t = t + dt
-        if ((iter%2000==0)&&(bisection==true))||((iter%500==0)&&(bisection==false))
+        #if ((iter%2000==0)&&(bisection==true))||((iter%500==0)&&(bisection==false))
+        if (iter%100==0)
             println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
         end
         #println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
@@ -978,7 +1010,8 @@ function timeevolution(state_array,finaltime,run)
             print(" monitor ratio is ", maximum(monitor_ratio))
         end
 
-        if ((bisection==true)&&(iter%1000==0||(t>1.1&&iter%500==0)))||((bisection==false)&&(iter%500==0))
+        #if ((bisection==true)&&(iter%1000==0||(t>1.1&&iter%500==0)))||((bisection==false)&&(iter%500==0))
+        if iter%100==0
             if zeroformat==true
                 zero_print_muninn(files, t, state_array[:,1:5],res,"a")
             else

@@ -585,25 +585,6 @@ function bulkSF(y,i,X)
 end
 
 
-function bulkSF(y,i,X,spls)
-    
-    #psi,x
-    #dy=-1.0/2.0*exp(2.0*y[i,2])*(-(2*(X[i]-1)^3*y[i,3]*(X[i]*((X[i]-1)*unevenDer(y,i,1,X,spls)+X[i]*unevenDer(y,i,2,X,spls))+y[i,1]*(1+2*(X[i]-1)*X[i]*unevenDer(y,i,2,X,spls))))/X[i]^3 - (2*(X[i]-1)^4*(X[i]*((X[i]-1)*unevenDer(y,i,1,X,spls)+X[i]*unevenDer(y,i,2,X,spls))+y[i,1]*(1+2(X[i]-1)*X[i]*unevenDer(y,i,2,X,spls)))*y[i,4])/X[i]^2 - ((X[i]+2*(X[i]-1)*y[i,1])*unevenDer(y,i,4,X,spls))/X[i])
-
-    #psi,x
-    if compactified == false
-        r=X[i]
-        dy=(1/(2*r^3))*exp(2*y[i,2])*(-2*y[i,1]*y[i,3]+2*r*y[i,3]*Der(y,i,1,X)-2*r^2*y[i,3]*Der(y,i,2,X)+4*r*y[i,1]*y[i,3]*Der(y,i,2,X)+2*r*y[i,1]*y[i,4]-2*r^2*Der(y,i,1,X)*y[i,4]+2*r^3*Der(y,i,2,X)*y[i,4]-4*r^2*y[i,1]*Der(y,i,2,X)*y[i,4]+r^3*Der(y,i,4,X)-2*r^2*y[i,1]*Der(y,i,4,X))
-    else
-        ## psi,r evol equation
-        x=X[i]
-        r = x/(1-x)
-        dy=(1/(2*r^3))*exp(2*y[i,2])*(r^3*(1-x)^2*unevenDer(y,i,4,X,spls)-2*r^2*(1-x)^2*unevenDer(y,i,4,X,spls)*y[i,1]+2*r*y[i,1]*y[i,4]-2*y[i,1]*y[i,3]-2*r^2*(1-x)^2*y[i,4]*unevenDer(y,i,1,X,spls)+2*r*(1-x)^2*y[i,3]*unevenDer(y,i,1,X,spls)+2*r^3*(1-x)^2*y[i,4]*unevenDer(y,i,2,X,spls)-4*r^2*(1-x)^2*y[i,1]*y[i,4]*unevenDer(y,i,2,X,spls)-2*r^2*(1-x)^2*y[i,3]*unevenDer(y,i,2,X,spls)+4*r*(1-x)^2*y[i,1]*y[i,3]*unevenDer(y,i,2,X,spls))
-
-
-    end
-    return dy
-end
 function boundarySF(y,X)
 
     L=length(state_array[:,1])
