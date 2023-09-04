@@ -30,7 +30,7 @@ global twod = true
 
 N=400.0
 global dir = "/home/ritapsantos/data/ritapsantos"
-global low_bound = 0.05?
+global low_bound = 0.05
 global high_bound = 0.15
 
 #### CONFIG ####
