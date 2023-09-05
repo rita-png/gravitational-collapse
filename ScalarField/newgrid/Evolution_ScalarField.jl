@@ -43,8 +43,6 @@ Tf=Nt*dt; #final time
 
 using Printf
 
-#include("/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/myspline.jl");
-
 if loggrid==true
     ori=(tan(-mgrid/Agrid)/fgrid+kgrid)#0.0#Float128(0.0)#0.0;
     Xf=(tan((1-mgrid)/Agrid)/fgrid+kgrid)

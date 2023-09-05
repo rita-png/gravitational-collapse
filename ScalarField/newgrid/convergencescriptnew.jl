@@ -5,8 +5,13 @@ res = trunc(Int, ARGS[2])
 #res=m
 
 m=res
-
 run = 1
+
+## grid
+Agrid=0.35
+kgrid=0.7
+mgrid=0.5#0.55
+fgrid=5
 
 function compactify(r)
     return r/(1+r)
@@ -14,6 +19,12 @@ end
 
 function uncompactify(x)
     return x/(1-x)
+end
+
+if compactified==true
+    Xf=1.0
+else
+    Xf=10.0#Float128(1.0);
 end
 
 global compactified=true
@@ -24,52 +35,37 @@ global bisection=false
 
 using Printf
 
+if loggrid==true
+    ori=(tan(-mgrid/Agrid)/fgrid+kgrid)#0.0#Float128(0.0)#0.0;
+    Xf=(tan((1-mgrid)/Agrid)/fgrid+kgrid)
+else
+    ori=0.0
+    Xf=1.0
+end
+
 res=m;
 N=2.0^m*300.0/2.0
 
-if compactified==true
-    Xf=1.0
-else
-    Xf=10.0#Float128(1.0);
-end
-
-dx=Xf/N#Float128(Xf/N);
-if loggrid==false
-    dt=0.5*round(dx,digits=10)#0.5*dx#round(dx,digits=10);#dx
-else
-    dt=0.1*round(dx,digits=10)
-end
-Nt=N
-Tf=Nt*dt; #final time
-#print(Tf)
+dx=(Xf-ori)/N
 
 println("running for resolution ", res, " N1 = ", N, ", A = ", A)
 
 global dir = "/home/ritapsantos/data/ritapsantos"
-#global dir = "/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA"
 
 using Printf
 include("./ScalarField.jl");
 #include("/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/myspline.jl");
 
-ori=0.0#Float128(0.0)#0.0;
 initX1 = nothing
-N=int(N)
+
 initX1=range(ori, stop=Xf, step=dx);
 #initX1=create_range(ori,Xf,dx,N)
-initX = range(round(ori-3.0*dx,digits=10), stop=Xf+3.0*dx, step=dx)
+#initX = range(round(ori-3.0*dx,digits=10), stop=Xf+3.0*dx, step=dx)
 #initX=create_range(ori-3.0*dx,Xf+3.0*dx,dx,N+6)
 
-L=length(initX);
+L=length(initX1)+6;#length(initX)
 
-"""if loggrid==true
-    global originalX=initX
-    xtilde=gridfunc(initX1)
-    initX1=xtilde
-    initX=collect(initX)
-    initX[4:L-3]=xtilde
-    #global dergrid_func = der_grid(initX)
-end;""";
+initX=[ori-3*dx; ori-2*dx; ori-dx; collect(initX1); Xf+dx; Xf+2*dx; Xf+3*dx];
 
 using Dierckx
 
@@ -88,7 +84,7 @@ r0=0.7#Float128(0.7)#0.01#0.7#0.01#0.7#0.7#0.7#0.01#0.7#0.3
 sigma=0.3#Float128(0.3)
 
 
-#PSI,X FROM PSI
+#PSI,R FROM PSI
 initderpsi[4:L-3] = init_gaussian_der(initX1,r0,sigma,A)
 
 
@@ -102,11 +98,6 @@ else
     derpsi_func = Spline1D(initX[4:L-3], state_array[4:L-3,4],  k=4);
 end;
 
-
-#derpsi_func(state_array[:,5]); #doesnt output the quad precision
-#coef=splinethree(state_array[4:L-3,5],state_array[4:L-3,4],state_array[4:L-3,5]);
-
-#evalInterval(Float128.([0.1]),initX,coef,3);
 
 y0=[0.0 0.0 0.0]
 

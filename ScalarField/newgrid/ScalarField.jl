@@ -1011,7 +1011,12 @@ function timeevolution(state_array,finaltime,run)
             end
         end
 
-        if (iter%1000==0)&&(bisection==true)
+        """if hessian_control(state_array)==true
+            println("Hessian is really big!")
+            break
+        end"""
+
+        if (iter%100==0)&&(bisection==true)
             print(" monitor ratio is ", maximum(monitor_ratio))
         end
 
@@ -1031,7 +1036,7 @@ function timeevolution(state_array,finaltime,run)
             println("Supercritical evolution! At time ", t, ", iteration = ", iter)
             println("t = ", t, "iteration ", iter, " monitor ratio = ", maximum(monitor_ratio))
             global time = t
-            #break
+            break
         end
         if maximum(monitor_ratio)>0.995
             print(" monitor ratio is ", maximum(monitor_ratio))
