@@ -3,7 +3,11 @@ res = trunc(Int, ARGS[2])
 #A=0.1
 #m=1
 #res=m
-
+global compactified=true
+global loggrid=true
+global zeroformat = false
+global twod = false
+global bisection=false
 m=res
 run = 1
 
@@ -26,12 +30,6 @@ if compactified==true
 else
     Xf=10.0#Float128(1.0);
 end
-
-global compactified=true
-global loggrid=true
-global zeroformat = false
-global twod = false
-global bisection=false
 
 using Printf
 
