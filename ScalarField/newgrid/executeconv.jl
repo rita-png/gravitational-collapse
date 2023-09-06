@@ -6,7 +6,7 @@ for ress in resol
     include("./convergencescriptnew.jl");
 end"""
 
-ress=4
+ress=1
 A=0.05#0.1
 global ARGS = [A,ress]
 include("./convergencescriptnew.jl");
