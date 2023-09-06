@@ -699,31 +699,19 @@ function SF_RHS(data,t,X)
 
     
    
-    if loggrid==false
-        Threads.@threads for i in 4:L-3 #ORI
-            if X[i]<10^(-15) #left
-                dy[i,4]= +1.0/2.0 * (1/(1-X[i])^2 * Der(data,i,4,X) + 2/(1-X[i])^3*data[i,4])  - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4];
-                
-            elseif abs.(X[i] .- 1.0)<10^(-15)
-                dy[i,4]= 0.0 - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4]
-                
-            else
-                dy[i,4]=bulkSF(data,i,X) - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4]
-            end
+    
+    Threads.@threads for i in 4:L-3 #ORI
+        if X[i]<10^(-15) #left
+            dy[i,4]= +1.0/2.0 * (1/(1-X[i])^2 * Der(data,i,4,X) + 2/(1-X[i])^3*data[i,4])  - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4];
+            
+        elseif abs.(X[i] .- 1.0)<10^(-15)
+            dy[i,4]= 0.0 - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4]
+            
+        else
+            dy[i,4]=bulkSF(data,i,X) - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4]
         end
-    else
-        Threads.@threads for i in 4:L-3 #ORI
-            if X[i]<10^(-15) #left
-                dy[i,4]= +1.0/2.0 * (1/(1-X[i])^2 * unevenDer(data,i,4,X,funcs) + 2/(1-X[i])^3*data[i,4])  - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4];
-                
-            elseif abs.(X[i] .- 1.0)<10^(-15)
-                dy[i,4]= 0.0 - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4]
-                
-            else
-                dy[i,4]=bulkSF(data,i,X,funcs) - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4]
-            end
-        end
-    end 
+    end
+    
     
     dy[4,4]=extrapolate_in(dy[5,4], dy[6,4], dy[7,4], dy[8,4])
 
