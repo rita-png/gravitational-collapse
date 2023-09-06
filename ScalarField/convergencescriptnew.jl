@@ -9,7 +9,7 @@ run = 1
 
 global compactified=true
 global loggrid=false
-
+global zeroformat=false
 global bisection=false
 
 res=m;
