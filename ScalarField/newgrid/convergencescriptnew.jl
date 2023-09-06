@@ -134,6 +134,7 @@ Threads.nthreads()
 if bisection==false
     if m==1
         global dt=0.0002 #N=200
+        global dt=0.0002/2/2/2 #N=1600
         
     elseif m==2
         #global dt=2e-5/5/2 #N=200
