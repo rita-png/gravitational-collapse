@@ -986,7 +986,7 @@ function timeevolution(state_array,finaltime,run)
 
         if speed(initX, state_array[:,1], state_array[:,2])>10^(9)
             println("Speed is ", speed(initX, state_array[:,1], state_array[:,2]))
-            global criticality=1
+            global criticality = true
             break
         end
 
@@ -1036,6 +1036,7 @@ function timeevolution(state_array,finaltime,run)
         end
 
         if hessian_control(state_array,t)==true
+            global criticality = true
             break
         end
 
@@ -1078,6 +1079,7 @@ function timeevolution(state_array,finaltime,run)
             end
             global time = t
             println("boom at time=", t, " monitor ratio of ", maximum(monitor_ratio))
+            global criticality = true
             break
 
         end
