@@ -689,8 +689,33 @@ function chebyshev(N)
 end
 
 
-function h(z)
+"""function h(z)
     return acos(-1 + 2*z)
+end"""
+
+function hessian_control(data, t)
+
+    y=data[:,4]
+    x=data[:,5]
+
+    dx=x[6]-x[5]
+
+    control=10000
+    result=false
+
+    hess=zeros(length(data[:,4]))
+    for i in 5:L-4 #excluding x=0 and x=1
+        hess[i]=abs((y[i+1]-2*y[i]+y[i-1])/dx^2)
+    end
+    if maximum(hess)>control
+        result=true
+        println("\n\nHessian is really big!\n\n", maximum(hess), " time is ", t)
+    end   
+    
+
+
+    return result
+
 end
 
 function bulkSF(y,i,X)
@@ -1010,10 +1035,10 @@ function timeevolution(state_array,finaltime,run)
             end
         end
 
-        """if hessian_control(state_array)==true
-            println("Hessian is really big!")
+        if hessian_control(state_array,t)==true
             break
-        end"""
+        end
+
 
         if (iter%100==0)&&(bisection==true)
             print(" monitor ratio is ", maximum(monitor_ratio))
