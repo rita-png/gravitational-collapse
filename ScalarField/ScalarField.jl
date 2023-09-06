@@ -35,7 +35,7 @@ end
 end"""
 
 
-function init_gaussian_der(r,r0,sigma,A)
+function init_gaussian_der(r,r0,sigma,A) #This is actually dphi/dr and not dpsi/dr but doesnt make much diff... 
     n=length(r);
     if compactified==false
         if n==1
