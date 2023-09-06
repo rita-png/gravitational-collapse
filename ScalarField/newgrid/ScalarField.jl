@@ -704,7 +704,7 @@ function hessian_control(data, t)
     result=false
 
     hess=zeros(length(data[:,4]))
-    for i in 5:L-4 #excluding x=0 and x=1
+    for i in 10:L-7 #excluding x=0 and x=1
         hess[i]=abs((y[i+1]-2*y[i]+y[i-1])/dx^2)
     end
     if maximum(hess)>control
