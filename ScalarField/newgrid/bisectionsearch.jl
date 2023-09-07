@@ -28,7 +28,7 @@ global high_bound = 0.135
 
 ##OR##
 
-#N=2000.0
+#N=1200.0
 #global dir = "/home/ritapsantos/data/ritapsantos"
 #global low_bound = 0.115
 #global high_bound = 0.135

@@ -1037,6 +1037,7 @@ function timeevolution(state_array,finaltime,run)
 
         if hessian_control(state_array,t)==true
             global criticality = true
+            global time = t
             break
         end
 
@@ -1055,17 +1056,18 @@ function timeevolution(state_array,finaltime,run)
         end
 
 
-        if maximum(monitor_ratio)>0.7&&k==0
+        """if maximum(monitor_ratio)>0.7&&k==0
             global criticality = true
             k=k+1
             println("Supercritical evolution! At time ", t, ", iteration = ", iter)
             println("t = ", t, "iteration ", iter, " monitor ratio = ", maximum(monitor_ratio))
             global time = t
             break
-        end
-        if maximum(monitor_ratio)>0.995
+        end"""
+        if maximum(monitor_ratio)>0.99
             print(" monitor ratio is ", maximum(monitor_ratio))
             global criticality = true
+            global time = t
             break
         end
 
