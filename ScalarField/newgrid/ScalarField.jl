@@ -746,7 +746,7 @@ function bulkSF(y,i,X)
             #dy=-(1/(2*r^2))*(-((exp(2*y[i,2])*r*(1+fgrid^2*(kgrid-xt)^2)*(1-mgrid+Agrid*atan(fgrid*(kgrid-xt)))^2*Der(y,i,4,X)*(r-2*y[i,1]))/(Agrid*fgrid))-(2*exp(2*y[i,2])*(1+fgrid^2*(kgrid-xt)^2)*(1-mgrid+Agrid*atan(fgrid*(kgrid-xt)))^2*y[i,3]*(Der(y,i,1,X)-r*Der(y,i,2,X)))/(Agrid*fgrid)-(2*exp(2*y[i,2])*r*(1+fgrid^2*(kgrid-xt)^2)*(1-mgrid+Agrid*atan(fgrid*(kgrid-xt)))^2*y[i,4]*(-Der(y,i,1,X)+r*Der(y,i,2,X)))/(Agrid*fgrid)+(1/(Agrid*fgrid*r))*2*exp(2*y[i,2])*y[i,1]*(y[i,3]*(Agrid*fgrid-2*r*(1+fgrid^2*(kgrid-xt)^2)*(1-mgrid+Agrid*atan(fgrid*(kgrid-xt)))^2*Der(y,i,2,X))+r*y[i,4]*(-Agrid*fgrid+2*r*(1+fgrid^2*(kgrid-xt)^2)*((-1+mgrid)^2-2*Agrid*(-1+mgrid)*atan(fgrid*(kgrid-xt))+Agrid^2*atan(fgrid*(-kgrid+xt))^2)*Der(y,i,2,X))))
             #new 10/09
             #dr/dxt
-            derxtr=(Agrid*fgrid)/((1+fgrid^2*(-kgrid+xt)^2)*(1-mc-Agrid*atan(fgrid*(-kgrid+xt))))+(Agrid*fgrid*(mc+Agrid*ArcTan(fgrid*(-kgrid+xt))))/((1+fgrid^2*(-kgrid+xt)^2)*(1-mc-Agrid*atan(fgrid*(-kgrid+xt)))^2)
+            derxtr=(Agrid*fgrid)/((1+fgrid^2*(-kgrid+xt)^2)*(1-mgrid-Agrid*atan(fgrid*(-kgrid+xt))))+(Agrid*fgrid*(mgrid+Agrid*ArcTan(fgrid*(-kgrid+xt))))/((1+fgrid^2*(-kgrid+xt)^2)*(1-mgrid-Agrid*atan(fgrid*(-kgrid+xt)))^2)
             derm=Der(y,i,1,X)/(derxtr)
             derbeta=Der(y,i,2,X)/(derxtr)
             derderpsi=Der(y,i,4,X)/(derxtr)
