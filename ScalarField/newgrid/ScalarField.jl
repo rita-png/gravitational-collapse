@@ -190,7 +190,7 @@ function update_dt(X, m, beta,dt)
 
     #return  dx/g*0.01
 
-    return dx/g*0.5
+    return dx/g*0.5/2
 end
 
 function find_origin(X)
@@ -742,8 +742,16 @@ function bulkSF(y,i,X)
             #dy=(1/(pi*r^3))exp(2*y[i,2])*(r^2*cos((pi*xt)/2)*cot((pi*xt)/2)*Der(y,i,4,X)*(r-2*y[i,1])+(r*y[i,4]-y[i,3])*(2*r*cos((pi*xt)/2)*cot((pi*xt)/2)*(-Der(y,i,1,X)+r*Der(y,i,2,X))+y[i,1]*(pi-4*r*cos((pi*xt)/2)*cot((pi*xt)/2)*Der(y,i,2,X))))
 
             #arctan
-            dy=-(1/(2*r^2))*(-((exp(2*y[i,2])*r*(1+fgrid^2*(kgrid-xt)^2)*(1-mgrid+Agrid*atan(fgrid*(kgrid-xt)))^2*Der(y,i,4,X)*(r-2*y[i,1]))/(Agrid*fgrid))-(2*exp(2*y[i,2])*(1+fgrid^2*(kgrid-xt)^2)*(1-mgrid+Agrid*atan(fgrid*(kgrid-xt)))^2*y[i,3]*(Der(y,i,1,X)-r*Der(y,i,2,X)))/(Agrid*fgrid)-(2*exp(2*y[i,2])*r*(1+fgrid^2*(kgrid-xt)^2)*(1-mgrid+Agrid*atan(fgrid*(kgrid-xt)))^2*y[i,4]*(-Der(y,i,1,X)+r*Der(y,i,2,X)))/(Agrid*fgrid)+(1/(Agrid*fgrid*r))*2*exp(2*y[i,2])*y[i,1]*(y[i,3]*(Agrid*fgrid-2*r*(1+fgrid^2*(kgrid-xt)^2)*(1-mgrid+Agrid*atan(fgrid*(kgrid-xt)))^2*Der(y,i,2,X))+r*y[i,4]*(-Agrid*fgrid+2*r*(1+fgrid^2*(kgrid-xt)^2)*((-1+mgrid)^2-2*Agrid*(-1+mgrid)*atan(fgrid*(kgrid-xt))+Agrid^2*atan(fgrid*(-kgrid+xt))^2)*Der(y,i,2,X))))
-
+            #erased 10/09
+            #dy=-(1/(2*r^2))*(-((exp(2*y[i,2])*r*(1+fgrid^2*(kgrid-xt)^2)*(1-mgrid+Agrid*atan(fgrid*(kgrid-xt)))^2*Der(y,i,4,X)*(r-2*y[i,1]))/(Agrid*fgrid))-(2*exp(2*y[i,2])*(1+fgrid^2*(kgrid-xt)^2)*(1-mgrid+Agrid*atan(fgrid*(kgrid-xt)))^2*y[i,3]*(Der(y,i,1,X)-r*Der(y,i,2,X)))/(Agrid*fgrid)-(2*exp(2*y[i,2])*r*(1+fgrid^2*(kgrid-xt)^2)*(1-mgrid+Agrid*atan(fgrid*(kgrid-xt)))^2*y[i,4]*(-Der(y,i,1,X)+r*Der(y,i,2,X)))/(Agrid*fgrid)+(1/(Agrid*fgrid*r))*2*exp(2*y[i,2])*y[i,1]*(y[i,3]*(Agrid*fgrid-2*r*(1+fgrid^2*(kgrid-xt)^2)*(1-mgrid+Agrid*atan(fgrid*(kgrid-xt)))^2*Der(y,i,2,X))+r*y[i,4]*(-Agrid*fgrid+2*r*(1+fgrid^2*(kgrid-xt)^2)*((-1+mgrid)^2-2*Agrid*(-1+mgrid)*atan(fgrid*(kgrid-xt))+Agrid^2*atan(fgrid*(-kgrid+xt))^2)*Der(y,i,2,X))))
+            #new 10/09
+            #dr/dxt
+            derxtr=(Agrid*fgrid)/((1+fgrid^2*(-kgrid+xt)^2)*(1-mc-Agrid*atan(fgrid*(-kgrid+xt))))+(Agrid*fgrid*(mc+Agrid*ArcTan(fgrid*(-kgrid+xt))))/((1+fgrid^2*(-kgrid+xt)^2)*(1-mc-Agrid*atan(fgrid*(-kgrid+xt)))^2)
+            derm=Der(y,i,1,X)/(derxtr)
+            derbeta=Der(y,i,2,X)/(derxtr)
+            derderpsi=Der(y,i,4,X)/(derxtr)
+            
+            dy=(1/(2*r^3))*exp(2*y[i,2])*(-2*y[i,1]*y[i,3]+2*r*y[i,3]*derm-2*r^2*y[i,3]*derbeta+4*r*y[i,1]*y[i,3]*derbeta+2*r*y[i,1]*y[i,4]-2*r^2*derm*y[i,4]+2*r^3*derbeta*y[i,4]-4*r^2*y[i,1]*derbeta*y[i,4]+r^3*derderpsi-2*r^2*y[i,1]*derderpsi)
         end
 
     end
@@ -820,7 +828,7 @@ function RHS(y0,x1,time,func,i,data)
             #z[3]=derpsi(inverse(x1))*2*pi*csc(pi*x1)^2*sin((pi*x1)/2)^3# == dpsi/dr*dr/dxtilde 
             xt=x1
             x=inverse(xt)
-            z[3]=derpsi(x)/(1-x)^2*jacobian(xt) # == dpsi/dr*dr/dxtilde == dpsi/dr*dr/dx*dx/dxtilde 
+            z[3]=derpsi(xt)/(1-x)^2*jacobian(xt) # == dpsi/dr*dr/dxtilde == dpsi/dr*dr/dx*dx/dxtilde 
 
             if abs.(x .- 1.0)<10^(-15)
                 z[3] = 0.0
@@ -895,7 +903,7 @@ function SF_RHS(data,t,X)
     dy=zeros((L,length(data[1,:])));
 
     # update interpolation of psi,x
-    derpsi_func = Spline1D(inverse.(X[4:L-3]),data[4:L-3,4],k=4)
+    derpsi_func = Spline1D(X[4:L-3],data[4:L-3,4],k=4)
     
     # update m, beta and psi data
     y0=[0.0 0.0 0.0]
@@ -1006,7 +1014,7 @@ function timeevolution(state_array,finaltime,run)
     
         
         # update interpolation of psi,x
-        derpsi_func = Spline1D(inverse.(X[4:L-3]),state_array[4:L-3,4],k=4)#new
+        derpsi_func = Spline1D(X[4:L-3],state_array[4:L-3,4],k=4)#new
 
         #evolve m and beta together, new
         y0=[0.0 0.0 0.0]
