@@ -13,7 +13,7 @@ global zeroformat=false
 global bisection=false
 
 res=m;
-N=2.0^m*400.0/2.0
+N=2.0^m*200.0/2.0
 
 if compactified==true
     Xf=1.0
@@ -27,7 +27,7 @@ if loggrid==false
 else
     dt=0.1*round(dx,digits=10)
 end
-Nt=2.0^m*400.0/2.0
+Nt=2.0^m*200.0/2.0
 Tf=Nt*dt; #final time
 #print(Tf)
 
@@ -134,11 +134,14 @@ using Base.Threads
 Threads.nthreads()
 
 if m==1
-    global dt=2e-5
+    #global dt=2e-5
+    global dt=5e-5/2
 elseif m==2
-    global dt=1e-5
+    #global dt=1e-5
+    global dt=5e-5/2/2
 else
-    global dt=1e-5/2
+    #global dt=1e-5/2
+    global dt=5e-5/2/2/2
 end
 
 finaltime=5.0
