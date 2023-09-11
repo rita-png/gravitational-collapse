@@ -246,31 +246,42 @@ end
 
 
 
-
 function print_muninn(files, t, data, res, mode)
     #mode is "a" for append or "w" for write
     j=1
     if bisection==false
         for fl in files #normal run
             
-            #open(dir*"/muninnDATA/res$res/$fl.txt", mode) do file
-            open("./DATA/muninnDATA/res$res/$fl.txt", mode) do file
+            open(dir*"/muninnDATA/res$res/$fl.txt", mode) do file
                 @printf file "\"Time = %.10e\n" t
                 for i in 1:length(data[:,1])
-                    @printf file "% .10e % .10e\n" data[i,5] data[i,j]
+                    if loggrid==true&&i>=4&&i<=L-3
+                        @printf file "% .10e % .10e\n" inverse(data[i,5]) data[i,j]
+                    else
+                        @printf file "% .10e % .10e\n" data[i,5] data[i,j]
+                    end
                 end
                 println(file) # insert empty line to indicate end of data set
                 end
             j=j+1
         end
     else
+        if loggrid==true
+            auxdir= dir*"/bisectionsearch/muninnDATA/uneven"
+        else
+            auxdir= dir*"/bisectionsearch/muninnDATA/even"
+        end
+
         for fl in files #bisection search
             
-            #open(dir*"/muninnDATA/run$run/$fl.txt", mode) do file
-            open("./DATA/bisectionsearch/muninnDATA/run$run/$fl.txt", mode) do file
+            open(auxdir*"/run$run/$fl.txt", mode) do file
                 @printf file "\"Time = %.10e\n" t
                 for i in 1:length(data[:,1])
-                    @printf file "% .10e % .10e\n" data[i,5] data[i,j]
+                    if loggrid==true&&i>=4&&i<=L-3
+                        @printf file "% .10e % .10e\n" inverse(data[i,5]) data[i,j]
+                    else
+                        @printf file "% .10e % .10e\n" data[i,5] data[i,j]
+                    end
                 end
                 println(file) # insert empty line to indicate end of data set
                 end
@@ -278,6 +289,7 @@ function print_muninn(files, t, data, res, mode)
         end
     end
 end
+
 
 #ghosts
 
@@ -654,19 +666,10 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         
 
         run=int(run)
-        #if iter%100==0
-        if (iter%500==0&&t>0.3)||(t>0.85&&iter%25==0)
-            """if bisection==true
-                #CSV.write(dir*"/run$run/time_step$iter.csv", Tables.table(state_array), writeheader=false)
-                CSV.write("./DATA/bisectionsearch/run$run/time_step$iter.csv", Tables.table(state_array), writeheader=false)
-            else
-                #CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
-                CSV.write("./DATA/res$res/time_step$iter.csv", Tables.table(state_array), writeheader=false)
-            end"""
-            #write muninn
+        if iter%100==0
             print_muninn(files, t, state_array[:,1:5],res,"a")
-
         end
+
 
 
         #threshold for apparent black hole formation
