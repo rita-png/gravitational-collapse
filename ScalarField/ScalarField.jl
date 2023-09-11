@@ -612,7 +612,6 @@ function doublegrid(X)
 end
 
 #using ProgressMeter
-using Term.Progress
 function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run)
 
     t=0.0
