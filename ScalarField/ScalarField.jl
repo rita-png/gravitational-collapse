@@ -640,9 +640,9 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
             global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)      
         end
         t = t + dt
-        """if iter%100==0
+        if iter%100==0
             println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
-        end"""
+        end
         #println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
         
         
