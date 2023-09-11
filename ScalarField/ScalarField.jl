@@ -17,7 +17,7 @@ function init_gaussian(x,r0,sigma,A)
     return z
 end
 
-"""function init_gaussian_der(x,r0,sigma,A)
+function init_gaussian_der(x,r0,sigma,A)
     n=length(x);
     if n==1
         #z= 2*A * x/(1-x)^3 * exp(-((x/(1-x)-r0)/sigma)^2) * (1 - x/(1-x) * (x/(1-x) - r0) / sigma^2)
@@ -32,55 +32,12 @@ end
         end
     end
     return z
-end"""
-
-
-function init_gaussian_der(r,r0,sigma,A) #This is actually dphi/dr and not dpsi/dr but doesnt make much diff... 
-    n=length(r);
-    if compactified==false
-        if n==1
-            z= A * (2 * exp(-(r-r0)^2/sigma^2) * r - 2 * exp(-(r-r0)^2/sigma^2) * (r-r0)*r^2/sigma^2)#exp(-((x/(1-x)-r0)/sigma)^2) * (3 * x^2 / (1-x) ^4 - (x/(1-x))^3 * (2*(x-r0*(-x+1)))/(sigma^2*(1-x)^3))
-        else
-            z=zeros(n);
-            for i in 1:n
-                rr = r[i]
-                z[i] = A * (2 * exp(-(rr-r0)^2/sigma^2) * rr - 2 * exp(-(rr-r0)^2/sigma^2) * (rr-r0)*rr^2/sigma^2)
-            end
-        end
-    else # inputted argument r is actually an x
-
-        if n==1
-            x=r
-            r=x/(1-x)
-            z= A * (2 * exp(-(r-r0)^2/sigma^2) * r - 2 * exp(-(r-r0)^2/sigma^2) * (r-r0)*r^2/sigma^2)#exp(-((x/(1-x)-r0)/sigma)^2) * (3 * x^2 / (1-x) ^4 - (x/(1-x))^3 * (2*(x-r0*(-x+1)))/(sigma^2*(1-x)^3))
-        else
-            z=zeros(n);
-            for i in 1:n
-
-                ## psi,r (corr?)
-                x=r[i]
-                rr = x/(1-x)
-                z[i] = A * (2 * exp(-(rr-r0)^2/sigma^2) * rr - 2 * exp(-(rr-r0)^2/sigma^2) * (rr-r0)*rr^2/sigma^2)
-
-
-                ## psi,x (correct)
-                #x=r[i]
-                #rr = x/(1-x)
-                #z[i] = A * (2 * exp(-(rr-r0)^2/sigma^2) * rr - 2 * exp(-(rr-r0)^2/sigma^2) * (rr-r0)*rr^2/sigma^2) / (1-x)^2
-                
-            end
-            z[n] = 0
-        end
-    end
-
-    return z
 end
-    
+
 
 # outputs xtilde(x)
 function gridfunc(x)
-    #return 1/2 .+ 1/2 .* cos.( pi .* (1 .- 0.9 .* x)) #option 6
-    return 1/2 .+ 1/2 .* cos.( pi .* (1 .- x)) #option 7
+    return 1/2 .+ 1/2 .* cos.( pi .* (1 .- 0.9 .* x)) #option 6
 end;
 
 
@@ -128,11 +85,10 @@ function update_dt(X, m, beta,dt,ginit)
         for i in 1:L-7
             aux[i]=initX1[i+1]-initX1[i]
         end
-        
-        dx=minimum(aux)
+        dx=minimum(aux)*2
     end
-    return dx/g*0.5
-   
+
+    return  dx/g#dx/g*0.5#dt*(ginit/g)
 
 end
 
@@ -140,14 +96,15 @@ function find_origin(X)
 
     origin_i=Int64
     L=length(X)
-    
+    #origin_i = 4
     for i in 1:L
         if X[i] >= 0
             origin_i = i
             break
         end
     end
-   
+    #println("\nOrigin of the grid is at t = ", t, " is i = ", origin_i, "\n")
+
     return origin_i
 end
 
@@ -289,15 +246,15 @@ end
 
 
 
-using Printf
+
 function print_muninn(files, t, data, res, mode)
     #mode is "a" for append or "w" for write
     j=1
     if bisection==false
         for fl in files #normal run
             
-            open(dir*"/muninnDATA/res$res/$fl.txt", mode) do file
-            #open("./DATA/muninnDATA/res$res/$fl.txt", mode) do file
+            #open(dir*"/muninnDATA/res$res/$fl.txt", mode) do file
+            open("./DATA/muninnDATA/res$res/$fl.txt", mode) do file
                 @printf file "\"Time = %.10e\n" t
                 for i in 1:length(data[:,1])
                     @printf file "% .10e % .10e\n" data[i,5] data[i,j]
@@ -307,54 +264,16 @@ function print_muninn(files, t, data, res, mode)
             j=j+1
         end
     else
-        if loggrid==true
-            auxdir= dir*"/bisectionsearch/muninnDATA/uneven"
-        else
-            auxdir= dir*"/bisectionsearch/muninnDATA/even"
-        end
-        
         for fl in files #bisection search
             
-            open(auxdir*"/run$run/$fl.txt", mode) do file
-            #open("./DATA/bisectionsearch/muninnDATA/run$run/$fl.txt", mode) do file
+            #open(dir*"/muninnDATA/run$run/$fl.txt", mode) do file
+            open("./DATA/bisectionsearch/muninnDATA/run$run/$fl.txt", mode) do file
                 @printf file "\"Time = %.10e\n" t
                 for i in 1:length(data[:,1])
                     @printf file "% .10e % .10e\n" data[i,5] data[i,j]
                 end
                 println(file) # insert empty line to indicate end of data set
                 end
-            j=j+1
-        end
-    end
-end
-
-
-
-# 0 dimension output, save every variable at the ori and scri+
-function zero_print_muninn(files, t, data, res, mode)
-    #mode is "a" for append or "w" for write
-    j=1
-    
-    if bisection==false
-        for fl in files #normal run
-            
-            open(dir*"/muninnDATA/res$res/$fl.txt", mode) do file                
-                @printf file "% .10e % .10e % .10e\n" t data[4,j] data[L-3,j]
-            end
-            j=j+1
-        end
-    else
-        if loggrid==true
-            auxdir= dir*"/bisectionsearch/muninnDATA/uneven"
-        else
-            auxdir= dir*"/bisectionsearch/muninnDATA/even"
-        end
-
-        for fl in files #bisection search
-            
-            open(auxdir*"/run$run/$fl.txt", mode) do file
-                @printf file "% .10e % .10e % .10e\n" t data[4,j] data[L-3,j]
-            end
             j=j+1
         end
     end
@@ -440,6 +359,7 @@ function DDer(y,i,k,X)
 end
 
 
+
 #matrix
 function unevenDer(y,i,k,X,spls)
 
@@ -456,32 +376,29 @@ function unevenDer(y,i,k,X,spls)
 
     if i==4 # left boundary LOP1, TEM
         dx=X[i+1]-X[i]
-        z = (-27*y[i,k]+58*y[i+1,k]-56*spl(X[i]+2*dx)+36*spl(X[i]+3*dx)-13*spl(X[i]+4*dx)+2*spl(X[i]+5*dx))/(12*(dx))
+        z = (-27*y[i,k]+58*y[i+1,k]-56*spl(X[i]+2*dx)+36*spl(X[i]+3*dx)-13*spl(X[i]+4*dx)+2*spl(X[i]+5*dx))/(12*(X[i+1]-X[i]))
     elseif i==5 # left boundary LOP1, TEM
         dx=X[i+1]-X[i]
-        z = (-2*spl(X[i]-dx)-15*y[i,k]+28*y[i+1,k]-16*spl(X[i]+2*dx)+6*spl(X[i]+3*dx)-spl(X[i]+4*dx))/(12*(dx))
+        z = (-2*spl(X[i]-dx)-15*y[i,k]+28*y[i+1,k]-16*spl(X[i]+2*dx)+6*spl(X[i]+3*dx)-spl(X[i]+4*dx))/(12*(X[i+1]-X[i]))
     """elseif i==L-3
         dx=X[i]-X[i-1]
-        z = -(-27*y[i,k]+58*y[i-1,k]-56*spl(X[i]-2*dx)+36*spl(X[i]-3*dx)-13*spl(X[i]-4*dx)+2*spl(X[i]-5*dx))/(12*(dx)) #12-06 i did *-1
+        z = (-27*y[i,k]+58*y[i-1,k]-56*spl(X[i]-2*dx)+36*spl(X[i]-3*dx)-13*spl(X[i]-4*dx)+2*spl(X[i]-5*dx))/(12*(X[i]-X[i-1])) #12-06 i did *-1
     elseif i==L-4 # right boundary TEM
         dx=X[i+1]-X[i]
-        z = -(-2*y[i+1,k]-15*y[i]+28*spl(X[i]-dx)-16*spl(X[i]-2*dx)+6*spl(X[i]-3*dx)-spl(X[i]-4*dx))/(12*(dx)) #12-06 i did *-1"""
+        z = (-2*y[i+1,k]-15*y[i]+28*spl(X[i]-dx)-16*spl(X[i]-2*dx)+6*spl(X[i]-3*dx)-spl(X[i]-4*dx))/(12*(X[i+1]-X[i])) #12-06 i did *-1"""
     else
-        
+        dx=X[i+1]-X[i]
+        #z = (y[i+1,k]-spl(X[i]-dx))/(2*dx)
+        z = (-spl(X[i]+2dx)+8*y[i+1,k]-8*spl(X[i]-dx)+spl(X[i]-2*dx))/(12*(X[i+1]-X[i]))
 
         if(X[i]-dx)<0.0||(X[i]-2*dx)<0.0 #avoid evaluating spline out of domain
             dx=X[i+1]-X[i]
-            z = (-27*y[i,k]+58*y[i+1,k]-56*spl(X[i]+2*dx)+36*spl(X[i]+3*dx)-13*spl(X[i]+4*dx)+2*spl(X[i]+5*dx))/(12*(dx))
-            #println("warnign at ori, i is ", i)
-        """elseif(X[i]+dx)>1.0||(X[i]+2*dx)>1.0 #avoid evaluating spline out of domain
-            dx=X[i]-X[i-1]
-            #println("warning!, X[i]", X[i], "i is ", i)
-            #z = (spl(X[i]+3*dx)-4*spl(X[i]+2*dx)+7*y[i+1,k]-4*y[i,k])/(2*dx)
-            z = -(-27*y[i,k]+58*y[i-1,k]-56*spl(X[i]-2*dx)+36*spl(X[i]-3*dx)-13*spl(X[i]-4*dx)+2*spl(X[i]-5*dx))/(12*(dx))"""
-        else
-            dx=X[i+1]-X[i]
-            z = (-spl(X[i]+2dx)+8*y[i+1,k]-8*spl(X[i]-dx)+spl(X[i]-2*dx))/(12*(dx))
+            z = (spl(X[i]+3*dx)-4*spl(X[i]+2*dx)+7*y[i+1,k]-4*y[i,k])/(2*dx)
         end
+        """if(X[i]+dx)>1.0||(X[i]+2*dx)>1.0 #avoid evaluating spline out of domain
+            dx=X[i]-X[i-1]
+            z = (-27*y[i,k]+58*y[i-1,k]-56*spl(X[i]-2*dx)+36*spl(X[i]-3*dx)-13*spl(X[i]-4*dx)+2*spl(X[i]-5*dx))/(12*(X[i]-X[i-1]))
+        end"""
     end
         
     return z
@@ -565,25 +482,21 @@ function chebyshev(N)
 end
 
 
-function bulkSF(y,i,X)
+"""function bulkSF(y,i,X)
     
     #psi,x
-    #dy=-1.0/2.0*exp(2.0*y[i,2])*(-(2*(X[i]-1)^3*y[i,3]*(X[i]*((X[i]-1)*Der(y,i,1,X)+X[i]*Der(y,i,2,X))+y[i,1]*(1+2*(X[i]-1)*X[i]*Der(y,i,2,X))))/X[i]^3 - (2*(X[i]-1)^4*(X[i]*((X[i]-1)*Der(y,i,1,X)+X[i]*Der(y,i,2,X))+y[i,1]*(1+2(X[i]-1)*X[i]*Der(y,i,2,X)))*y[i,4])/X[i]^2 - ((X[i]+2*(X[i]-1)*y[i,1])*Der(y,i,4,X))/X[i])
-    
-    #psi,x
-    if compactified == false
-        r=X[i]
-        dy=(1/(2*r^3))*exp(2*y[i,2])*(-2*y[i,1]*y[i,3]+2*r*y[i,3]*Der(y,i,1,X)-2*r^2*y[i,3]*Der(y,i,2,X)+4*r*y[i,1]*y[i,3]*Der(y,i,2,X)+2*r*y[i,1]*y[i,4]-2*r^2*Der(y,i,1,X)*y[i,4]+2*r^3*Der(y,i,2,X)*y[i,4]-4*r^2*y[i,1]*Der(y,i,2,X)*y[i,4]+r^3*Der(y,i,4,X)-2*r^2*y[i,1]*Der(y,i,4,X))
-    else
-        ## psi,r evol equation
-        x=X[i]
-        r = x/(1-x)
-        dy=(1/(2*r^3))*exp(2*y[i,2])*(r^3*(1-x)^2*Der(y,i,4,X)-2*r^2*(1-x)^2*Der(y,i,4,X)*y[i,1]+2*r*y[i,1]*y[i,4]-2*y[i,1]*y[i,3]-2*r^2*(1-x)^2*y[i,4]*Der(y,i,1,X)+2*r*(1-x)^2*y[i,3]*Der(y,i,1,X)+2*r^3*(1-x)^2*y[i,4]*Der(y,i,2,X)-4*r^2*(1-x)^2*y[i,1]*y[i,4]*Der(y,i,2,X)-2*r^2*(1-x)^2*y[i,3]*Der(y,i,2,X)+4*r*(1-x)^2*y[i,1]*y[i,3]*Der(y,i,2,X))
+    dy=-1.0/2.0*exp(2.0*y[i,2])*(-(2*(X[i]-1)^3*y[i,3]*(X[i]*((X[i]-1)*Der(y,i,1,X)+X[i]*Der(y,i,2,X))+y[i,1]*(1+2*(X[i]-1)*X[i]*Der(y,i,2,X))))/X[i]^3 - (2*(X[i]-1)^4*(X[i]*((X[i]-1)*Der(y,i,1,X)+X[i]*Der(y,i,2,X))+y[i,1]*(1+2(X[i]-1)*X[i]*Der(y,i,2,X)))*y[i,4])/X[i]^2 - ((X[i]+2*(X[i]-1)*y[i,1])*Der(y,i,4,X))/X[i])
+ 
+    return dy
+end"""
 
-    end
+function bulkSF(y,i,X,spls)
+    
+    #psi,x
+    dy=-1.0/2.0*exp(2.0*y[i,2])*(-(2*(X[i]-1)^3*y[i,3]*(X[i]*((X[i]-1)*unevenDer(y,i,1,X,spls)+X[i]*unevenDer(y,i,2,X,spls))+y[i,1]*(1+2*(X[i]-1)*X[i]*unevenDer(y,i,2,X,spls))))/X[i]^3 - (2*(X[i]-1)^4*(X[i]*((X[i]-1)*unevenDer(y,i,1,X,spls)+X[i]*unevenDer(y,i,2,X,spls))+y[i,1]*(1+2(X[i]-1)*X[i]*unevenDer(y,i,2,X,spls)))*y[i,4])/X[i]^2 - ((X[i]+2*(X[i]-1)*y[i,1])*unevenDer(y,i,4,X,spls))/X[i])
+
     return dy
 end
-
 
 function boundarySF(y,X)
 
@@ -614,65 +527,36 @@ function boundarySF(y,X)
 end
 
 
-
+#EXACTLY THE SAME POINTS MUST BE CALCULATED THE SAME WAY
 function RHS(y0,x1,time,func,i,data)
     
     z=zeros(length(y0))
     derpsi = func
 
-    if compactified==false
-        r=x1
-        z[3]=derpsi(r)
-    else
-        #psi,x
-        if abs.(x1 .- 1.0)<10^(-15)
-            z[3]=0.0
-        else
-            z[3]=derpsi(x1)/(1-x1)^2
-        end
-    end
-    
-    
-    
+    z[3]=derpsi(x1)
+
     #m and beta
     if x1<10^(-15) #left
         z[1] = 0.0;
         z[2] = 0.0;
-    else
-    
-        if compactified == false
-            r=x1
-            z[1] = (r - 2.0 * y0[1]) * 2.0 .* pi .* r * ((r*z[3]-y0[3])/r^2.0) ^ 2.0
-            z[2] = 2.0 .* pi .* r * ((r*z[3]-y0[3])/r^2.0) ^ 2.0
-        else
-            if loggrid==false
-                x=x1
-                z[1] = - 2.0 .* pi .* (-1.0 .+ x) .* (y0[3] .+ (-1 + x) .* x .* z[3]) .^ 2.0 ./ x .^ 3.0 .* ( x ./ (1.0 .-x ) .- 2 .* y0[1])
-                z[2] = - 2.0 .* pi .* (-1.0 .+ x) .* (y0[3] .+ (-1 + x) .* x .* z[3]) .^ 2.0 ./ x .^ 3.0
-                if abs.(x1 .- 1.0)<10^(-15)
-                    z[1] = 0.0
-                    z[2] = 0.0
-                    z[3] = 0.0
-                end
-            else
-                #x = x1
-                #z[1] = (2.0 .* h(x) .* (pi .* y0[3] + sqrt(-((-1+x) .* x)) .* h(x) .* (-pi .+ h(x)) .* z[3])^2)/(sqrt(-((-1+x) .* x)) .* (pi-h(x))^3) .* ((pi - h(x) .* (1.0 .+ 2.0 .* y0[1])))/h(x)
-                #z[2] = (2.0 .* h(x) .* (pi .* y0[3] + sqrt(-((-1+x) .* x)) .* h(x) .* (-pi .+ h(x)) .* z[3])^2)/(sqrt(-((-1+x) .* x)) .* (pi-h(x))^3)
-                x=x1
-                z[1] = - 2.0 .* pi .* (-1.0 .+ x) .* (y0[3] .+ (-1 + x) .* x .* z[3]) .^ 2.0 ./ x .^ 3.0 .* ( x ./ (1.0 .-x ) .- 2 .* y0[1])
-                z[2] = - 2.0 .* pi .* (-1.0 .+ x) .* (y0[3] .+ (-1 + x) .* x .* z[3]) .^ 2.0 ./ x .^ 3.0
-                if abs.(x1 .- 1.0)<10^(-15)
-                    z[1] = 0.0
-                    z[2] = 0.0
-                    z[3] = 0.0
-                end
-            end
-        end
+    elseif abs.(x1 .- 1.0)<10^(-15) #right
+        #z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;#2.0 .* pi .* (y0[3]) .^ 2.0
+        z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0;#2.0 .* pi .* (y0[3]) .^ 2.0
+        #z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0;#0.0
+        z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0;#0.0
 
+        
+    else #bulk
+        #z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^ 2.0;
+        #z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* derpsi(x1)) .^2.0;
+        z[1] = 2.0 .* pi .* (x1 .+ 2.0 .* (x1 .- 1.0) .* y0[1]) ./ x1 .^3.0 .* (y0[3] .+ (x1 .- 1.0) .* x1 .* z[3]) .^ 2.0;
+        z[2] = 2.0 .* pi .* (1.0 .- x1) ./ x1 .^3.0 .* (y0[3]  .+ (x1 .- 1.0) .* x1 .* z[3]) .^2.0;
+        
     end
 
     return z[:]
 end
+
 
 # Defining the function in the RHS of the evolution equation system
 using Base.Threads
@@ -690,31 +574,22 @@ function SF_RHS(data,t,X)
     data=ghost(data)
 
     #NEW
-    if loggrid==true
-        m_func = Spline1D(X[4:L],data[4:L,1],k=4)
-        beta_func = Spline1D(X[4:L],data[4:L,2],k=4)
+    m_func = Spline1D(X[4:L],data[4:L,1],k=4)
+    beta_func = Spline1D(X[4:L],data[4:L,2],k=4)
 
-        funcs=[m_func beta_func derpsi_func]
-    end
+    funcs=[m_func beta_func derpsi_func]
 
-    
-   
-    
-    Threads.@threads for i in 4:L-3 #ORI
+    Threads.@threads for i in 4:L-3
         if X[i]<10^(-15) #left
-            dy[i,4]= +1.0/2.0 * (1/(1-X[i])^2 * Der(data,i,4,X) + 2/(1-X[i])^3*data[i,4])  - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4];
-            
-        elseif abs.(X[i] .- 1.0)<10^(-15)
-            dy[i,4]= 0.0 - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4]
-            
-        else
-            dy[i,4]=bulkSF(data,i,X) - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4]
+            dy[i,4]= +1.0/2.0*unevenDer(data,i,4,X,funcs) - dissipation6(data,i,0.0065)[4];
+        elseif X[i] < (1-10^(-15)) #bulk
+            dy[i,4]=bulkSF(data,i,X,funcs) - dissipation6(data,i,0.0065)[4]
+        else #right
+            dy[i,4]= bulkSF(data,i,X,funcs) - dissipation6(data,i,0.0065)[4]
         end
     end
     
     
-    dy[4,4]=extrapolate_in(dy[5,4], dy[6,4], dy[7,4], dy[8,4])
-
     #dy=ghost(dy)
     return dy
 
@@ -736,26 +611,27 @@ function doublegrid(X)
 
 end
 
-
+#using ProgressMeter
+using Term.Progress
 function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run)
 
     t=0.0
     T_array = [0.0]
     iter = 0
-    k=0
+    
     while t<finaltime#@TRACK
 
         iter = iter + 1
         
         #update time increment
 
-        if criticality!=true&&bisection==true#||dt>0.00000001
+        if criticality!=true#||dt>0.00000001
             global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)      
         end
         t = t + dt
-        if iter%200==0
+        """if iter%100==0
             println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
-        end
+        end"""
         #println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
         
         
@@ -779,28 +655,26 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         
 
         run=int(run)
-
-        
-        if (((iter%100==0&&t>0.5)||(t>1.5&&iter%5==0)||(t>=2.04&&t<=2.046))&&bisection==true)||((iter%200==0)&&(bisection==false))
-            if zeroformat==true
-                zero_print_muninn(files, t, state_array[:,1:5],res,"a")
+        #if iter%100==0
+        if (iter%500==0&&t>0.3)||(t>0.85&&iter%25==0)
+            """if bisection==true
+                #CSV.write(dir*"/run$run/time_step$iter.csv", Tables.table(state_array), writeheader=false)
+                CSV.write("./DATA/bisectionsearch/run$run/time_step$iter.csv", Tables.table(state_array), writeheader=false)
             else
-                print_muninn(files, t, state_array[:,1:5],res,"a")
-            end
+                #CSV.write(dir*"/time_step$iter.csv", Tables.table(state_array), writeheader=false)
+                CSV.write("./DATA/res$res/time_step$iter.csv", Tables.table(state_array), writeheader=false)
+            end"""
+            #write muninn
+            print_muninn(files, t, state_array[:,1:5],res,"a")
 
         end
+
 
         #threshold for apparent black hole formation
-        if compactified==false
-            global monitor_ratio[5:L-4] = 2 .* state_array[5:L-4,1] ./ initX[5:L-4]
-        else
-            global monitor_ratio[5:L-4] = 2 .* state_array[5:L-4,1] ./ initX[5:L-4] .* (1 .- initX[5:L-4])
-        end
+        global monitor_ratio[5:L-4] = 2 .* state_array[5:L-4,1] ./ initX[5:L-4] .* (1 .- initX[5:L-4])
 
-        
-        if maximum(monitor_ratio)>0.70&&k==0
+        if maximum(monitor_ratio)>0.70
             global criticality = true
-            k=k+1
             println("Supercritical evolution! At time ", t, ", iteration = ", iter)
             println("t = ", t, "iteration ", iter, " monitor ratio = ", maximum(monitor_ratio))
             global time = t
@@ -811,32 +685,29 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         end"""
         
         if isnan(state_array[L-3,4])
-            if criticality==false
-                global time = iter
-                global explode = true
-            end
-
+            global explode = true
             println("boom at time=", t)
-            criticality=true
+            global timestep = iter
             break
-
         end
 
-        #global time = t
-        
-    end
-    
-    if criticality==false
         global time = t
-    end
-
-    if t>2.9
-        global time = 3.0
-        global criticality = false
+        
     end
     
     global evol_stats = [criticality A sigma r0 time explode run]
 
     return evol_stats, T_array
 
+end    
+
+function epsilon(X,i,dt,dx)
+    #minimum([dx/dt*(1/2)^(2*3), 10])
+    #println("dissipation epsilon is ", (dx/dt*(1/2)^(2*3)))
+    if i != L-3
+        dx=X[i+1]-X[i]
+    elseif i==L-3
+        dx = X[i]-X[i-1]
+    end
+    return (dx/dt*(1/2)^(2*3+1))
 end
