@@ -1,6 +1,6 @@
 A = ARGS[1]
 res = trunc(Int, ARGS[2])
-println("running for resolution ", res, " N1 = 200", ", A = ", A)
+
 m=res
 #m = 3
 #A = 0.1#0.0492646484375#0.001#0.049375#5#0.0492645084166179#0.049264507293701174#0.049264508247375494#0.04925#0.0493#0.001#0.049375#0.07#0.05#0.1124921875#0.125
@@ -13,8 +13,8 @@ global zeroformat=false
 global bisection=false
 
 res=m;
-N=2.0^m*200.0/2.0
-
+N=2.0^m*1600.0/2.0
+println("running for resolution ", res, ", N = ", N, ", A = ", A)
 if compactified==true
     Xf=1.0
 else
@@ -27,7 +27,7 @@ if loggrid==false
 else
     dt=0.1*round(dx,digits=10)
 end
-Nt=2.0^m*200.0/2.0
+Nt=2.0^m*1600.0/2.0
 Tf=Nt*dt; #final time
 #print(Tf)
 
@@ -148,4 +148,3 @@ finaltime=5.0
 evol_stats, T_interp = timeevolution(state_array,finaltime,run);
 #CSV.write(dir*"/timearray$res.csv", Tables.table(T_interp), writeheader=false);
 #CSV.write(dir*"/parameters.csv", Tables.table(evol_stats), writeheader=false);
-
