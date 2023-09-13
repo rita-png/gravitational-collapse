@@ -602,6 +602,12 @@ function Der(y,i,k,X)
         end
     end
     
+    if loggrid==true
+        xt=X[i]
+        z=z/((Agrid*fgrid)/(1+fgrid^2*(-kgrid + xt)^2)) #z/(dx/dxt)
+    end
+    
+    
     return z
 end
 
@@ -744,14 +750,19 @@ function bulkSF(y,i,X)
             #arctan
             #erased 10/09
             #dy=-(1/(2*r^2))*(-((exp(2*y[i,2])*r*(1+fgrid^2*(kgrid-xt)^2)*(1-mgrid+Agrid*atan(fgrid*(kgrid-xt)))^2*Der(y,i,4,X)*(r-2*y[i,1]))/(Agrid*fgrid))-(2*exp(2*y[i,2])*(1+fgrid^2*(kgrid-xt)^2)*(1-mgrid+Agrid*atan(fgrid*(kgrid-xt)))^2*y[i,3]*(Der(y,i,1,X)-r*Der(y,i,2,X)))/(Agrid*fgrid)-(2*exp(2*y[i,2])*r*(1+fgrid^2*(kgrid-xt)^2)*(1-mgrid+Agrid*atan(fgrid*(kgrid-xt)))^2*y[i,4]*(-Der(y,i,1,X)+r*Der(y,i,2,X)))/(Agrid*fgrid)+(1/(Agrid*fgrid*r))*2*exp(2*y[i,2])*y[i,1]*(y[i,3]*(Agrid*fgrid-2*r*(1+fgrid^2*(kgrid-xt)^2)*(1-mgrid+Agrid*atan(fgrid*(kgrid-xt)))^2*Der(y,i,2,X))+r*y[i,4]*(-Agrid*fgrid+2*r*(1+fgrid^2*(kgrid-xt)^2)*((-1+mgrid)^2-2*Agrid*(-1+mgrid)*atan(fgrid*(kgrid-xt))+Agrid^2*atan(fgrid*(-kgrid+xt))^2)*Der(y,i,2,X))))
+            
             #new 10/09
             #dr/dxt
-            derxtr=(Agrid*fgrid)/((1+fgrid^2*(-kgrid+xt)^2)*(1-mgrid-Agrid*atan(fgrid*(-kgrid+xt))))+(Agrid*fgrid*(mgrid+Agrid*atan(fgrid*(-kgrid+xt))))/((1+fgrid^2*(-kgrid+xt)^2)*(1-mgrid-Agrid*atan(fgrid*(-kgrid+xt)))^2)
+            """derxtr=(Agrid*fgrid)/((1+fgrid^2*(-kgrid+xt)^2)*(1-mgrid-Agrid*atan(fgrid*(-kgrid+xt))))+(Agrid*fgrid*(mgrid+Agrid*atan(fgrid*(-kgrid+xt))))/((1+fgrid^2*(-kgrid+xt)^2)*(1-mgrid-Agrid*atan(fgrid*(-kgrid+xt)))^2)
             derm=Der(y,i,1,X)/(derxtr)
             derbeta=Der(y,i,2,X)/(derxtr)
             derderpsi=Der(y,i,4,X)/(derxtr)
             
-            dy=(1/(2*r^3))*exp(2*y[i,2])*(-2*y[i,1]*y[i,3]+2*r*y[i,3]*derm-2*r^2*y[i,3]*derbeta+4*r*y[i,1]*y[i,3]*derbeta+2*r*y[i,1]*y[i,4]-2*r^2*derm*y[i,4]+2*r^3*derbeta*y[i,4]-4*r^2*y[i,1]*derbeta*y[i,4]+r^3*derderpsi-2*r^2*y[i,1]*derderpsi)
+            dy=(1/(2*r^3))*exp(2*y[i,2])*(-2*y[i,1]*y[i,3]+2*r*y[i,3]*derm-2*r^2*y[i,3]*derbeta+4*r*y[i,1]*y[i,3]*derbeta+2*r*y[i,1]*y[i,4]-2*r^2*derm*y[i,4]+2*r^3*derbeta*y[i,4]-4*r^2*y[i,1]*derbeta*y[i,4]+r^3*derderpsi-2*r^2*y[i,1]*derderpsi)"""
+
+            #new 13/09. dy is same as compactified even grid in x but Der is multiplied by jacobian
+            dy=(1/(2*r^3))*exp(2*y[i,2])*(r^3*(1-x)^2*Der(y,i,4,X)-2*r^2*(1-x)^2*Der(y,i,4,X)*y[i,1]+2*r*y[i,1]*y[i,4]-2*y[i,1]*y[i,3]-2*r^2*(1-x)^2*y[i,4]*Der(y,i,1,X)+2*r*(1-x)^2*y[i,3]*Der(y,i,1,X)+2*r^3*(1-x)^2*y[i,4]*Der(y,i,2,X)-4*r^2*(1-x)^2*y[i,1]*y[i,4]*Der(y,i,2,X)-2*r^2*(1-x)^2*y[i,3]*Der(y,i,2,X)+4*r*(1-x)^2*y[i,1]*y[i,3]*Der(y,i,2,X))
+
         end
 
     end
@@ -950,8 +961,12 @@ function SF_RHS(data,t,X)
                 #dy[i,4]= 1/2*Der(data,i,4,X)*exp(2*data[i,2])/(2*pi*csc(pi*xt)^2*sin((pi*xt)/2)^3) - dissipation(data,i,epsilon)[4]#- dissipation4(data,i,0.02)[4]
                 #old half cheby
                 #dy[i,4]= +1.0/2.0 * (1/(1-x)^2 * pi/2.0 * sin(pi*(1-x)) * Der(data,i,4,X) + 2/(1-x)^3*data[i,4])  - dissipation(data,i,epsilon)[4]#- dissipation4(data,i,0.02)[4];
-                dy[i,4]= 1.0/2.0 * 2.0 / (1.0 - x)^3.0*data[i,4] + 1.0/2.0 / (1.0 - x)^2.0 / ((Agrid*fgrid)/(1 + fgrid^2.0 * (-kgrid + xtilde)^2.0)) * Der(data,i,4,X)
-            
+                
+                #commented this on 13/09
+                #dy[i,4]= 1.0/2.0 * 2.0 / (1.0 - x)^3.0*data[i,4] + 1.0/2.0 / (1.0 - x)^2.0 / ((Agrid*fgrid)/(1 + fgrid^2.0 * (-kgrid + xtilde)^2.0)) * Der(data,i,4,X)
+                #new 13/09
+
+                dy[i,4] = 1.0/2.0 * ((1+x)^4 * Der(data,i,4,X) + 2*(1+x)^3*data[i,4])  - dissipation(data,i,epsilon)[4]
             end
             
             

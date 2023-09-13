@@ -21,10 +21,10 @@ global twod = true
 
 #global dir = "/home/ritapsantos/data/ritapsantos/4theven"
 
-N=2000.0
-global dir = "/home/ritapsantos/data/ritapsantos/2nduneven"
-global low_bound = 0.115
-global high_bound = 0.135
+#N=2000.0
+#global dir = "/home/ritapsantos/data/ritapsantos/2nduneven"
+#global low_bound = 0.115
+#global high_bound = 0.135
 
 ##OR##
 
@@ -32,6 +32,13 @@ global high_bound = 0.135
 #global dir = "/home/ritapsantos/data/ritapsantos"
 #global low_bound = 0.115
 #global high_bound = 0.135
+
+##OR##
+
+N=1200.0
+global dir = "/home/ritapsantos/data/ritapsantos/new2nduneven"
+global low_bound = 0.115
+global high_bound = 0.135
 
 #### CONFIG ####
 
