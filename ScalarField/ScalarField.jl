@@ -37,7 +37,8 @@ end
 
 # outputs xtilde(x)
 function gridfunc(x)
-    return 1/2 .+ 1/2 .* cos.( pi .* (1 .- 0.9 .* x)) #option 6
+    #return 1/2 .+ 1/2 .* cos.( pi .* (1 .- 0.9 .* x)) #option 6
+    return 1/2 .+ 1/2 .* cos.( pi .* (1 .- x)) #option 7
 end;
 
 
@@ -85,10 +86,11 @@ function update_dt(X, m, beta,dt,ginit)
         for i in 1:L-7
             aux[i]=initX1[i+1]-initX1[i]
         end
-        dx=minimum(aux)*2
+        #dx=minimum(aux)*2
+        dx=minimum(aux)
     end
-
-    return  dx/g#dx/g*0.5#dt*(ginit/g)
+    return dx/g*0.5
+    #return  dx/g#dx/g*0.5#dt*(ginit/g)
 
 end
 
@@ -246,6 +248,7 @@ end
 
 
 
+using Printf
 function print_muninn(files, t, data, res, mode)
     #mode is "a" for append or "w" for write
     j=1
@@ -253,13 +256,10 @@ function print_muninn(files, t, data, res, mode)
         for fl in files #normal run
             
             open(dir*"/muninnDATA/res$res/$fl.txt", mode) do file
+            #open("./DATA/muninnDATA/res$res/$fl.txt", mode) do file
                 @printf file "\"Time = %.10e\n" t
                 for i in 1:length(data[:,1])
-                    if loggrid==true&&i>=4&&i<=L-3
-                        @printf file "% .10e % .10e\n" inverse(data[i,5]) data[i,j]
-                    else
-                        @printf file "% .10e % .10e\n" data[i,5] data[i,j]
-                    end
+                    @printf file "% .10e % .10e\n" data[i,5] data[i,j]
                 end
                 println(file) # insert empty line to indicate end of data set
                 end
@@ -271,17 +271,14 @@ function print_muninn(files, t, data, res, mode)
         else
             auxdir= dir*"/bisectionsearch/muninnDATA/even"
         end
-
+        
         for fl in files #bisection search
             
             open(auxdir*"/run$run/$fl.txt", mode) do file
+            #open("./DATA/bisectionsearch/muninnDATA/run$run/$fl.txt", mode) do file
                 @printf file "\"Time = %.10e\n" t
                 for i in 1:length(data[:,1])
-                    if loggrid==true&&i>=4&&i<=L-3
-                        @printf file "% .10e % .10e\n" inverse(data[i,5]) data[i,j]
-                    else
-                        @printf file "% .10e % .10e\n" data[i,5] data[i,j]
-                    end
+                    @printf file "% .10e % .10e\n" data[i,5] data[i,j]
                 end
                 println(file) # insert empty line to indicate end of data set
                 end
@@ -289,6 +286,7 @@ function print_muninn(files, t, data, res, mode)
         end
     end
 end
+
 
 
 #ghosts
@@ -371,7 +369,6 @@ function DDer(y,i,k,X)
 end
 
 
-
 #matrix
 function unevenDer(y,i,k,X,spls)
 
@@ -388,29 +385,32 @@ function unevenDer(y,i,k,X,spls)
 
     if i==4 # left boundary LOP1, TEM
         dx=X[i+1]-X[i]
-        z = (-27*y[i,k]+58*y[i+1,k]-56*spl(X[i]+2*dx)+36*spl(X[i]+3*dx)-13*spl(X[i]+4*dx)+2*spl(X[i]+5*dx))/(12*(X[i+1]-X[i]))
+        z = (-27*y[i,k]+58*y[i+1,k]-56*spl(X[i]+2*dx)+36*spl(X[i]+3*dx)-13*spl(X[i]+4*dx)+2*spl(X[i]+5*dx))/(12*(dx))
     elseif i==5 # left boundary LOP1, TEM
         dx=X[i+1]-X[i]
-        z = (-2*spl(X[i]-dx)-15*y[i,k]+28*y[i+1,k]-16*spl(X[i]+2*dx)+6*spl(X[i]+3*dx)-spl(X[i]+4*dx))/(12*(X[i+1]-X[i]))
+        z = (-2*spl(X[i]-dx)-15*y[i,k]+28*y[i+1,k]-16*spl(X[i]+2*dx)+6*spl(X[i]+3*dx)-spl(X[i]+4*dx))/(12*(dx))
     """elseif i==L-3
         dx=X[i]-X[i-1]
-        z = (-27*y[i,k]+58*y[i-1,k]-56*spl(X[i]-2*dx)+36*spl(X[i]-3*dx)-13*spl(X[i]-4*dx)+2*spl(X[i]-5*dx))/(12*(X[i]-X[i-1])) #12-06 i did *-1
+        z = -(-27*y[i,k]+58*y[i-1,k]-56*spl(X[i]-2*dx)+36*spl(X[i]-3*dx)-13*spl(X[i]-4*dx)+2*spl(X[i]-5*dx))/(12*(dx)) #12-06 i did *-1
     elseif i==L-4 # right boundary TEM
         dx=X[i+1]-X[i]
-        z = (-2*y[i+1,k]-15*y[i]+28*spl(X[i]-dx)-16*spl(X[i]-2*dx)+6*spl(X[i]-3*dx)-spl(X[i]-4*dx))/(12*(X[i+1]-X[i])) #12-06 i did *-1"""
+        z = -(-2*y[i+1,k]-15*y[i]+28*spl(X[i]-dx)-16*spl(X[i]-2*dx)+6*spl(X[i]-3*dx)-spl(X[i]-4*dx))/(12*(dx)) #12-06 i did *-1"""
     else
-        dx=X[i+1]-X[i]
-        #z = (y[i+1,k]-spl(X[i]-dx))/(2*dx)
-        z = (-spl(X[i]+2dx)+8*y[i+1,k]-8*spl(X[i]-dx)+spl(X[i]-2*dx))/(12*(X[i+1]-X[i]))
+        
 
         if(X[i]-dx)<0.0||(X[i]-2*dx)<0.0 #avoid evaluating spline out of domain
             dx=X[i+1]-X[i]
-            z = (spl(X[i]+3*dx)-4*spl(X[i]+2*dx)+7*y[i+1,k]-4*y[i,k])/(2*dx)
-        end
-        """if(X[i]+dx)>1.0||(X[i]+2*dx)>1.0 #avoid evaluating spline out of domain
+            z = (-27*y[i,k]+58*y[i+1,k]-56*spl(X[i]+2*dx)+36*spl(X[i]+3*dx)-13*spl(X[i]+4*dx)+2*spl(X[i]+5*dx))/(12*(dx))
+            #println("warnign at ori, i is ", i)
+        """elseif(X[i]+dx)>1.0||(X[i]+2*dx)>1.0 #avoid evaluating spline out of domain
             dx=X[i]-X[i-1]
-            z = (-27*y[i,k]+58*y[i-1,k]-56*spl(X[i]-2*dx)+36*spl(X[i]-3*dx)-13*spl(X[i]-4*dx)+2*spl(X[i]-5*dx))/(12*(X[i]-X[i-1]))
-        end"""
+            #println("warning!, X[i]", X[i], "i is ", i)
+            #z = (spl(X[i]+3*dx)-4*spl(X[i]+2*dx)+7*y[i+1,k]-4*y[i,k])/(2*dx)
+            z = -(-27*y[i,k]+58*y[i-1,k]-56*spl(X[i]-2*dx)+36*spl(X[i]-3*dx)-13*spl(X[i]-4*dx)+2*spl(X[i]-5*dx))/(12*(dx))"""
+        else
+            dx=X[i+1]-X[i]
+            z = (-spl(X[i]+2dx)+8*y[i+1,k]-8*spl(X[i]-dx)+spl(X[i]-2*dx))/(12*(dx))
+        end
     end
         
     return z
@@ -494,13 +494,13 @@ function chebyshev(N)
 end
 
 
-"""function bulkSF(y,i,X)
+function bulkSF(y,i,X)
     
     #psi,x
     dy=-1.0/2.0*exp(2.0*y[i,2])*(-(2*(X[i]-1)^3*y[i,3]*(X[i]*((X[i]-1)*Der(y,i,1,X)+X[i]*Der(y,i,2,X))+y[i,1]*(1+2*(X[i]-1)*X[i]*Der(y,i,2,X))))/X[i]^3 - (2*(X[i]-1)^4*(X[i]*((X[i]-1)*Der(y,i,1,X)+X[i]*Der(y,i,2,X))+y[i,1]*(1+2(X[i]-1)*X[i]*Der(y,i,2,X)))*y[i,4])/X[i]^2 - ((X[i]+2*(X[i]-1)*y[i,1])*Der(y,i,4,X))/X[i])
  
     return dy
-end"""
+end
 
 function bulkSF(y,i,X,spls)
     
@@ -586,18 +586,32 @@ function SF_RHS(data,t,X)
     data=ghost(data)
 
     #NEW
-    m_func = Spline1D(X[4:L],data[4:L,1],k=4)
-    beta_func = Spline1D(X[4:L],data[4:L,2],k=4)
+    if loggrid==true
+        m_func = Spline1D(X[4:L],data[4:L,1],k=4)
+        beta_func = Spline1D(X[4:L],data[4:L,2],k=4)
 
-    funcs=[m_func beta_func derpsi_func]
+        funcs=[m_func beta_func derpsi_func]
+    end
 
     Threads.@threads for i in 4:L-3
         if X[i]<10^(-15) #left
-            dy[i,4]= +1.0/2.0*unevenDer(data,i,4,X,funcs) - dissipation6(data,i,0.0065)[4];
+            if loggrid==true
+                dy[i,4]= +1.0/2.0*unevenDer(data,i,4,X,funcs) - dissipation6(data,i,0.0065)[4];
+            else
+                dy[i,4]= +1.0/2.0*Der(data,i,4,X) - dissipation6(data,i,0.0065)[4];
+            end
         elseif X[i] < (1-10^(-15)) #bulk
-            dy[i,4]=bulkSF(data,i,X,funcs) - dissipation6(data,i,0.0065)[4]
+            if loggrid==true
+                dy[i,4]=bulkSF(data,i,X,funcs) - dissipation6(data,i,0.0065)[4]
+            else
+                dy[i,4]=bulkSF(data,i,X) - dissipation6(data,i,0.0065)[4]
+            end
         else #right
-            dy[i,4]= bulkSF(data,i,X,funcs) - dissipation6(data,i,0.0065)[4]
+            if loggrid==true
+                dy[i,4]= bulkSF(data,i,X,funcs) - dissipation6(data,i,0.0065)[4]
+            else
+                dy[i,4]= bulkSF(data,i,X) - dissipation6(data,i,0.0065)[4]
+            end
         end
     end
     
@@ -623,13 +637,13 @@ function doublegrid(X)
 
 end
 
-#using ProgressMeter
+
 function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run)
 
     t=0.0
     T_array = [0.0]
     iter = 0
-    
+    k=0
     while t<finaltime#@TRACK
 
         iter = iter + 1
@@ -640,7 +654,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
             global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)      
         end"""
         t = t + dt
-        if iter%100==0
+        if iter%500==0
             println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
         end
         #println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
@@ -666,17 +680,19 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         
 
         run=int(run)
-        if iter%100==0
+        if iter%500==0
+        #if (iter%500==0&&t>0.3)||(t>0.85&&iter%10==0)
             print_muninn(files, t, state_array[:,1:5],res,"a")
-        end
 
+        end
 
 
         #threshold for apparent black hole formation
         global monitor_ratio[5:L-4] = 2 .* state_array[5:L-4,1] ./ initX[5:L-4] .* (1 .- initX[5:L-4])
 
-        if maximum(monitor_ratio)>0.70
+        if maximum(monitor_ratio)>0.70&&k==0
             global criticality = true
+            k=k+1
             println("Supercritical evolution! At time ", t, ", iteration = ", iter)
             println("t = ", t, "iteration ", iter, " monitor ratio = ", maximum(monitor_ratio))
             global time = t
@@ -687,29 +703,26 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         end"""
         
         if isnan(state_array[L-3,4])
-            global explode = true
+            if criticality==false
+                global time = iter
+                global explode = true
+            end
+
             println("boom at time=", t)
-            global timestep = iter
             break
+
         end
 
-        global time = t
+        #global time = t
         
     end
     
+    if criticality==false
+        global time = t
+    end
+
     global evol_stats = [criticality A sigma r0 time explode run]
 
     return evol_stats, T_array
 
-end    
-
-function epsilon(X,i,dt,dx)
-    #minimum([dx/dt*(1/2)^(2*3), 10])
-    #println("dissipation epsilon is ", (dx/dt*(1/2)^(2*3)))
-    if i != L-3
-        dx=X[i+1]-X[i]
-    elseif i==L-3
-        dx = X[i]-X[i-1]
-    end
-    return (dx/dt*(1/2)^(2*3+1))
 end
