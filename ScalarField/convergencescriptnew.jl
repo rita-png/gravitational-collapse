@@ -135,7 +135,7 @@ Threads.nthreads()
 
 if m==1
     #global dt=2e-5
-    global dt=5e-5/2
+    global dt=5e-5/2/2/2/2
 elseif m==2
     #global dt=1e-5
     global dt=5e-5/2/2
