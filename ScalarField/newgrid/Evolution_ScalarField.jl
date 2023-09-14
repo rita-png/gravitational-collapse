@@ -88,7 +88,7 @@ state_array=ghost(state_array)
 
 ####
 if loggrid==true
-    derpsi_func = Spline1D(inverse(initX[4:L-3]), state_array[4:L-3,4],  k=4);
+    derpsi_func = Spline1D(initX[4:L-3], state_array[4:L-3,4],  k=4);
 else
     derpsi_func = Spline1D(initX[4:L-3], state_array[4:L-3,4],  k=4);
 end;
