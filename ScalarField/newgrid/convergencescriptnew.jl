@@ -42,13 +42,13 @@ else
 end
 
 res=m;
-N=2.0^m*1600.0/2.0
+N=2.0^m*200.0/2.0
 
 dx=(Xf-ori)/N
 
 println("running for resolution ", res, " N1 = ", N, ", A = ", A)
 
-global dir = "/home/ritapsantos/data/ritapsantos"
+global dir = "/home/ritapsantos/data/ritapsantos/convergenceuneven"
 
 using Printf
 include("./ScalarField.jl");
@@ -134,7 +134,7 @@ Threads.nthreads()
 if bisection==false
     if m==1
         global dt=0.0002 #N=200
-        global dt=0.0002/2/2/2 #N=1600
+        #global dt=0.0002/2/2/2 #N=1600
         
     elseif m==2
         #global dt=2e-5/5/2 #N=200

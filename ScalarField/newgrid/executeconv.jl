@@ -1,12 +1,7 @@
-"""resol=[1,2,3]
+resol=[1,2,3]
 
 for ress in resol
     A=0.05#0.1
     global ARGS = [A,ress]
     include("./convergencescriptnew.jl");
-end"""
-
-ress=1
-A=0.05#0.1
-global ARGS = [A,ress]
-include("./convergencescriptnew.jl");
+end
