@@ -1091,7 +1091,7 @@ function timeevolution(state_array,finaltime,run)
             print(" monitor ratio is ", maximum(monitor_ratio))
             global criticality = true
             global time = t
-            #break
+            break
         end
 
 
