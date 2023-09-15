@@ -7,16 +7,16 @@ using CSV, Tables, DataFrames, Plots, Printf
 include("./ScalarField.jl");
 
 # grid 1
-Agrid=0.35
+"""Agrid=0.35
 kgrid=0.7
 mgrid=0.5#0.55
-fgrid=5
+fgrid=5"""
 
 #grid 2, new
-"""Agrid=0.45
+Agrid=0.45
 kgrid=0.5
 mgrid=0.5
-fgrid=4.5"""
+fgrid=4.5
 
 
 #### CONFIG ####
@@ -27,24 +27,24 @@ global compactified = true
 global zeroformat = false
 global twod = true
 
-#N=2000.0
+#N=2000.0 #grid 1
 #global dir = "/home/ritapsantos/data/ritapsantos/2nduneven"
 #global low_bound = 0.125966796875#0.115
 #global high_bound = 0.1259765625#0.135
 
 ##OR##
 
-#N=1200.0
-#global dir = "/home/ritapsantos/data/ritapsantos"
-#global low_bound = 0.125
-#global high_bound = 0.135
+N=1200.0 #grid 2
+global dir = "/home/ritapsantos/data/ritapsantos"
+global low_bound = 0.125
+global high_bound = 0.135
 
 ##OR##
 
-N=1200.0
-global dir = "/home/ritapsantos/data/ritapsantos/new2nduneven"
-global low_bound = 0.125966796875
-global high_bound = 0.1259765625
+#N=1200.0 #grid 1
+#global dir = "/home/ritapsantos/data/ritapsantos/new2nduneven"
+#global low_bound = 0.125966796875
+#global high_bound = 0.1259765625
 
 
 #### CONFIG ####
