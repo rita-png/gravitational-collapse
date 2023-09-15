@@ -27,10 +27,10 @@ global compactified = true
 global zeroformat = false
 global twod = true
 
-N=2000.0
-global dir = "/home/ritapsantos/data/ritapsantos/2nduneven"
-global low_bound = 0.125966796875#0.115
-global high_bound = 0.1259765625#0.135
+#N=2000.0
+#global dir = "/home/ritapsantos/data/ritapsantos/2nduneven"
+#global low_bound = 0.125966796875#0.115
+#global high_bound = 0.1259765625#0.135
 
 ##OR##
 
@@ -41,10 +41,11 @@ global high_bound = 0.1259765625#0.135
 
 ##OR##
 
-#N=1200.0
-#global dir = "/home/ritapsantos/data/ritapsantos/new2nduneven"
-#global low_bound = 0.125
-#global high_bound = 0.135
+N=1200.0
+global dir = "/home/ritapsantos/data/ritapsantos/new2nduneven"
+global low_bound = 0.125966796875
+global high_bound = 0.1259765625
+
 
 #### CONFIG ####
 
