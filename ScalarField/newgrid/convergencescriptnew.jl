@@ -138,7 +138,7 @@ if bisection==false
         
     elseif m==2
         #global dt=2e-5/5/2 #N=200
-        global dt=0.0002/2 #N=300
+        global dt=0.0002/2 #N=200
         
     else
         global dt=0.0002/2/2 #N=200

@@ -10,11 +10,6 @@ N = ARGS[3]
 m = 1
 res=m
 
-## grid
-Agrid=0.35
-kgrid=0.7
-mgrid=0.5#0.55
-fgrid=5
 
 function compactify(r)
     return r/(1+r)
