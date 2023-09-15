@@ -12,7 +12,7 @@ kgrid=0.7
 mgrid=0.5#0.55
 fgrid=5
 
-#grid 2
+#grid 2, new
 """Agrid=0.45
 kgrid=0.5
 mgrid=0.5

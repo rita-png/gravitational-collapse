@@ -1,4 +1,4 @@
-resol=[1]
+resol=[1,2,3]
 
 for ress in resol
     A=0.01
