@@ -1,35 +1,76 @@
 # Definition of gaussian initial data functions
 
-function init_gaussian_der(r,r0,sigma,A)
+function init_derpsi(r,r0,sigma,A) #psi,r
     n=length(r);
     if compactified==false
         if n==1
-            z= A * (3 * exp(-(r-r0)^2/sigma^2) * r^2 - 2 * exp(-(r-r0)^2/sigma^2) * (r-r0)*r^3/sigma^2)#exp(-((x/(1-x)-r0)/sigma)^2) * (3 * x^2 / (1-x) ^4 - (x/(1-x))^3 * (2*(x-r0*(-x+1)))/(sigma^2*(1-x)^3))
+            z= A*exp(-((r - r0)^2/sigma^2)) - (2*A*exp(-((r - r0)^2/sigma^2))*r*(r - r0))/sigma^2#A * (3 * exp(-(r-r0)^2/sigma^2) * r^2 - 2 * exp(-(r-r0)^2/sigma^2) * (r-r0)*r^3/sigma^2)#exp(-((x/(1-x)-r0)/sigma)^2) * (3 * x^2 / (1-x) ^4 - (x/(1-x))^3 * (2*(x-r0*(-x+1)))/(sigma^2*(1-x)^3))
         else
             z=zeros(n);
             for i in 1:n
                 rr = r[i]
-                z[i] = A * (3 * exp(-(rr-r0)^2/sigma^2) * rr^2 - 2 * exp(-(rr-r0)^2/sigma^2) * (rr-r0)*rr^3/sigma^2)
+                z[i] = A*exp(-((rr - r0)^2/sigma^2)) - (2*A*exp(-((rr - r0)^2/sigma^2))*rr*(rr - r0))/sigma^2#A * (3 * exp(-(rr-r0)^2/sigma^2) * rr^2 - 2 * exp(-(rr-r0)^2/sigma^2) * (rr-r0)*rr^3/sigma^2)
             end
         end
     else # inputted argument r is actually an x
+        if loggrid==false
+            if n==1
+                x=r
+                rr=x/(1-x)
+                z= A*exp(-((rr - r0)^2/sigma^2)) - (2*A*exp(-((rr - r0)^2/sigma^2))*rr*(rr - r0))/sigma^2#A * (3 * exp(-(rr-r0)^2/sigma^2) * rr^2 - 2 * exp(-(rr-r0)^2/sigma^2) * (rr-r0)*rr^3/sigma^2)
+            else
+                z=zeros(n);
+                for i in 1:n
 
+                    ## psi,r
+                    x=r[i]
+                    rr = x/(1-x)
+                    z[i] = A*exp(-((rr - r0)^2/sigma^2)) - (2*A*exp(-((rr - r0)^2/sigma^2))*rr*(rr - r0))/sigma^2#A * (3 * exp(-(rr-r0)^2/sigma^2) * rr^2 - 2 * exp(-(rr-r0)^2/sigma^2) * (rr-r0)*rr^3/sigma^2)
+
+                    
+                end
+                z[n] = 0
+            end
+        else
+            z=0
+        end
+    end
+
+    return z
+end
+function init_derxchi(r,r0,sigma,A) #(xchi),r
+    n=length(r);
+    if compactified==false
         if n==1
-            x=r
-            r=x/(1-x)
-            z= A * (2 * exp(-(r-r0)^2/sigma^2) * r - 2 * exp(-(r-r0)^2/sigma^2) * (r-r0)*r^2/sigma^2)#exp(-((x/(1-x)-r0)/sigma)^2) * (3 * x^2 / (1-x) ^4 - (x/(1-x))^3 * (2*(x-r0*(-x+1)))/(sigma^2*(1-x)^3))
+            z= (A*exp(-((r - r0)^2/sigma^2))*(-2*r^3 + 2*r^2*(-1 + r0) + 2*r*r0 + sigma^2))/((1 + r)^2*sigma^2)
         else
             z=zeros(n);
             for i in 1:n
-
-                ## psi,r (corr?)
-                x=r[i]
-                rr = x/(1-x)
-                z[i] = A * (2 * exp(-(rr-r0)^2/sigma^2) * rr - 2 * exp(-(rr-r0)^2/sigma^2) * (rr-r0)*rr^2/sigma^2)
-
-                
+                rr = r[i]
+                z[i] = (A*exp(-((rr - r0)^2/sigma^2))*(-2*rr^3 + 2*rr^2*(-1 + r0) + 2*rr*r0 + sigma^2))/((1 + rr)^2*sigma^2) # A * (3 * exp(-(rr-r0)^2/sigma^2) * rr^2 - 2 * exp(-(rr-r0)^2/sigma^2) * (rr-r0)*rr^3/sigma^2)
             end
-            z[n] = 0
+        end
+    else # inputted argument r is actually an x
+        if loggrid==false
+            if n==1
+                x=r
+                rr=x/(1-x)
+                z= (A*exp(-((rr - r0)^2/sigma^2))*(-2*rr^3 + 2*rr^2*(-1 + r0) + 2*rr*r0 + sigma^2))/((1 + rr)^2*sigma^2)
+            else
+                z=zeros(n);
+                for i in 1:n
+
+                    
+                    x=r[i]
+                    rr = x/(1-x)
+                    z[i] = (A*exp(-((rr - r0)^2/sigma^2))*(-2*rr^3 + 2*rr^2*(-1 + r0) + 2*rr*r0 + sigma^2))/((1 + rr)^2*sigma^2)
+
+                    
+                end
+                z[n] = 0
+            end
+        else
+            z=0
         end
     end
 
@@ -65,8 +106,13 @@ function speed(X, m, beta)
     ori=find_origin(X)
 
     g = zeros(int(L-5-ori))
-    g=abs.((1.0 .- initX[ori+1:L-4]) .^ 3.0 .* exp.(2 .* state_array[ori+1:L-4,2]) .* (2 .* state_array[ori+1:L-4,1] .- initX[ori+1:L-4] ./ (1 .- initX[ori+1:L-4])) ./ (2 .* initX[ori+1:L-4]))
+    #g=abs.((1.0 .- initX[ori+1:L-4]) .^ 3.0 .* exp.(2 .* state_array[ori+1:L-4,2]) .* (2 .* state_array[ori+1:L-4,1] .- initX[ori+1:L-4] ./ (1 .- initX[ori+1:L-4])) ./ (2 .* initX[ori+1:L-4]))
     
+    if compactified==true
+        g=abs.((1.0 .- initX[ori+1:L-4]) .^ 3.0 .* exp.(2 .* state_array[ori+1:L-4,2]) .* (2 .* state_array[ori+1:L-4,1] .- initX[ori+1:L-4] ./ (1 .- initX[ori+1:L-4])) ./ (2 .* initX[ori+1:L-4]))
+    else
+        g=abs.(exp.(2 .* state_array[ori+1:L-4,2]) .* (2 .* state_array[ori+1:L-4,1] .- initX[ori+1:L-4]) ./ (2 .* initX[ori+1:L-4]))
+    end
     z=maximum(g)
     if isnan(z)
         println("Error: Speed is NaN!")
@@ -91,7 +137,7 @@ function update_dt(X, m, beta,dt,ginit)
         
         dx=minimum(aux)
     end
-    return dx/g*0.5
+    return dx/g*0.1
    
 
 end
@@ -117,7 +163,7 @@ function update_grid(data,T,k)
     dx = data[2,5]-data[1,5]
 
     #evolve grid
-    data = rungekutta4molstep(Grid_RHS,data,T,k,data[:,5]) #evolve X
+    data = twod_rungekutta4molstep(Grid_RHS,data,T,k,data[:,5]) #evolve X
     #data=ghost(data)
     
     X = data[:,5]
@@ -169,6 +215,20 @@ function rungekutta4molstep(f,y00,T,w::Int64,X)
     return ghost(y[:,:])
 end
 
+function twod_rungekutta4molstep(f,y00,T,w::Int64,X)
+    y = y00;
+    X=collect(X)
+        h = T[w+1]-T[w]
+        #print("\n\nh = ", h, " \n")
+        #h = dt; # only for equally spaced grid in time and space, otherwise (T[w+1] - T[w])
+        k1 = f(y[:,:], T[w],X)
+        k1=ghost(k1)
+        k2 = f(y[:,:] .+ k1 .* h, T[w] + h,X)
+        k2=ghost(k2)
+        y[:,:] = y[:,:] .+ (h/2) .* (k1 .+ k2)
+        
+    return ghost(y[:,:])
+end
 
 
 function rk4wrapper(f,y0,x,u,spl_funcs,data) # u depicts T array, or M!!
@@ -198,6 +258,20 @@ function n_rk4wrapper(f,y0,x,u,spl_funcs,data) # u depicts T array, or M!!
         k3 = f(y[i,:] .+ k2 * h/2, x[i] .+ h/2,u,spl_funcs,i,data)
         k4 = f(y[i,:] .+ k3 * h, x[i] .+ h,u,spl_funcs,i,data)
         y[i+1,:] = y[i,:] .+ (h/6) * (k1 .+ 2*k2 .+ 2*k3 .+ k4)
+    end
+    return y[:,:]
+end
+
+function twod_n_rk4wrapper(f,y0,x,u,spl_funcs,data) # u depicts T array, or M!!
+    L = length(x)
+    n = length(y0)
+    y = zeros(L,n)
+    y[1,:] = y0;
+    for i in 1:L-1
+        h = x[i+1] .- x[i]
+        k1 = f(y[i,:], x[i],u,spl_funcs,i,data)
+        k2 = f(y[i,:] .+ k1 * h, x[i] .+ h,u,spl_funcs,i,data)
+        y[i+1,:] = y[i,:] .+ (h/2) * (k1 .+ k2)
     end
     return y[:,:]
 end
@@ -340,6 +414,15 @@ function ghost(y)
 end
 
 
+function dissipation(y,i,eps)
+
+    if twod==true
+        return dissipation4(y,i,eps)
+    else
+        return dissipation6(y,i,eps) 
+    end
+end
+
 #6th order dissipation, added to 4th order original scheme
 function dissipation6(y,i,eps)
     if i==4
@@ -362,6 +445,21 @@ return (-1)^3*eps*1/(dx)*delta6
 end
 
 
+#4th order  dissipation, added to 2nd order original scheme
+function dissipation4(y,i,eps)#0.02
+    if i==4
+        delta4=(-13/6*y[i+5,:]+71/6*y[i+4,:]-77/3*y[i+3,:]+83/3*y[i+2,:]-89/6*y[i+1,:]+19/6*y[i,:])
+    elseif i==5
+        delta4=(-7/6*y[i+4,:]+41/6*y[i+3,:]-47/3*y[i+2,:]+53/3*y[i+1,:]-59/6*y[i,:]+13/6*y[i-1,:])
+    elseif i==L-3
+        delta4=-(-13/6*y[i-5,:]+71/6*y[i-4,:]-77/3*y[i-3,:]+83/3*y[i-2,:]-89/6*y[i-1,:]+19/6*y[i,:])
+    elseif i==L-4
+        delta4=-(-7/6*y[i-4,:]+41/6*y[i-3,:]-47/3*y[i-2,:]+53/3*y[i-1,:]-59/6*y[i,:]+13/6*y[i+1,:])
+    else
+        delta4=(y[i+2,:]-4*y[i+1,:]+6*y[i,:]-4*y[i-1,:]+y[i-2,:]);
+    end
+    return (-1)^2*eps*1/(dx)*delta4
+end
 
 # Finite difference approximation
 function Der(y,i,k,X)
@@ -379,7 +477,15 @@ function Der(y,i,k,X)
     
 
     end
-    
+
+    """if isnan(z)
+        println("NAN in Der func for i = ", i)
+    end"""
+    if compactified==true
+        x=X[i]
+        r=x/(1-x)
+        z=z/(r+1)^2#z=z*dx/dr gives the Der in order to r, as originally!
+    end
     return z
 end
 
@@ -525,38 +631,33 @@ function chebyshev(N)
     return sort(X)
 end
 
-function derrchi_evol(y,i,X)
+function derxchi_evol(y,i,X)
     
-
-
-        
-    #state array is [m beta psi rchi rchi,u psi,r rchi,r r]
+    #state array is [m beta psi rchi rchi,u psi,r xchi,r r]
     
-    
-
-
-    #(rchi),r
+    #(xchi),r
     if compactified == false
         r=X[i]
-        r1=X[i]
+        x=r/(1+r)
 
         #necessary functions
-        #chi=zeros(length(y[:,1]))
-        #chi = y[:,4] ./ r
-        chi = y[i,4] ./ r1
+        chi = y[i,4] ./ x
+        derchi = (y[i,7] - 1/(1+r)^2*chi) / x #chi,r = ((xchi),r - 1/(1+r)^2*chi)/x
+        deruchi = y[i,5] / x #chi,u = (xchi),u / x
 
-        #derchi=zeros(length(y[:,1]))
-        #derchi = (y[:,7] .- chi) ./ r #chi,r = ((rchi),r - chi)/r
-        derchi = (y[i,7] - chi) / r1 #chi,r = ((rchi),r - chi)/r
-
-
-        #derphi = -y[i,3]/r^2+derpsi(r)/r #phi,r = -psi/r^2 + psi,r/r
-        deruchi = y[i,5] / r1 #chi,u = (rchi),u / r
-
-        dy=deruchi + 1/(2*(r^2+1)^5)*(exp(2*y[i,2])*((r^2+1)*((r^2+1)^4-4*pi*r^2*chi^2*(r^2*chi+2*r^2+2)^2)*derchi+r*chi*(chi*(chi*(-8*pi*r^2*chi*(r^2*chi+4*r^2+4)-(r^2+1)^2*(r^4+r^2+32*pi))-3*(r^2+1)^4)-2*(r^2+1)^4))+4*r^2*(2*pi*(r^2+1)*(r*(r^2+1)*derchi+2*chi)^2-(r^2+2)*(r^4+2*r^2+2))*deruchi-4*deruchi)
+        dy=deruchi/(1+r)^2 + 1/(2*(1+r)*(r^2+1)^5)*(exp(2*y[i,2])*((r^2+1)*((r^2+1)^4-4*pi*r^2*chi^2*(r^2*chi+2*r^2+2)^2)*derchi+r*chi*(chi*(chi*(-8*pi*r^2*chi*(r^2*chi+4*r^2+4)-(r^2+1)^2*(r^4+r^2+32*pi))-3*(r^2+1)^4)-2*(r^2+1)^4))+4*r^2*(2*pi*(r^2+1)*(r*(r^2+1)*derchi+2*chi)^2-(r^2+2)*(r^4+2*r^2+2))*deruchi-4*deruchi)
+    
     elseif loggrid==false
         x=X[i]
-        dy=0#?????????????????todo
+        r=x/(1-x)
+        
+        #necessary functions
+        chi = y[i,4] ./ x
+        derchi = (y[i,7] - 1/(1+r)^2*chi) / x #chi,r = ((xchi),r - 1/(1+r)^2*chi)/x
+        deruchi = y[i,5] / x #chi,u = (xchi),u / x
+
+        dy=deruchi/(1+r)^2 + 1/(2*(1+r)*(r^2+1)^5)*(exp(2*y[i,2])*((r^2+1)*((r^2+1)^4-4*pi*r^2*chi^2*(r^2*chi+2*r^2+2)^2)*derchi+r*chi*(chi*(chi*(-8*pi*r^2*chi*(r^2*chi+4*r^2+4)-(r^2+1)^2*(r^4+r^2+32*pi))-3*(r^2+1)^4)-2*(r^2+1)^4))+4*r^2*(2*pi*(r^2+1)*(r*(r^2+1)*derchi+2*chi)^2-(r^2+2)*(r^4+2*r^2+2))*deruchi-4*deruchi)
+
     else
         ## (rchi),r evol equation
         x=X[i]
@@ -570,31 +671,34 @@ end
 
 function derpsi_evol(y,i,X)
     
-    #psi,x
+    #psi,r
     if compactified == false
         r=X[i]
-        dy=(1/(2*r^3))*exp(2*y[i,2])*(-2*y[i,1]*y[i,3]+2*r*y[i,3]*Der(y,i,1,X)-2*r^2*y[i,3]*Der(y,i,2,X)+4*r*y[i,1]*y[i,3]*Der(y,i,2,X)+2*r*y[i,1]*y[i,4]-2*r^2*Der(y,i,1,X)*y[i,4]+2*r^3*Der(y,i,2,X)*y[i,4]-4*r^2*y[i,1]*Der(y,i,2,X)*y[i,4]+r^3*Der(y,i,4,X)-2*r^2*y[i,1]*Der(y,i,4,X))
+        dy=(1/(2*r^3))*exp(2*y[i,2])*(-2*y[i,1]*y[i,3]+2*r*y[i,3]*Der(y,i,1,X)-2*r^2*y[i,3]*Der(y,i,2,X)+4*r*y[i,1]*y[i,3]*Der(y,i,2,X)+2*r*y[i,1]*y[i,6]-2*r^2*Der(y,i,1,X)*y[i,6]+2*r^3*Der(y,i,2,X)*y[i,6]-4*r^2*y[i,1]*Der(y,i,2,X)*y[i,6]+r^3*Der(y,i,6,X)-2*r^2*y[i,1]*Der(y,i,6,X))
+    
     else
         
         if loggrid==false
             ## psi,r evol equation
             x=X[i]
             r = x/(1-x)
-            dy=(1/(2*r^3))*exp(2*y[i,2])*(r^3*(1-x)^2*Der(y,i,4,X)-2*r^2*(1-x)^2*Der(y,i,4,X)*y[i,1]+2*r*y[i,1]*y[i,4]-2*y[i,1]*y[i,3]-2*r^2*(1-x)^2*y[i,4]*Der(y,i,1,X)+2*r*(1-x)^2*y[i,3]*Der(y,i,1,X)+2*r^3*(1-x)^2*y[i,4]*Der(y,i,2,X)-4*r^2*(1-x)^2*y[i,1]*y[i,4]*Der(y,i,2,X)-2*r^2*(1-x)^2*y[i,3]*Der(y,i,2,X)+4*r*(1-x)^2*y[i,1]*y[i,3]*Der(y,i,2,X))
+            
+            dy=(1/(2*r^3))*exp(2*y[i,2])*(-2*y[i,1]*y[i,3]+2*r*y[i,3]*Der(y,i,1,X)-2*r^2*y[i,3]*Der(y,i,2,X)+4*r*y[i,1]*y[i,3]*Der(y,i,2,X)+2*r*y[i,1]*y[i,6]-2*r^2*Der(y,i,1,X)*y[i,6]+2*r^3*Der(y,i,2,X)*y[i,6]-4*r^2*y[i,1]*Der(y,i,2,X)*y[i,6]+r^3*Der(y,i,6,X)-2*r^2*y[i,1]*Der(y,i,6,X))
+    
         else
 
-            ##psi,x evol equation
+            ##psi,r evol equation
             xt=X[i] #xtilde
             x=inverse(xt)
             r=x/(1-x)
             
-            
-            derxtr=(Agrid*fgrid)/((1+fgrid^2*(-kgrid+xt)^2)*(1-mgrid-Agrid*atan(fgrid*(-kgrid+xt))))+(Agrid*fgrid*(mgrid+Agrid*atan(fgrid*(-kgrid+xt))))/((1+fgrid^2*(-kgrid+xt)^2)*(1-mgrid-Agrid*atan(fgrid*(-kgrid+xt)))^2)
-            derm=Der(y,i,1,X)/(derxtr)
-            derbeta=Der(y,i,2,X)/(derxtr)
-            derderpsi=Der(y,i,4,X)/(derxtr)
-            
-            dy=(1/(2*r^3))*exp(2*y[i,2])*(-2*y[i,1]*y[i,3]+2*r*y[i,3]*derm-2*r^2*y[i,3]*derbeta+4*r*y[i,1]*y[i,3]*derbeta+2*r*y[i,1]*y[i,4]-2*r^2*derm*y[i,4]+2*r^3*derbeta*y[i,4]-4*r^2*y[i,1]*derbeta*y[i,4]+r^3*derderpsi-2*r^2*y[i,1]*derderpsi)
+            #todo
+            #derxtr=(Agrid*fgrid)/((1+fgrid^2*(-kgrid+xt)^2)*(1-mgrid-Agrid*atan(fgrid*(-kgrid+xt))))+(Agrid*fgrid*(mgrid+Agrid*atan(fgrid*(-kgrid+xt))))/((1+fgrid^2*(-kgrid+xt)^2)*(1-mgrid-Agrid*atan(fgrid*(-kgrid+xt)))^2)
+            #derm=Der(y,i,1,X)/(derxtr)
+            #derbeta=Der(y,i,2,X)/(derxtr)
+            #derderpsi=Der(y,i,4,X)/(derxtr)
+            #
+            #dy=(1/(2*r^3))*exp(2*y[i,2])*(-2*y[i,1]*y[i,3]+2*r*y[i,3]*derm-2*r^2*y[i,3]*derbeta+4*r*y[i,1]*y[i,3]*derbeta+2*r*y[i,1]*y[i,4]-2*r^2*derm*y[i,4]+2*r^3*derbeta*y[i,4]-4*r^2*y[i,1]*derbeta*y[i,4]+r^3*derderpsi-2*r^2*y[i,1]*derderpsi)
         end
 
     end
@@ -632,53 +736,112 @@ end
 
 function RHS(y0,x1,time,func,i,data)
     
-    #state array is [m beta psi rchi rchi,u psi,r rchi,r r]
+    #state array is [m beta psi xchi xchi,u psi,r xchi,r r]
     z=zeros(length(y0))
     
     derpsi = func[1]
-    derrchi = func[2]
+    derxchi = func[2]
 
     #coords
     r=0
     if compactified==false
         r=x1
     else
-        z=0#??
+        x=x1
+        r=x/(1-x)
     end
     
-    #psi
-    z[3]=derpsi(r)
-
-    #rchi
-    z[4]=derrchi(r)
+    #psi and rchi
+    if compactified==false
+        r=x1
+        z[3]=derpsi(r)
+        z[4]=derxchi(r)
+    else
+        #psi,x
+        if abs.(x1 .- 1.0)<10^(-15)
+            z[3]=0.0
+            z[4]=0.0
+        else
+            z[3]=derpsi(x1)/(1-x1)^2
+            z[4]=derxchi(x1)/(1-x1)^2
+        end
+    end
+    
+    
 
     #necessary functions
-    chi = y0[4]/r
-    derchi = (derrchi(r)-chi)/r #chi,r = ((rchi),r - chi)/r
-    derphi = -y0[3]/r^2+derpsi(r)/r #phi,r = -psi/r^2 + psi,r/r
-    deruchi = y0[5] / r #chi,u = (rchi),u / r
+    
+
+    if compactified==false
+        r=x1
+        x=r/(1+r)
+        chi = y0[4]/x
+        deruchi = y0[5] / x #chi,u = (xchi),u / x
+        derphi = -y0[3]/r^2+derpsi(r)/r #phi,r = -psi/r^2 + psi,r/r
+        derchi = (derxchi(r)-1/(1+r)^2*chi)/x #chi,r = ((xchi),r - 1/(1+r)^2*chi)/x
+    else
+        x=x1
+        r=x/(1-x)
+        chi = y0[4]/x
+        deruchi = y0[5] / x #chi,u = (xchi),u / x
+        derphi = -y0[3]/r^2+derpsi(x1)/r #phi,r = -psi/r^2 + psi,r/r
+        derchi = (derxchi(r)-1/(1+r)^2*chi)/x #chi,r = ((xchi),r - 1/(1+r)^2*chi)/x
+    end
     
     #beta
     if x1<10^(-15)
         z[2] = 0.0
     else
-        z[2] = 2*pi*r*((derphi)^2 + (2*(r*(r^2+1)*derchi+2*chi))/(r^2+1)^4)
+        if compactified==false
+            z[2] = 2*pi*r*((derphi)^2 + (2*(r*(r^2+1)*derchi+2*chi))/(r^2+1)^4)
+        else
+            x=x1
+            r=x/(1-x)
+            z[2] = 1/(1-x1)^2*(2*pi*r*((derphi)^2 + (2*(r*(r^2+1)*derchi+2*chi))/(r^2+1)^4))
+            if abs.(x1 .- 1.0)<10^(-15)
+                z[2]=0.0
+            end
+        end
     end
 
-    #rchi,u   
+    #xchi,u
     if x1<10^(-15)
         z[5] = 0.0
     else
-        z[5] = deruchi + 1/(2*(r^2+1)^5)*(exp(2*y0[2])*((r^2+1)*((r^2+1)^4-4*pi*r^2*chi^2*(r^2*chi+2*r^2+2)^2)*derchi+r*chi*(chi*(chi*(-8*pi*r^2*chi*(r^2*chi+4*r^2+4)-(r^2+1)^2*(r^4+r^2+32*pi))-3*(r^2+1)^4)-2*(r^2+1)^4))+4*r^2*(2*pi*(r^2+1)*(r*(r^2+1)*derchi+2*chi)^2-(r^2+2)*(r^4+2*r^2+2))*deruchi-4*deruchi)
+        if compactified==false
+            r=x1
+            z[5] = 1/(1+r)^2*deruchi + 1/(2*(r^2+1)^5*(1+r))*(exp(2*y0[2])*((r^2+1)*((r^2+1)^4-4*pi*r^2*chi^2*(r^2*chi+2*r^2+2)^2)*derchi+r*chi*(chi*(chi*(-8*pi*r^2*chi*(r^2*chi+4*r^2+4)-(r^2+1)^2*(r^4+r^2+32*pi))-3*(r^2+1)^4)-2*(r^2+1)^4))+4*r^2*(2*pi*(r^2+1)*(r*(r^2+1)*derchi+2*chi)^2-(r^2+2)*(r^4+2*r^2+2))*deruchi-4*deruchi)
+        else
+            x=x1
+            r=x/(1-x)
+            z[5] = 1/(1-x1)^2 * (1/(1+r)^2*deruchi + 1/(2*(r^2+1)^5*(1+r))*(exp(2*y0[2])*((r^2+1)*((r^2+1)^4-4*pi*r^2*chi^2*(r^2*chi+2*r^2+2)^2)*derchi+r*chi*(chi*(chi*(-8*pi*r^2*chi*(r^2*chi+4*r^2+4)-(r^2+1)^2*(r^4+r^2+32*pi))-3*(r^2+1)^4)-2*(r^2+1)^4))+4*r^2*(2*pi*(r^2+1)*(r*(r^2+1)*derchi+2*chi)^2-(r^2+2)*(r^4+2*r^2+2))*deruchi-4*deruchi))
+            
+            if abs.(x1 .- 1.0)<10^(-15)
+                z[5]=0.0
+            end
+        end
     end 
     
     #m
     if x1<10^(-15)
         z[1] = 0.0
     else
-        z[1] = (2*pi*r)/((r^2+1)^3)*(2*(r^2+1)*r^2*exp(-2*y0[2])*derchi*((r-2*y0[1])*exp(2*y0[2])*derchi-r*deruchi)+(r^2+1)^3*(r-2*y0[1])*derphi^2+(4*(-4*y0[1]+r^5+2*r^3+3*r)*chi^2)/(r^2+1)+4*r*chi*(2*(r-2*y0[1])*derchi-r*exp(-2*y0[2])*deruchi)+4*r^3*chi^3+(r^5*chi^4)/(r^2+1))
+        if compactified==false
+            #z[1] = (2*pi*r)*(r-2*y0[1])*derphi^2
+            z[1] = (2*pi*r)/((r^2+1)^3)*(2*(r^2+1)*r^2*exp(-2*y0[2])*derchi*((r-2*y0[1])*exp(2*y0[2])*derchi-r*deruchi)+(r^2+1)^3*(r-2*y0[1])*derphi^2+(4*(-4*y0[1]+r^5+2*r^3+3*r)*chi^2)/(r^2+1)+4*r*chi*(2*(r-2*y0[1])*derchi-r*exp(-2*y0[2])*deruchi)+4*r^3*chi^3+(r^5*chi^4)/(r^2+1))
+        else
+            x=x1
+            r=x/(1-x)
+            z[1] = 1/(1-x1)^2*((2*pi*r)/((r^2+1)^3)*(2*(r^2+1)*r^2*exp(-2*y0[2])*derchi*((r-2*y0[1])*exp(2*y0[2])*derchi-r*deruchi)+(r^2+1)^3*(r-2*y0[1])*derphi^2+(4*(-4*y0[1]+r^5+2*r^3+3*r)*chi^2)/(r^2+1)+4*r*chi*(2*(r-2*y0[1])*derchi-r*exp(-2*y0[2])*deruchi)+4*r^3*chi^3+(r^5*chi^4)/(r^2+1)))
+            if abs.(x1 .- 1.0)<10^(-15)
+                z[1]=0.0
+            end
+        end
     end 
     
+    #println("z[4]", z[4], " time =", time)
+    #println("z[5]", z[5])
+
     return z[:]
 end
 
@@ -752,32 +915,51 @@ function SF_RHS(data,t,X)
 
     # update interpolation of psi,x
     derpsi_func = Spline1D(X[4:L-3],data[4:L-3,6],k=4)
-    derrchir_func = Spline1D(X[4:L-3], data[4:L-3,7],  k=4);
+    derxchi_func = Spline1D(X[4:L-3], data[4:L-3,7], k=4);
 
-    funcs=[derpsi_func derrchir_func];
+    funcs=[derpsi_func derxchi_func];
     
     # update m, beta and psi data
     y0=[0.0 0.0 0.0 0.0 0.0]
-    data[4:L-3,1:5] = n_rk4wrapper(RHS,y0,X[4:L-3],t,funcs,data[:,:])
+    if twod==true
+        data[4:L-3,1:5] = twod_n_rk4wrapper(RHS,y0,X[4:L-3],t,funcs,data[:,:])
+    else
+        data[4:L-3,1:5] = n_rk4wrapper(RHS,y0,X[4:L-3],t,funcs,data[:,:])
+    end
     data=ghost(data)
 
-    
-
+    if twod==true
+        epsilon=0.02
+    else
+        epsilon=0.0065
+    end
 
     Threads.@threads for i in 4:L-3 #ORI
         if X[i]<10^(-15) #left
-            dy[i,6]= +1.0/2.0 * (1/(1-X[i])^2 * Der(data,i,6,X) + 2/(1-X[i])^3*data[i,6])  - dissipation6(data,i,0.0065)[6]#- dissipation4(data,i,0.02)[6];
-            dy[i,7]= 0.0 - dissipation6(data,i,0.0065)[6]
+            dy[i,6]= +1.0/2.0 * (Der(data,i,6,X))  - dissipation(data,i,epsilon)[6]
+            #dy[i,6]= +1.0/2.0 * (1/(1-x)^2 * Der(data,i,6,X) + 2/(1-x)^3*data[i,6])  - dissipation(data,i,epsilon)[6]#- dissipation4(data,i,0.02)[6];
+         
+            dy[i,7]= 0.0 - dissipation(data,i,epsilon)[6]
+
+
+            
+            #dy[i,7]=derxchi_evol(data,i,X) - dissipation(data,i,epsilon)[7]
+            
+            
         elseif abs.(X[i] .- 1.0)<10^(-15)
-            dy[i,6]= derpsi_evol(data,i,X) - dissipation6(data,i,0.0065)[6]
-            dy[i,7]= 0.0 - dissipation6(data,i,0.0065)[7]#- dissipation4(data,i,0.02)[4]
+            dy[i,6]= 0.0 - dissipation(data,i,epsilon)[6]
+            dy[i,7]= 0.0 - dissipation(data,i,epsilon)[7]#- dissipation4(data,i,0.02)[4]
             
         else
-            dy[i,6]=derpsi_evol(data,i,X) - dissipation6(data,i,0.0065)[6]
-            dy[i,7]=derrchi_evol(data,i,X) - dissipation6(data,i,0.0065)[7]
+            dy[i,6]=derpsi_evol(data,i,X) - dissipation(data,i,epsilon)[6]
+            dy[i,7]=derxchi_evol(data,i,X) - dissipation(data,i,epsilon)[7]
+            #println("dy[i,7] = ", dy[i,7], " t = ", t)
         end
     end
-
+    
+    
+    #extrapolate_in(dy[5,7], dy[6,7], dy[7,7], dy[8,7]) - dissipation(data,4,epsilon)[6]
+    #println("dy[4,7]=",dy[4,7])
     
     
 
@@ -813,13 +995,15 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
 
         iter = iter + 1
         
+        
         #update time increment
 
-        if criticality!=true#||dt>0.00000001
+        if criticality!=true
             global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)      
         end
         t = t + dt
-        if iter%100==0
+        
+        if iter%5==0
             println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
         end
         #println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
@@ -830,30 +1014,40 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         X=initX #state_array[:,5]
         X1=X[4:L-3]
        
-        #evolve psi,x
         
-        state_array[:,:] = rungekutta4molstep(SF_RHS,state_array[:,:],T_array,iter,X) #evolve psi,x
+        #evolve psi,x
+        #println("hey")
+        if twod==true
+            state_array[:,:] = twod_rungekutta4molstep(SF_RHS,state_array[:,:],T_array,iter,X) #evolve psi,x
+        else
+            state_array[:,:] = rungekutta4molstep(SF_RHS,state_array[:,:],T_array,iter,X) #evolve psi,x
+        end
         state_array=ghost(state_array)
-    
+        #println("bye")
+        
         # update interpolation of psi,x
         derpsi_func = Spline1D(X[4:L-3],state_array[4:L-3,6],k=4)
-        derrchir_func = Spline1D(X[4:L-3], state_array[4:L-3,7], k=4);
+        derxchi_func = Spline1D(X[4:L-3], state_array[4:L-3,7], k=4);
 
-        funcs=[derpsi_func derrchir_func];
+        funcs=[derpsi_func derxchi_func];
 
         #evolve m and beta together, new
         y0=[0.0 0.0 0.0 0.0 0.0]
         
-        
-        state_array[4:L-3,1:5] = n_rk4wrapper(RHS,y0,X1,t,funcs,state_array[:,:])
+        #println("ola")
+        if twod==true
+            state_array[4:L-3,1:5] = twod_n_rk4wrapper(RHS,y0,X1,t,funcs,state_array[:,:])
+        else
+            state_array[4:L-3,1:5] = n_rk4wrapper(RHS,y0,X1,t,funcs,state_array[:,:])
+        end
         state_array=ghost(state_array)
-        
+        #println("adeus")
         
 
         run=int(run)
 
         
-        if iter%100==0
+        if iter%10==0
         #if (iter%100==0&&t>0.5)||(t>1.5&&iter%5==0)||(t>=2.04&&t<=2.046)
             if zeroformat==true
                 zero_print_muninn(files, t, state_array[:,:],res,"a")
@@ -871,19 +1065,20 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         end
 
         
-        if maximum(monitor_ratio)>0.70&&k==0
+        if maximum(monitor_ratio)>0.60&&k==0
             global criticality = true
             k=k+1
             println("Supercritical evolution! At time ", t, ", iteration = ", iter)
             println("t = ", t, "iteration ", iter, " monitor ratio = ", maximum(monitor_ratio))
             global time = t
+            break
         end
 
         """if criticality == true
             break
         end"""
         
-        if isnan(state_array[L-3,4])
+        if isnan(state_array[L-3,6])
             if criticality==false
                 global time = iter
                 global explode = true
@@ -896,6 +1091,8 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         end
 
         #global time = t
+
+        #println("state array at the end of iteration of time ", time, " is ", state_array)
         
     end
     
