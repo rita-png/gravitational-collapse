@@ -1,7 +1,7 @@
 using CSV, Tables
 using Dierckx
 
-
+include("./ScalarField.jl");
 A = 0.1256
 global bisection = false
 global loggrid = true
