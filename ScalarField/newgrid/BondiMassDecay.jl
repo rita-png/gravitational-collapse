@@ -129,7 +129,7 @@ explode=0.0
 evol_stats = [criticality A sigma r0 time explode run]
 global monitor_ratio = zeros(L);
 
-run=int(run)
+
 if run == 1 && bisection==true
     if loggrid==true
         CSV.write(dir*"/bisectionsearch/muninnDATA/uneven/parameters.csv", Tables.table(evol_stats))#, writeheader=true, header=["criticality", "A", "sigma", "r0", "time", "explode", "run"])
