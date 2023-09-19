@@ -1,6 +1,6 @@
 using CSV, Tables
 using Dierckx
-
+using CSV, Tables, DataFrames, Plots, Printf
 include("./ScalarField.jl");
 A = 0.1256
 global bisection = false
