@@ -1042,7 +1042,7 @@ function timeevolution(state_array,finaltime,run)
         state_array=ghost(state_array)
         
         
-        run=int(run)
+        
 
         
 
