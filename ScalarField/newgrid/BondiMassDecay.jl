@@ -9,6 +9,12 @@ global compactified = true
 global zeroformat = true
 global twod = true
 
+
+Agrid=0.35
+kgrid=0.7
+mgrid=0.5#0.55
+fgrid=5
+
 N=1000.0
 global dir = "/home/ritapsantos/data/ritapsantos/bondimass"
 
@@ -150,9 +156,9 @@ if bisection==false
         #global dt=2e-5/5/2/2
         global dt=0.000006/2/2
     end
-    finaltime=5.0
+    finaltime=20.0
 else
-    finaltime=5.0
+    finaltime=20.0
 end
 
 stats, T_interp = timeevolution(state_array,finaltime,run);
