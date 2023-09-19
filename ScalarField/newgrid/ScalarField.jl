@@ -997,6 +997,9 @@ function timeevolution(state_array,finaltime,run)
         iter = iter + 1
 
         #update time increment
+        """if bisection==true
+            global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt)
+        end"""
         if bisection==true
             global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt)
         end
