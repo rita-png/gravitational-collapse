@@ -1000,9 +1000,9 @@ function timeevolution(state_array,finaltime,run)
         """if bisection==true
             global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt)
         end"""
-        if bisection==true
-            global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt)
-        end
+        
+        global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt)
+        
 
         t = t + dt
         if ((iter%100==0)&&(bisection==true))||((iter%100==0)&&(bisection==false))
