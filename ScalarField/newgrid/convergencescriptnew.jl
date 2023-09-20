@@ -6,7 +6,7 @@ res = trunc(Int, ARGS[2])
 global compactified=true
 global loggrid=true
 global zeroformat = false
-global twod = true
+global twod = false
 global bisection=false
 m=res
 run = 1
@@ -42,7 +42,7 @@ else
 end
 
 res=m;
-N=2.0^m*1600.0/2.0
+N=2.0^m*200.0/2.0
 
 dx=(Xf-ori)/N
 
@@ -133,8 +133,8 @@ Threads.nthreads()
 
 if bisection==false
     if m==1
-        #global dt=0.0002 #N=200
-        global dt=0.0002/2/2/2 #N=1600
+        global dt=0.0002 #N=200
+        #global dt=0.0002/2/2/2 #N=1600
         
     elseif m==2
         #global dt=2e-5/5/2 #N=200
@@ -144,7 +144,7 @@ if bisection==false
         global dt=0.0002/2/2 #N=200
         
     end
-    finaltime=5.0
+    finaltime=3.0 ##changed##
 else
     finaltime=3.0
 end
