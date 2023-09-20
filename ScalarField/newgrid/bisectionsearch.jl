@@ -12,8 +12,8 @@ kgrid=0.7
 mgrid=0.5#0.55
 fgrid=5"""
 
-#grid 2, new
-Agrid=0.45
+#grid 2, newnew
+Agrid=0.42
 kgrid=0.5
 mgrid=0.5
 fgrid=4.5
