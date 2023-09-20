@@ -14,7 +14,7 @@ global dir = "/home/ritapsantos/data/ritapsantos/bondimassnear"
 global bisection = false
 global loggrid = true
 global compactified = true
-global zeroformat = true
+global zeroformat = false
 global twod = true
 
 
@@ -24,7 +24,6 @@ mgrid=0.5#0.55
 fgrid=5
 
 N=1000.0
-global dir = "/home/ritapsantos/data/ritapsantos/bondimass"
 
 m = 1
 res=m
