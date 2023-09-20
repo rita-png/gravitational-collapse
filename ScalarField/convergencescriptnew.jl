@@ -139,10 +139,10 @@ if m==1
     #global dt=5e-5/2/2/2/2
 elseif m==2
     #global dt=1e-5
-    global dt=5e-5/2/2
+    global dt=5e-5/2
 else
     #global dt=1e-5/2
-    global dt=5e-5/2/2/2
+    global dt=5e-5/2/2
 end
 
 finaltime=5.0
