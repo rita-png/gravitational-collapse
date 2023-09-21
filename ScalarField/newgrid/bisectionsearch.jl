@@ -27,7 +27,7 @@ global compactified = true
 global zeroformat = false
 
 
-N=5000.0 #grid 2
+N=4000.0 #grid 2
 global dir = "/home/ritapsantos/data/ritapsantos/4thuneven"
 global low_bound = 0.12
 global high_bound = 0.13
