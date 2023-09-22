@@ -27,19 +27,19 @@ global compactified = true
 global zeroformat = false
 
 
-N=1200.0 #grid 2
-global dir = "/home/ritapsantos/data/ritapsantos/4thuneven"
-global low_bound = 0.12
-global high_bound = 0.13
-global twod = false
+#N=1200.0 #grid 2
+#global dir = "/home/ritapsantos/data/ritapsantos/4thuneven"
+#global low_bound = 0.12
+#global high_bound = 0.13
+#global twod = false
 
 ##OR##
 
-#N=1200.0 #grid 2, tmux 2
-#global dir = "/home/ritapsantos/data/ritapsantos"
-#global low_bound = 0.115#0.125
-#global high_bound = 0.12500000000931322#0.135
-#global twod = true
+N=10000.0 #grid 2, tmux 2
+global dir = "/home/ritapsantos/data/ritapsantos"
+global low_bound = 0.1240
+global high_bound = 0.1250
+global twod = false
 
 ##OR##
 
