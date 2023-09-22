@@ -32,11 +32,11 @@ global compactified = true
 global zeroformat = false
 
 
-N=6000.0 #grid 2
-global dir = "/home/ritapsantos/data/ritapsantos/4thuneven"
-global low_bound = 0.1240
-global high_bound = 0.1250
-global twod = false
+#N=6000.0 #grid 2
+#global dir = "/home/ritapsantos/data/ritapsantos/4thuneven"
+#global low_bound = 0.1240
+#global high_bound = 0.1250
+#global twod = false
 
 ##OR##
 
@@ -48,11 +48,11 @@ global twod = false
 
 ##OR##
 
-#N=2000.0 #grid 2
-#global dir = "/home/ritapsantos/data/ritapsantos/new2nduneven"
-#global low_bound = 0.12
-#global high_bound = 0.13
-#global twod = FALSE?true
+N=6000.0 #grid 2
+global dir = "/home/ritapsantos/data/ritapsantos/new4thuneven"
+global low_bound = 0.1240
+global high_bound = 0.1250
+global twod = false
 
 
 #### CONFIG ####
