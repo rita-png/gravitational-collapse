@@ -190,7 +190,7 @@ function update_dt(X, m, beta,dt)
 
     #return  dx/g*0.01
 
-    return dx/g*0.5/2/10
+    return dx/g*0.5/2
 end
 
 function find_origin(X)
