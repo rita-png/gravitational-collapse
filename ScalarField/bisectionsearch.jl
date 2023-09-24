@@ -47,7 +47,7 @@ global twod = false
 
 
 global run = 1
-global runmax = 40
+global runmax = 80
 
 plt_A_crit = Vector{Float64}()
 plt_A_non_crit = Vector{Float64}()

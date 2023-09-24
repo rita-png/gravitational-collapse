@@ -11,9 +11,10 @@ global compactified=true
 global loggrid=false
 global zeroformat=false
 global bisection=false
+global twod=true
 
 res=m;
-N=2.0^m*150.0/2.0
+N=2.0^m*200.0/2.0
 println("running for resolution ", res, ", N = ", N, ", A = ", A)
 if compactified==true
     Xf=1.0
@@ -27,7 +28,7 @@ if loggrid==false
 else
     dt=0.1*round(dx,digits=10)
 end
-Nt=2.0^m*150.0/2.0
+Nt=N
 Tf=Nt*dt; #final time
 #print(Tf)
 
@@ -100,8 +101,11 @@ derpsi_func = Spline1D(initX[4:L-3], state_array[4:L-3,4],  k=4);
 
 y0=[0, 0, 0]
 
-state_array[4:L-3,1:3] = n_rk4wrapper(RHS,y0,initX[4:L-3],0,derpsi_func,state_array[:,:]);
-
+if twod==false
+    state_array[4:L-3,1:3] = n_rk4wrapper(RHS,y0,initX[4:L-3],0,derpsi_func,state_array[:,:]);
+else
+    state_array[4:L-3,1:3] = twod_n_rk4wrapper(RHS,y0,initX[4:L-3],0,derpsi_func,state_array[:,:]);
+end
 state_array = ghost(state_array);
 
 
@@ -134,15 +138,15 @@ using Base.Threads
 Threads.nthreads()
 
 if m==1
-    #global dt=2e-5
-    global dt=5e-5
+    global dt=2e-5 #N=200
+    #global dt=5e-5 #N=150
     #global dt=5e-5/2/2/2/2
 elseif m==2
-    #global dt=1e-5
-    global dt=5e-5/2
+    global dt=1e-5
+    #global dt=5e-5/2
 else
-    #global dt=1e-5/2
-    global dt=5e-5/2/2
+    global dt=1e-5/2
+    #global dt=5e-5/2/2
 end
 
 finaltime=5.0

@@ -4,16 +4,13 @@ res = trunc(Int, ARGS[2])
 #m=1
 #res=m
 global compactified=true
-global loggrid=false##CHANGE##
+global loggrid=true
 global zeroformat = false
-global twod = true##CHANGE##
+global twod = false
 global bisection=false
 m=res
 run = 1
-
-#global dir = "/home/ritapsantos/data/ritapsantos/convergenceuneven"
-global dir = "/home/ritapsantos/data/ritapsantos"
-
+global dir = "/home/ritapsantos/data/ritapsantos/convergenceuneven"
 
 ## grid
 Agrid=0.35
@@ -51,7 +48,6 @@ N=2.0^m*200.0/2.0
 dx=(Xf-ori)/N
 
 println("running for resolution ", res, " N1 = ", N, ", A = ", A)
-
 
 using Printf
 include("./ScalarField.jl");
