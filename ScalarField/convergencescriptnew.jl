@@ -14,7 +14,7 @@ global bisection=false
 global twod=true
 
 res=m;
-N=2.0^m*1600.0/2.0
+N=2.0^m*150.0/2.0
 println("running for resolution ", res, ", N = ", N, ", A = ", A)
 if compactified==true
     Xf=1.0
@@ -139,15 +139,15 @@ Threads.nthreads()
 
 if m==1
     #global dt=2e-5 #N=200
-    global dt=2e-5/2/2/2 #N=1600
-    #global dt=5e-5 #N=150
+    #global dt=2e-5/2/2/2 #N=1600
+    global dt=5e-5 #N=150
     #global dt=5e-5/2/2/2/2
 elseif m==2
-    global dt=1e-5
-    #global dt=5e-5/2
+    #global dt=1e-5
+    global dt=5e-5/2
 else
-    global dt=1e-5/2
-    #global dt=5e-5/2/2
+    #global dt=1e-5/2
+    global dt=5e-5/2/2
 end
 
 finaltime=5.0
