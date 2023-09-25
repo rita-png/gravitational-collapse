@@ -29,8 +29,8 @@ global high_bound = 0.12465049985275255#0.12465049985283985#0.12465049985796213#
 global N=2000.0
 global dir = "/home/ritapsantos/data/ritapsantos/massscaling"
 
-global low_bound = 0.124
-global high_bound = 0.125
+global low_bound = 0.12465049029170858#0.124
+global high_bound = 0.12465049029170948#0.125
 ####
 
 global bisection = true
