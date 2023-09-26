@@ -42,7 +42,7 @@ global zeroformat = false
 
 N=10000.0 #grid 2, tmux 2
 global dir = "/home/ritapsantos/data/ritapsantos"
-global low_bound = 0.1240
+global low_bound = 0.1245
 global high_bound = 0.1250
 global twod = false
 
