@@ -941,7 +941,7 @@ function SF_RHS(data,t,X)
          
             dy[i,7]= 0.0 - dissipation(data,i,epsilon)[6]
 
-
+            #println(dissipation(data,i,epsilon)[6], " ")
             
             #dy[i,7]=derxchi_evol(data,i,X) - dissipation(data,i,epsilon)[7]
             
@@ -949,11 +949,15 @@ function SF_RHS(data,t,X)
         elseif abs.(X[i] .- 1.0)<10^(-15)
             dy[i,6]= 0.0 - dissipation(data,i,epsilon)[6]
             dy[i,7]= 0.0 - dissipation(data,i,epsilon)[7]#- dissipation4(data,i,0.02)[4]
+
+            #print(dissipation(data,i,epsilon)[6], " ")
             
         else
             dy[i,6]=derpsi_evol(data,i,X) - dissipation(data,i,epsilon)[6]
             dy[i,7]=derxchi_evol(data,i,X) - dissipation(data,i,epsilon)[7]
             #println("dy[i,7] = ", dy[i,7], " t = ", t)
+
+            #print( dissipation(data,i,epsilon)[6], " ")
         end
     end
     
@@ -995,7 +999,9 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
 
         iter = iter + 1
         
-        
+        if iter==2
+            break
+        end
         #update time increment
 
         if criticality!=true

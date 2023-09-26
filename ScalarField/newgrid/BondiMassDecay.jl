@@ -6,10 +6,6 @@ include("./ScalarField.jl");
 A = 0.1256
 global dir = "/home/ritapsantos/data/ritapsantos/bondimass"
 
-##OR##
-#run 2
-#A = 0.126
-#global dir = "/home/ritapsantos/data/ritapsantos/bondimassnear"
 
 global bisection = false
 global loggrid = true
