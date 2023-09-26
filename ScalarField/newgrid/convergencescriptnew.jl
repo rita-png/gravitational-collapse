@@ -143,9 +143,9 @@ if bisection==false
         global dt=0.0002/2/2 #N=200
         
     end
-    finaltime=3.0 ##changed##
+    finaltime=5.0
 else
-    finaltime=3.0
+    finaltime=5.0
 end
 
 
