@@ -35,7 +35,7 @@ end
 end"""
 
 
-function init_gaussian_der(r,r0,sigma,A) #This is actually dphi/dr and not dpsi/dr but doesnt make much diff... 
+function init_gaussian_der(r,r0,sigma,A)
     n=length(r);
     if compactified==false
         if n==1
@@ -585,6 +585,25 @@ function bulkSF(y,i,X)
 end
 
 
+function bulkSF(y,i,X,spls)
+    
+    #psi,x
+    #dy=-1.0/2.0*exp(2.0*y[i,2])*(-(2*(X[i]-1)^3*y[i,3]*(X[i]*((X[i]-1)*unevenDer(y,i,1,X,spls)+X[i]*unevenDer(y,i,2,X,spls))+y[i,1]*(1+2*(X[i]-1)*X[i]*unevenDer(y,i,2,X,spls))))/X[i]^3 - (2*(X[i]-1)^4*(X[i]*((X[i]-1)*unevenDer(y,i,1,X,spls)+X[i]*unevenDer(y,i,2,X,spls))+y[i,1]*(1+2(X[i]-1)*X[i]*unevenDer(y,i,2,X,spls)))*y[i,4])/X[i]^2 - ((X[i]+2*(X[i]-1)*y[i,1])*unevenDer(y,i,4,X,spls))/X[i])
+
+    #psi,x
+    if compactified == false
+        r=X[i]
+        dy=(1/(2*r^3))*exp(2*y[i,2])*(-2*y[i,1]*y[i,3]+2*r*y[i,3]*Der(y,i,1,X)-2*r^2*y[i,3]*Der(y,i,2,X)+4*r*y[i,1]*y[i,3]*Der(y,i,2,X)+2*r*y[i,1]*y[i,4]-2*r^2*Der(y,i,1,X)*y[i,4]+2*r^3*Der(y,i,2,X)*y[i,4]-4*r^2*y[i,1]*Der(y,i,2,X)*y[i,4]+r^3*Der(y,i,4,X)-2*r^2*y[i,1]*Der(y,i,4,X))
+    else
+        ## psi,r evol equation
+        x=X[i]
+        r = x/(1-x)
+        dy=(1/(2*r^3))*exp(2*y[i,2])*(r^3*(1-x)^2*unevenDer(y,i,4,X,spls)-2*r^2*(1-x)^2*unevenDer(y,i,4,X,spls)*y[i,1]+2*r*y[i,1]*y[i,4]-2*y[i,1]*y[i,3]-2*r^2*(1-x)^2*y[i,4]*unevenDer(y,i,1,X,spls)+2*r*(1-x)^2*y[i,3]*unevenDer(y,i,1,X,spls)+2*r^3*(1-x)^2*y[i,4]*unevenDer(y,i,2,X,spls)-4*r^2*(1-x)^2*y[i,1]*y[i,4]*unevenDer(y,i,2,X,spls)-2*r^2*(1-x)^2*y[i,3]*unevenDer(y,i,2,X,spls)+4*r*(1-x)^2*y[i,1]*y[i,3]*unevenDer(y,i,2,X,spls))
+
+
+    end
+    return dy
+end
 function boundarySF(y,X)
 
     L=length(state_array[:,1])
@@ -699,19 +718,31 @@ function SF_RHS(data,t,X)
 
     
    
-    
-    Threads.@threads for i in 4:L-3 #ORI
-        if X[i]<10^(-15) #left
-            dy[i,4]= +1.0/2.0 * (1/(1-X[i])^2 * Der(data,i,4,X) + 2/(1-X[i])^3*data[i,4])  - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4];
-            
-        elseif abs.(X[i] .- 1.0)<10^(-15)
-            dy[i,4]= 0.0 - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4]
-            
-        else
-            dy[i,4]=bulkSF(data,i,X) - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4]
+    if loggrid==false
+        Threads.@threads for i in 4:L-3 #ORI
+            if X[i]<10^(-15) #left
+                dy[i,4]= +1.0/2.0 * (1/(1-X[i])^2 * Der(data,i,4,X) + 2/(1-X[i])^3*data[i,4])  - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4];
+                
+            elseif abs.(X[i] .- 1.0)<10^(-15)
+                dy[i,4]= 0.0 - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4]
+                
+            else
+                dy[i,4]=bulkSF(data,i,X) - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4]
+            end
         end
-    end
-    
+    else
+        Threads.@threads for i in 4:L-3 #ORI
+            if X[i]<10^(-15) #left
+                dy[i,4]= +1.0/2.0 * (1/(1-X[i])^2 * unevenDer(data,i,4,X,funcs) + 2/(1-X[i])^3*data[i,4])  - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4];
+                
+            elseif abs.(X[i] .- 1.0)<10^(-15)
+                dy[i,4]= 0.0 - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4]
+                
+            else
+                dy[i,4]=bulkSF(data,i,X,funcs) - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4]
+            end
+        end
+    end 
     
     dy[4,4]=extrapolate_in(dy[5,4], dy[6,4], dy[7,4], dy[8,4])
 
@@ -749,11 +780,11 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         
         #update time increment
 
-        if criticality!=true&&bisection==true#||dt>0.00000001
+        if criticality!=true#||dt>0.00000001
             global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)      
         end
         t = t + dt
-        if iter%200==0
+        if iter%100==0
             println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
         end
         #println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
@@ -780,8 +811,8 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
 
         run=int(run)
 
-        
-        if (((iter%100==0&&t>0.5)||(t>1.5&&iter%5==0)||(t>=2.04&&t<=2.046))&&bisection==true)||((iter%200==0)&&(bisection==false))
+        #if iter%500==0
+        if (iter%100==0&&t>0.5)||(t>1.5&&iter%5==0)||(t>=2.04&&t<=2.046)
             if zeroformat==true
                 zero_print_muninn(files, t, state_array[:,1:5],res,"a")
             else
