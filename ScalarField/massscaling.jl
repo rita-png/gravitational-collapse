@@ -34,7 +34,7 @@ global runmax = length(exponents)
 
 while(run <= runmax)
 
-    A = e^(exponents[run]) + A_critic
+    A = exp(exponents[run]) + A_critic
 
     println("\n########")
     println("\nBisection search run ##", run, "\nLow bound = ",low_bound,"; High bound = ", high_bound,"; A = ", A," N = ", N,"\n")
