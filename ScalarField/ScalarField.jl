@@ -500,10 +500,7 @@ function Der(y,i,k,X)
         end
     end
     
-    if loggrid==true
-        xt=X[i]
-        z=z/((Agrid*fgrid)/(1+fgrid^2*(-kgrid + xt)^2)) #z/(dx/dxt)
-    end
+
     
     
     return z

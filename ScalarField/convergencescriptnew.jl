@@ -8,7 +8,7 @@ run = 1
 
 
 global compactified=true
-global loggrid=true
+global loggrid=false
 global zeroformat=false
 global bisection=false
 global twod=true
