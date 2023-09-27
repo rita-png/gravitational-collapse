@@ -841,7 +841,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
             break
         end"""
         
-        if isnan(state_array[L-3,1])==0.0 #if bondi mass isnt a NAN, update it!
+        if isnan(state_array[L-3,4])==0.0 #if bondi mass isnt a NAN, update it!
             mass=state_array[L-3,1]
         end
         
