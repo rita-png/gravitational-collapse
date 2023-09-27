@@ -27,7 +27,7 @@ global twod = false
 
 A_critic = 0.12465049029170887
 
-exponents = collect(-30:0.5:-15)
+exponents = collect(-30:0.5:-5)
 
 global run = 1
 global runmax = length(exponents)
