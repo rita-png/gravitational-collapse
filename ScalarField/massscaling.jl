@@ -37,7 +37,7 @@ while(run <= runmax)
     A = exp(exponents[run]) + A_critic
 
     println("\n########")
-    println("\nBisection search run ##", run, "; A = ", A," N = ", N,", exponent = ", exponent[run],"\n")
+    println("\nBisection search run ##", run, "; A = ", A," N = ", N,", exponent = ", exponents[run],"\n")
 
     global ARGS = [A,run,N]
     """include("./Evolution_ScalarField.jl");
