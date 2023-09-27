@@ -17,28 +17,28 @@ global high_bound = 0.12465049985275255#0.12465049985283985#0.12465049985796213#
 """
 ##OR##
 ####ongoing####
-global N=20000.0
-global dir = "/home/ritapsantos/data/ritapsantos"
-
-#0.124648615151412<A*<0.125#
-#0.12465050163460933<A*<0.12465050171838601
-global low_bound = 0.12465050163460933#0.124648615151412#0.124#0.12465050144332973#0.12465050144332965#0.12465049985051155
-global high_bound = 0.12465050171838601#0.125#0.12465052097457974#0.12466050144332981#0.12465050251698608#0.125
+#global N=20000.0
+#global dir = "/home/ritapsantos/data/ritapsantos"
+#
+##0.124648615151412<A*<0.125#
+##0.12465050163460933<A*<0.12465050171838601
+#global low_bound = 0.12465050163460933#0.124648615151412#0.124#0.12465050144332973#0.12465050144332965#0.12465049985051155
+#global high_bound = 0.12465050171838601#0.125#0.12465052097457974#0.12466050144332981#0.12465050251698608#0.125
 
 ##OR##
 ####started 21/09####
-#global N=2000.0
-#global dir = "/home/ritapsantos/data/ritapsantos/massscaling"
-#
-#global low_bound = 0.12465049029170858#0.124
-#global high_bound = 0.12465049029170948#0.125
+global N=2000.0
+global dir = "/home/ritapsantos/data/ritapsantos/2ndeven"
+
+global low_bound = 0.124
+global high_bound = 0.125
 ####
 
 global bisection = true
 global loggrid = false
 global compactified = true
 global zeroformat = true
-global twod = false
+global twod = true
 
 
 #global dir = "/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA"
