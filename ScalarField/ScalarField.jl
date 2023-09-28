@@ -838,7 +838,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
             global time = t
 
             iii=argmax(monitor_ratio)
-            global mass=state_array[L-3,iii]
+            global mass=state_array[iii,1]
 
             break
         end
