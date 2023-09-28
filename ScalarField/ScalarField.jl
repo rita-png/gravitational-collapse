@@ -774,6 +774,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
     T_array = [0.0]
     iter = 0
     k=0
+    global mass=0
     while t<finaltime#@TRACK
 
         iter = iter + 1
@@ -835,6 +836,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
             println("Supercritical evolution! At time ", t, ", iteration = ", iter)
             println("t = ", t, "iteration ", iter, " monitor ratio = ", maximum(monitor_ratio))
             global time = t
+            break
         end
 
         """if criticality == true
