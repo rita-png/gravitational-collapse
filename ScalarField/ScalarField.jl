@@ -839,7 +839,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
 
             argmax(monitor_ratio)=iii
             global mass=state_array[L-3,iii]
-            
+
             break
         end
 
@@ -847,7 +847,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
             break
         end"""
         
-        i"""f isnan(state_array[L-3,4])==0.0 #if derpsi isnt a NAN, update it!
+        """if isnan(state_array[L-3,4])==0.0 #if derpsi isnt a NAN, update it!
             global mass=state_array[L-3,1]
         end"""
         
