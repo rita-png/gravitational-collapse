@@ -836,6 +836,10 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
             println("Supercritical evolution! At time ", t, ", iteration = ", iter)
             println("t = ", t, "iteration ", iter, " monitor ratio = ", maximum(monitor_ratio))
             global time = t
+
+            argmax(monitor_ratio)=iii
+            global mass=state_array[L-3,iii]
+            
             break
         end
 
@@ -843,9 +847,9 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
             break
         end"""
         
-        if isnan(state_array[L-3,4])==0.0 #if derpsi isnt a NAN, update it!
+        i"""f isnan(state_array[L-3,4])==0.0 #if derpsi isnt a NAN, update it!
             global mass=state_array[L-3,1]
-        end
+        end"""
         
 
         if isnan(state_array[L-3,4])
