@@ -837,7 +837,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
             println("t = ", t, "iteration ", iter, " monitor ratio = ", maximum(monitor_ratio))
             global time = t
 
-            argmax(monitor_ratio)=iii
+            iii=argmax(monitor_ratio)
             global mass=state_array[L-3,iii]
 
             break
