@@ -13,16 +13,22 @@ mgrid=0.5#0.55
 fgrid=5"""
 
 #grid 2, newnew
-Agrid=0.42
-kgrid=0.5
-mgrid=0.5
-fgrid=4.5
+#Agrid=0.42
+#kgrid=0.5
+#mgrid=0.5
+#fgrid=4.5
 
 #grid 3
 #Agrid=0.44
 #kgrid=0.47
 #mgrid=0.5
 #fgrid=4.0
+
+#grid 4
+Agrid=0.58
+kgrid=0.47
+mgrid=0.51#0.55
+fgrid=1.0
 
 #### CONFIG ####
 
@@ -48,13 +54,18 @@ global zeroformat = false
 
 ##OR##
 
-N=3000.0 #grid 2, tmux 4
-global dir = "/home/ritapsantos/data/ritapsantos/new4thuneven"
+#N=3000.0 #grid 2, tmux 4
+#global dir = "/home/ritapsantos/data/ritapsantos/new4thuneven"
+#global low_bound = 0.1245
+#global high_bound = 0.1250
+#global twod = false
+
+##OR##
+N=10000 #grid 4, tmux 5
+global dir = "/home/ritapsantos/data/ritapsantos/gridfour"
 global low_bound = 0.1245
 global high_bound = 0.1250
 global twod = false
-
-
 #### CONFIG ####
 
 

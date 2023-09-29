@@ -180,6 +180,7 @@ function update_dt(X, m, beta,dt)
     if loggrid==false
         dx=X[5]-X[4]
     else
+        #dx=X[5]-X[4]
         aux=zeros(L-7)
         for i in 1:L-7
             aux[i]=inverse(initX1[i+1])-inverse(initX1[i])
@@ -187,10 +188,11 @@ function update_dt(X, m, beta,dt)
         dx=minimum(aux)
     end
 
-
+    #println("aux is ",aux)
+    #println("dx is", dx)
     #return  dx/g*0.01
 
-    return dx/g*0.5/2/10
+    return dx/g*0.5#/2/10
 end
 
 function find_origin(X)
