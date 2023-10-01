@@ -137,7 +137,7 @@ Threads.nthreads()
 if bisection==false
     if m==1
         #global dt=2e-5/5
-        global dt=0.000006
+        global dt=0.000006 #this is not the file  that is read for convergence tests
     elseif m==2
         #global dt=2e-5/5/2
         global dt=0.000006/2

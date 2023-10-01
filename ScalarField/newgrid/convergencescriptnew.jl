@@ -13,10 +13,15 @@ run = 1
 global dir = "/home/ritapsantos/data/ritapsantos/convergenceuneven"
 
 ## grid
-Agrid=0.35
+"""Agrid=0.35
 kgrid=0.7
 mgrid=0.5#0.55
-fgrid=5
+fgrid=5"""
+#grid 4
+Agrid=0.58
+kgrid=0.47
+mgrid=0.51#0.55
+fgrid=1.0
 
 function compactify(r)
     return r/(1+r)
@@ -132,17 +137,17 @@ Threads.nthreads()
 
 if bisection==false
     if m==1
-        global dt=0.00001 #new for N=300
+        global dt=0.00001/2 #new for N=200
         #global dt=0.0002 #N=200
         #global dt=0.0002/2/2/2 #N=1600
         
     elseif m==2
-        global dt=0.00001/2 #new for N=200
+        global dt=0.00001/2/2 #new for N=200
         #global dt=2e-5/5/2 #N=200
         #global dt=0.0002/2 #N=200
         
     else
-        global dt=0.00001/2/2 #new for N=200
+        global dt=0.00001/2/2/2 #new for N=200
         #global dt=0.0002/2/2 #N=200
         
     end
