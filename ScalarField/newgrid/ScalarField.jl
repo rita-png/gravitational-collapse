@@ -170,7 +170,7 @@ function speed(X, m, beta)
     return z
 end
 
-function update_dt(X, m, beta,dt)
+function update_dt(X, m, beta,dt,t)
 
     monitor_ratio = zeros(L)
     
@@ -192,7 +192,12 @@ function update_dt(X, m, beta,dt)
     #println("dx is", dx)
     #return  dx/g*0.01
 
-    return dx/g*0.5#/2/10
+    if t>2&&t<2.1
+        return dx/g*0.1
+    else
+        return dx/g*0.5
+    end
+    #return dx/g*0.5#/2/10
 end
 
 function find_origin(X)
