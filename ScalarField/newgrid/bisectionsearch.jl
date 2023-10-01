@@ -13,16 +13,16 @@ mgrid=0.5#0.55
 fgrid=5"""
 
 #grid 2, newnew
-#Agrid=0.42
-#kgrid=0.5
-#mgrid=0.5
-#fgrid=4.5
+Agrid=0.42
+kgrid=0.5
+mgrid=0.5
+fgrid=4.5
 
 #grid 3
-Agrid=0.44
-kgrid=0.47
-mgrid=0.5
-fgrid=4.0
+#Agrid=0.44
+#kgrid=0.47
+#mgrid=0.5
+#fgrid=4.0
 
 #grid 4
 #Agrid=0.58
@@ -38,11 +38,11 @@ global compactified = true
 global zeroformat = false
 
 
-N=6000.0 #grid 3, tmux 3
-global dir = "/home/ritapsantos/data/ritapsantos/4thuneven"
-global low_bound = 0.1245
-global high_bound = 0.12475#0.1250
-global twod = false
+#N=6000.0 #grid 3, tmux 3
+#global dir = "/home/ritapsantos/data/ritapsantos/4thuneven"
+#global low_bound = 0.1245
+#global high_bound = 0.12475#0.1250
+#global twod = false
 
 ##OR##
 
@@ -54,17 +54,17 @@ global twod = false
 
 ##OR##
 
-#N=3000.0 #grid 2, tmux 4
-#global dir = "/home/ritapsantos/data/ritapsantos/new4thuneven"
-#global low_bound = 0.1245
-#global high_bound = 0.1250
-#global twod = false
+N=2000.0 #grid 2, tmux 4
+global dir = "/home/ritapsantos/data/ritapsantos/new4thuneven"
+global low_bound = 0.1245
+global high_bound = 0.12475#0.1250
+global twod = false
 
 ##OR##
 #N=10000 #grid 4, tmux 5
 #global dir = "/home/ritapsantos/data/ritapsantos/gridfour"
-#global low_bound = 0.1245
-#global high_bound = 0.1250
+#global low_bound = 0.1246#0.1245 #these bounds were guessed
+#global high_bound = 0.1247#0.1250
 #global twod = false
 #### CONFIG ####
 
