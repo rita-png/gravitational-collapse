@@ -115,7 +115,7 @@ function speed(X, m, beta)
 end
 
 
-function update_dt(X, m, beta,dt,ginit)
+function update_dt(X, m, beta,dt,ginit,t)
 
     monitor_ratio = zeros(L)
     
@@ -131,8 +131,11 @@ function update_dt(X, m, beta,dt,ginit)
         
         dx=minimum(aux)
     end
-    return dx/g*0.5
-   
+    if t>2&&t<2.1
+        return dx/g*0.1
+    else
+        return dx/g*0.5
+    end
 
 end
 
@@ -211,22 +214,6 @@ end
 
 
 
-function twod_rungekutta4molstep(f,y00,T,w::Int64,X)
-    y = y00;
-    X=collect(X)
-        h = T[w+1]-T[w]
-        #print("\n\nh = ", h, " \n")
-        #h = dt; # only for equally spaced grid in time and space, otherwise (T[w+1] - T[w])
-        k1 = f(y[:,:], T[w],X)
-        k1=ghost(k1)
-        k2 = f(y[:,:] .+ k1 .* h, T[w] + h,X)
-        k2=ghost(k2)
-        y[:,:] = y[:,:] .+ (h/2) .* (k1 .+ k2)
-        
-    return ghost(y[:,:])
-end
-
-
 function rk4wrapper(f,y0,x,u,spl_funcs,data) # u depicts T array, or M!!
     n = length(x)
     y = zeros(n)
@@ -258,20 +245,6 @@ function n_rk4wrapper(f,y0,x,u,spl_funcs,data) # u depicts T array, or M!!
     return y[:,:]
 end
 
-
-function twod_n_rk4wrapper(f,y0,x,u,spl_funcs,data) # u depicts T array, or M!!
-    L = length(x)
-    n = length(y0)
-    y = zeros(L,n)
-    y[1,:] = y0;
-    for i in 1:L-1
-        h = x[i+1] .- x[i]
-        k1 = f(y[i,:], x[i],u,spl_funcs,i,data)
-        k2 = f(y[i,:] .+ k1 * h, x[i] .+ h,u,spl_funcs,i,data)
-        y[i+1,:] = y[i,:] .+ (h/2) * (k1 .+ k2)
-    end
-    return y[:,:]
-end
 
 function integrator(X,derpsi_func,data)
 
@@ -409,16 +382,6 @@ function ghost(y)
 end
 
 
-function dissipation(y,i,eps)
-
-    if twod==true
-        return dissipation4(y,i,eps)
-    else
-        return dissipation6(y,i,eps) 
-    end
-end
-
-
 #6th order dissipation, added to 4th order original scheme
 function dissipation6(y,i,eps)
     if i==4
@@ -441,23 +404,7 @@ return (-1)^3*eps*1/(dx)*delta6
 end
 
 
-#4th order  dissipation, added to 2nd order original scheme
-function dissipation4(y,i,eps)#0.02
-    if i==4
-        delta4=(-13/6*y[i+5,:]+71/6*y[i+4,:]-77/3*y[i+3,:]+83/3*y[i+2,:]-89/6*y[i+1,:]+19/6*y[i,:])
-    elseif i==5
-        delta4=(-7/6*y[i+4,:]+41/6*y[i+3,:]-47/3*y[i+2,:]+53/3*y[i+1,:]-59/6*y[i,:]+13/6*y[i-1,:])
-    elseif i==L-3
-        delta4=-(-13/6*y[i-5,:]+71/6*y[i-4,:]-77/3*y[i-3,:]+83/3*y[i-2,:]-89/6*y[i-1,:]+19/6*y[i,:])
-    elseif i==L-4
-        delta4=-(-7/6*y[i-4,:]+41/6*y[i-3,:]-47/3*y[i-2,:]+53/3*y[i-1,:]-59/6*y[i,:]+13/6*y[i+1,:])
-    else
-        delta4=(y[i+2,:]-4*y[i+1,:]+6*y[i,:]-4*y[i-1,:]+y[i-2,:]);
-    end
-    return (-1)^2*eps*1/(dx)*delta4
-end
 
-"""
 # Finite difference approximation
 function Der(y,i,k,X)
 
@@ -474,40 +421,6 @@ function Der(y,i,k,X)
     
 
     end
-    
-    return z
-end"""
-
-
-function Der(y,i,k,X)
-
-    if twod == false
-        if i==4 # left boundary LOP2, TEM
-            z = (-27*y[i,k]+58*y[i+1,k]-56*y[i+2,k]+36*y[i+3,k]-13*y[i+4,k]+2*y[i+5,k])/(12*(X[i+1]-X[i]))
-        elseif i==5 # left boundary LOP1, TEM
-            z = (-2*y[i-1,k]-15*y[i,k]+28*y[i+1,k]-16*y[i+2,k]+6*y[i+3,k]-y[i+4,k])/(12*(X[i+1]-X[i]))
-        elseif i==L-3 # right boundary TEM
-            z = (-27*y[i,k]+58*y[i-1,k]-56*y[i-2,k]+36*y[i-3,k]-13*y[i-4,k]+2*y[i-5,k])/(12*(X[i]-X[i-1])) #fixed this *-1
-        elseif i==L-4 # right boundary TEM
-            z = (-2*y[i+1,k]-15*y[i,k]+28*y[i-1,k]-16*y[i-2,k]+6*y[i-3,k]-y[i-4,k])/(12*(X[i+1]-X[i]))
-        else # central
-            z = (-y[i+2,k]+8*y[i+1,k]-8*y[i-1,k]+y[i-2,k])/(12*(X[i+1]-X[i]))
-        end
-    else
-        if i==4 # left boundary LOP1, TEM
-            z = (y[i+3,k]-4*y[i+2,k]+7*y[i+1,k]-4*y[i,k])/(2*(X[i+1]-X[i]))
-        elseif i==L-3
-            z = (-y[i-3,k]+4*y[i-2,k]-7*y[i-1,k]+4*y[i,k])/(2*(X[i]-X[i-1]))
-        else
-            z = (y[i+1,k]-y[i-1,k])/(2*(X[i+1]-X[i]))
-        end
-    end
-    
-    if loggrid==true
-        xt=X[i]
-        z=z/((Agrid*fgrid)/(1+fgrid^2*(-kgrid + xt)^2)) #z/(dx/dxt)
-    end
-    
     
     return z
 end
@@ -675,7 +588,25 @@ function bulkSF(y,i,X)
 end
 
 
+function bulkSF(y,i,X,spls)
+    
+    #psi,x
+    #dy=-1.0/2.0*exp(2.0*y[i,2])*(-(2*(X[i]-1)^3*y[i,3]*(X[i]*((X[i]-1)*unevenDer(y,i,1,X,spls)+X[i]*unevenDer(y,i,2,X,spls))+y[i,1]*(1+2*(X[i]-1)*X[i]*unevenDer(y,i,2,X,spls))))/X[i]^3 - (2*(X[i]-1)^4*(X[i]*((X[i]-1)*unevenDer(y,i,1,X,spls)+X[i]*unevenDer(y,i,2,X,spls))+y[i,1]*(1+2(X[i]-1)*X[i]*unevenDer(y,i,2,X,spls)))*y[i,4])/X[i]^2 - ((X[i]+2*(X[i]-1)*y[i,1])*unevenDer(y,i,4,X,spls))/X[i])
 
+    #psi,x
+    if compactified == false
+        r=X[i]
+        dy=(1/(2*r^3))*exp(2*y[i,2])*(-2*y[i,1]*y[i,3]+2*r*y[i,3]*Der(y,i,1,X)-2*r^2*y[i,3]*Der(y,i,2,X)+4*r*y[i,1]*y[i,3]*Der(y,i,2,X)+2*r*y[i,1]*y[i,4]-2*r^2*Der(y,i,1,X)*y[i,4]+2*r^3*Der(y,i,2,X)*y[i,4]-4*r^2*y[i,1]*Der(y,i,2,X)*y[i,4]+r^3*Der(y,i,4,X)-2*r^2*y[i,1]*Der(y,i,4,X))
+    else
+        ## psi,r evol equation
+        x=X[i]
+        r = x/(1-x)
+        dy=(1/(2*r^3))*exp(2*y[i,2])*(r^3*(1-x)^2*unevenDer(y,i,4,X,spls)-2*r^2*(1-x)^2*unevenDer(y,i,4,X,spls)*y[i,1]+2*r*y[i,1]*y[i,4]-2*y[i,1]*y[i,3]-2*r^2*(1-x)^2*y[i,4]*unevenDer(y,i,1,X,spls)+2*r*(1-x)^2*y[i,3]*unevenDer(y,i,1,X,spls)+2*r^3*(1-x)^2*y[i,4]*unevenDer(y,i,2,X,spls)-4*r^2*(1-x)^2*y[i,1]*y[i,4]*unevenDer(y,i,2,X,spls)-2*r^2*(1-x)^2*y[i,3]*unevenDer(y,i,2,X,spls)+4*r*(1-x)^2*y[i,1]*y[i,3]*unevenDer(y,i,2,X,spls))
+
+
+    end
+    return dy
+end
 function boundarySF(y,X)
 
     L=length(state_array[:,1])
@@ -777,44 +708,41 @@ function SF_RHS(data,t,X)
     
     # update m, beta and psi data
     y0=[0.0 0.0 0.0]
-    if twod == false
-        data[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X[4:L-3],t,derpsi_func,data[:,:])
-    else
-        data[4:L-3,1:3] = twod_n_rk4wrapper(RHS,y0,X[4:L-3],t,derpsi_func,data[:,:])
-    end
-    
+    data[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X[4:L-3],t,derpsi_func,data[:,:])
     data=ghost(data)
 
+    #NEW
+    if loggrid==true
+        m_func = Spline1D(X[4:L],data[4:L,1],k=4)
+        beta_func = Spline1D(X[4:L],data[4:L,2],k=4)
 
-    if twod==true
-        epsilon=0.02
-    else
-        epsilon=0.0065
+        funcs=[m_func beta_func derpsi_func]
     end
+
     
    
     if loggrid==false
         Threads.@threads for i in 4:L-3 #ORI
             if X[i]<10^(-15) #left
-                dy[i,4]= +1.0/2.0 * (1/(1-X[i])^2 * Der(data,i,4,X) + 2/(1-X[i])^3*data[i,4])  - dissipation(data,i,epsilon)[4]#- dissipation4(data,i,0.02)[4];
+                dy[i,4]= +1.0/2.0 * (1/(1-X[i])^2 * Der(data,i,4,X) + 2/(1-X[i])^3*data[i,4])  - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4];
                 
             elseif abs.(X[i] .- 1.0)<10^(-15)
-                dy[i,4]= 0.0 - dissipation(data,i,epsilon)[4]#- dissipation4(data,i,0.02)[4]
+                dy[i,4]= 0.0 - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4]
                 
             else
-                dy[i,4]=bulkSF(data,i,X) - dissipation(data,i,epsilon)[4]#- dissipation4(data,i,0.02)[4]
+                dy[i,4]=bulkSF(data,i,X) - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4]
             end
         end
     else
         Threads.@threads for i in 4:L-3 #ORI
             if X[i]<10^(-15) #left
-                dy[i,4]= +1.0/2.0 * (1/(1-X[i])^2 * unevenDer(data,i,4,X,funcs) + 2/(1-X[i])^3*data[i,4])  - dissipation(data,i,epsilon)[4]#- dissipation4(data,i,0.02)[4];
+                dy[i,4]= +1.0/2.0 * (1/(1-X[i])^2 * unevenDer(data,i,4,X,funcs) + 2/(1-X[i])^3*data[i,4])  - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4];
                 
             elseif abs.(X[i] .- 1.0)<10^(-15)
-                dy[i,4]= 0.0 - dissipation(data,i,epsilon)[4]#- dissipation4(data,i,0.02)[4]
+                dy[i,4]= 0.0 - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4]
                 
             else
-                dy[i,4]=bulkSF(data,i,X,funcs) - dissipation(data,i,epsilon)[4]#- dissipation4(data,i,0.02)[4]
+                dy[i,4]=bulkSF(data,i,X,funcs) - dissipation6(data,i,0.0065)[4]#- dissipation4(data,i,0.02)[4]
             end
         end
     end 
@@ -849,7 +777,6 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
     T_array = [0.0]
     iter = 0
     k=0
-    global mass=0
     while t<finaltime#@TRACK
 
         iter = iter + 1
@@ -857,10 +784,10 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         #update time increment
 
         if criticality!=true#||dt>0.00000001
-            global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)      
+            global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit,t)      
         end
         t = t + dt
-        if iter%200==0
+        if iter%100==0
             println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
         end
         #println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
@@ -872,31 +799,23 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         X1=X[4:L-3]
        
         #evolve psi,x
-        if twod==false
-            state_array[:,:] = rungekutta4molstep(SF_RHS,state_array[:,:],T_array,iter,X)
-        else
-            state_array[:,:] = twod_rungekutta4molstep(SF_RHS,state_array[:,:],T_array,iter,X)
-        end
-
+        state_array[:,:] = rungekutta4molstep(SF_RHS,state_array[:,:],T_array,iter,X) #evolve psi,x
+        state_array=ghost(state_array)
+    
         # update interpolation of psi,x
         derpsi_func = Spline1D(X[4:L-3],state_array[4:L-3,4],k=4)
 
         #evolve m and beta together, new
         y0=[0.0 0.0 0.0]
         
-        if twod==false
-            state_array[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X1,t,derpsi_func,state_array[:,:])
-        else
-            state_array[4:L-3,1:3] = twod_n_rk4wrapper(RHS,y0,X1,t,derpsi_func,state_array[:,:])
-        end
-        
+        state_array[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X1,t,derpsi_func,state_array[:,:])
         state_array=ghost(state_array)
         
 
         run=int(run)
 
-        if iter%25==0
-        #if (iter%100==0&&t>0.5)||(t>1.5&&iter%5==0)||(t>=2.04&&t<=2.046)
+        #if iter%500==0
+        if (iter%100==0&&t>0.5)||(t>1.5&&iter%5==0)||(t>=2.04&&t<=2.046)
             if zeroformat==true
                 zero_print_muninn(files, t, state_array[:,1:5],res,"a")
             else
@@ -919,22 +838,12 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
             println("Supercritical evolution! At time ", t, ", iteration = ", iter)
             println("t = ", t, "iteration ", iter, " monitor ratio = ", maximum(monitor_ratio))
             global time = t
-
-            iii=argmax(monitor_ratio)
-            global mass=state_array[iii,1]
-
-            break
         end
 
         """if criticality == true
             break
         end"""
         
-        """if isnan(state_array[L-3,4])==0.0 #if derpsi isnt a NAN, update it!
-            global mass=state_array[L-3,1]
-        end"""
-        
-
         if isnan(state_array[L-3,4])
             if criticality==false
                 global time = iter
@@ -960,7 +869,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         global criticality = false
     end
     
-    global evol_stats = [criticality A sigma r0 time explode run mass]
+    global evol_stats = [criticality A sigma r0 time explode run]
 
     return evol_stats, T_array
 
