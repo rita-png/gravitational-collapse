@@ -1005,7 +1005,7 @@ function timeevolution(state_array,finaltime,run)
 
         #update time increment
         if bisection==true
-            global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt)
+            global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,t)
         end
         
         #global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt)
