@@ -13,10 +13,10 @@ mgrid=0.5#0.55
 fgrid=5"""
 
 #grid 2, newnew
-#Agrid=0.42
-#kgrid=0.5
-#mgrid=0.5
-#fgrid=4.5
+Agrid=0.42
+kgrid=0.5
+mgrid=0.5
+fgrid=4.5
 
 #grid 3
 #Agrid=0.44
@@ -25,12 +25,12 @@ fgrid=5"""
 #fgrid=4.0
 
 #grid 4
-Agrid=0.58
-kgrid=0.47
-mgrid=0.51#0.55
-fgrid=1.0
+#Agrid=0.58
+#kgrid=0.47
+#mgrid=0.51#0.55
+#fgrid=1.0
 
-#### CONFIG ####
+#### CONFIG #### DON'T FORGET TO CHOOSE GRID
 
 global bisection = true
 global loggrid = true
@@ -46,11 +46,11 @@ global zeroformat = false
 
 ##OR##
 
-#N=10000.0 #grid 2, tmux 2
-#global dir = "/home/ritapsantos/data/ritapsantos"
-#global low_bound = 0.1245
-#global high_bound = 0.1250
-#global twod = false
+N=10000.0 #grid 2, tmux 2
+global dir = "/home/ritapsantos/data/ritapsantos"
+global low_bound = 0.1245
+global high_bound = 0.12475#0.1250
+global twod = false
 
 ##OR##
 
@@ -61,11 +61,11 @@ global zeroformat = false
 #global twod = false
 
 ##OR##
-N=10000 #grid 4, tmux 5
-global dir = "/home/ritapsantos/data/ritapsantos/gridfour"
-global low_bound = 0.1245
-global high_bound = 0.1250
-global twod = false
+#N=10000 #grid 4, tmux 5
+#global dir = "/home/ritapsantos/data/ritapsantos/gridfour"
+#global low_bound = 0.1245
+#global high_bound = 0.1250
+#global twod = false
 #### CONFIG ####
 
 

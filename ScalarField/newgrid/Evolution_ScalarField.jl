@@ -147,7 +147,7 @@ if bisection==false
     end
     finaltime=5.0
 else
-    finaltime=2.5
+    finaltime=2.2
 end
 
 stats, T_interp = timeevolution(state_array,finaltime,run);
