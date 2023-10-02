@@ -1088,9 +1088,10 @@ function timeevolution(state_array,finaltime,run)
             end
         end
 
-        if maximum(state_array[4:L-3,4])>1.1
+        if maximum(abs.(state_array[4:L-3,4]))>0.8
             println("State array is >1.1!")
             global criticality=true
+            global time = t
             break
         end
 
@@ -1102,7 +1103,7 @@ function timeevolution(state_array,finaltime,run)
             global time = t
             break
         end"""
-        if maximum(monitor_ratio)>0.85
+        if maximum(monitor_ratio)>0.7
             print(" monitor ratio is ", maximum(monitor_ratio))
             global criticality = true
             global time = t
