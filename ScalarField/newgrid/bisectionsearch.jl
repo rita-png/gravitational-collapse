@@ -35,7 +35,7 @@ fgrid=4.0
 global bisection = true
 global loggrid = true
 global compactified = true
-global zeroformat = true
+global zeroformat = false
 
 
 #N=6000.0 #grid 3, tmux 3
