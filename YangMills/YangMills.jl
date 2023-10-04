@@ -633,7 +633,7 @@ end
 
 function derxchi_evol(y,i,X)
     
-    #state array is [m beta psi rchi rchi,u psi,r xchi,r r]
+    #state array is [m beta psi xchi xchi,u psi,r xchi,r r]
     
     #(xchi),r
     if compactified == false
@@ -641,12 +641,48 @@ function derxchi_evol(y,i,X)
         x=r/(1+r)
 
         #necessary functions
-        chi = y[i,4] ./ x
-        derchi = (y[i,7] - 1/(1+r)^2*chi) / x #chi,r = ((xchi),r - 1/(1+r)^2*chi)/x
-        deruchi = y[i,5] / x #chi,u = (xchi),u / x
+        chi = y[i,4] / x
 
+        derchi = (y[i,7] - 1/(1+r)^2*chi) / x #chi,r = ((xchi),r - 1/(1+r)^2*chi)/x
+        ##or##
+        """yaux=y
+        yaux[:,4] = yaux[:,4] ./ X .* (1 .+ X) #because X is actually an r
+        yaux[4,4] = extrapolate_in(yaux[5,4], yaux[6,4], yaux[7,4], yaux[8,4])
+        derchi=Der(yaux,i,4,X)
+        if abs.(X[i])<10^(-15)
+            derchi=0.0
+            println("X[i]", aquiX[i])
+        end
+
+        derrchi=DDer(yaux,i,4,X)"""
+
+        
+        deruchi = y[i,5] / x #chi,u = (xchi),u / x
+        
         dy=deruchi/(1+r)^2 + 1/(2*(1+r)*(r^2+1)^5)*(exp(2*y[i,2])*((r^2+1)*((r^2+1)^4-4*pi*r^2*chi^2*(r^2*chi+2*r^2+2)^2)*derchi+r*chi*(chi*(chi*(-8*pi*r^2*chi*(r^2*chi+4*r^2+4)-(r^2+1)^2*(r^4+r^2+32*pi))-3*(r^2+1)^4)-2*(r^2+1)^4))+4*r^2*(2*pi*(r^2+1)*(r*(r^2+1)*derchi+2*chi)^2-(r^2+2)*(r^4+2*r^2+2))*deruchi-4*deruchi)
-    
+        ##or##
+        """if i<=7
+            chione=?
+            chizero?
+            dy = -(1/(2*r^2*(1+r^2)^5))exp(2*y[i,2])*((1+r^2)^3*(chizero+r*chione)*(1+r^2*(1+chizero+r*chione))*(2+r^2*(2+chizero+r*chione))+((1+r^2)^3*(r-2*y1)*((-2+6*r^2)*chizero+2*r*(-3+r^2)*chione-(r+r^3)^2*(\[Chi]^(0,2))[u,r]))/r+4 E^(-2 y2) r (1+r^2)^4 (\[Chi]^(1,0))[u,r]+(1/r)(2 chizero+r (3+r^2) chione) ((1+r^2)^4 (r-2 y1)-r ((1+r^2)^4-2 (16 \[Pi] r^2 (1+r^2) (r-2 y1) chione (chizero+r chione)+8 \[Pi] r (3 r+2 r^3+r^5-4 y1) (chizero+r chione)^2+8 \[Pi] r^4 (1+r^2) (chizero+r chione)^3+2 \[Pi] r^6 (chizero+r chione)^4+(1+r^2)^2 (r-2 y1) (4 \[Pi] r^3 chione^2+(1+r^2)^2 (-Deri2X+2 \[Pi] r (\[CapitalPhi]^(0,1))[u,r]^2)))+8 E^(-2 y2) \[Pi] r^3 (1+r^2) (2 chizero+r (3+r^2) chione) (\[Chi]^(1,0))[u,r])))
+        else
+            dy = -(1/(2*r^2*(1+r^2)^5))*exp(2*y[i,2])*((1+r^2)^3*chi*(1+r^2+r^2*chi)*(2+2*r^2+r^2*chi)+((1+r^2)^3*(r-2*y[i,1])*((-2+6*r^2)*chi+(r+r^3)*(-4*derchi-(r+r^3)*derrchi)))/r+4*exp(-2*y[i,2])*r*(1+r^2)^4*deruchi+(1/r)*(2*chi+r*(1+r^2)*derchi)*((1+r^2)^4*(r-2*y[i,1])-r*((1+r^2)^4-2*(8*pi*r*(3*r+2*r^3+r^5-4*y[i,1])*chi^2+8*pi*r^4*(1+r^2)*chi^3+2*pi*r^6*chi^4+16*pi*r^2*(1+r^2)*(r-2*y[i,1])*chi*derchi+(1+r^2)^2*(r-2*y[i,1])*((1+r^2)^2*(-Der(y,i,2,X)+2*pi*r*(-y[i,3]/r^2+y[i,6]/r)^2^2)+4*pi*r^3*derchi^2))+8*exp(-2*y[i,2])*pi*r^3*(1+r^2)*(2*chi+r*(1+r^2)*derchi)*deruchi)))
+        end"""
+
+        if isnan(derchi)
+            println("derchi is nan")
+        end
+        f isnan(deruchi)
+            println("deruchi is nan")
+        end
+
+        if isnan(derrchi)
+            println("derrchi is nan")
+        end
+
+        if isnan(dy)
+            println("dy is nan")
+        end
     elseif loggrid==false
         x=X[i]
         r=x/(1-x)
@@ -929,21 +965,22 @@ function SF_RHS(data,t,X)
     data=ghost(data)
 
     if twod==true
-        epsilon=0.02
+        epsilon=0.005
     else
         epsilon=0.0065
     end
 
     Threads.@threads for i in 4:L-3 #ORI
+
+        #do not evolve first 4 gridpoints
+        dy[4:7,7]= 0.0 #- dissipation(data,i,epsilon)[7]
+        
+        ???
         if X[i]<10^(-15) #left
             dy[i,6]= +1.0/2.0 * (Der(data,i,6,X))  - dissipation(data,i,epsilon)[6]
             #dy[i,6]= +1.0/2.0 * (1/(1-x)^2 * Der(data,i,6,X) + 2/(1-x)^3*data[i,6])  - dissipation(data,i,epsilon)[6]#- dissipation4(data,i,0.02)[6];
          
-            dy[i,7]= 0.0 - dissipation(data,i,epsilon)[6]
-
-            #println(dissipation(data,i,epsilon)[6], " ")
             
-            #dy[i,7]=derxchi_evol(data,i,X) - dissipation(data,i,epsilon)[7]
             
             
         elseif abs.(X[i] .- 1.0)<10^(-15)
@@ -959,6 +996,8 @@ function SF_RHS(data,t,X)
 
             #print( dissipation(data,i,epsilon)[6], " ")
         end
+
+        
     end
     
     
@@ -999,9 +1038,6 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
 
         iter = iter + 1
         
-        if iter==2
-            break
-        end
         #update time increment
 
         if criticality!=true
@@ -1009,7 +1045,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         end
         t = t + dt
         
-        if iter%5==0
+        if iter%1==0
             println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
         end
         #println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
@@ -1052,8 +1088,9 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
 
         run=int(run)
 
+        print_muninn(files, t, state_array[:,:],res,"a")
         
-        if iter%10==0
+        if iter%100==0
         #if (iter%100==0&&t>0.5)||(t>1.5&&iter%5==0)||(t>=2.04&&t<=2.046)
             if zeroformat==true
                 zero_print_muninn(files, t, state_array[:,:],res,"a")
