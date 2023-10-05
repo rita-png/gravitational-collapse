@@ -1082,9 +1082,9 @@ function timeevolution(state_array,finaltime,run)
         if (((bisection==true)&&(iter%150==0))||((bisection==true)&&(t>2.0)&&(iter%75==0)))||((bisection==false)&&(iter%500==0))
         #if iter%1==0
             if zeroformat==true
-                zero_print_muninn(files, t, state_array[:,1:5],res,"a")
+                zero_print_muninn(files, t, [state_array[:,1:5] monitor_ratio],res,"a")
             else
-                print_muninn(files, t, state_array[:,1:5],res,"a")
+                print_muninn(files, t, [state_array[:,1:5] monitor_ratio],res,"a")
             end
         end
 
@@ -1103,7 +1103,7 @@ function timeevolution(state_array,finaltime,run)
             global time = t
             break
         end"""
-        if maximum(monitor_ratio)>0.7
+        if maximum(monitor_ratio)>0.6
             print(" monitor ratio is ", maximum(monitor_ratio))
             global criticality = true
             global time = t

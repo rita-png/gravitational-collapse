@@ -100,15 +100,25 @@ end
 
 state_array = ghost(state_array);
 
+#threshold for apparent black hole formation
+monitor_ratio=zeros(L)
+if compactified==false
+    global monitor_ratio[5:L-4] = 2 .* state_array[5:L-4,1] ./ initX[5:L-4]
+else
+    if loggrid==false
+        global monitor_ratio[5:L-4] = 2 .* state_array[5:L-4,1] ./ initX[5:L-4] .* (1 .- initX[5:L-4])
+    else
+        global monitor_ratio[5:L-4] = 2 .* state_array[5:L-4,1] ./ inverse(initX[5:L-4]) .* (1 .- inverse(initX[5:L-4]))
+    end
+end
 
-
-global files=["m", "beta", "psi", "derpsi"]
+global files=["m", "beta", "psi", "derpsi", "monitorratio"]
 
 
 if zeroformat==true
-    zero_print_muninn(files, 0, state_array[:,1:5],res,"w")
+    zero_print_muninn(files, 0, [state_array[:,1:5] monitor_ratio],res,"w")
 else
-    print_muninn(files, 0, state_array[:,1:5],res,"w")
+    print_muninn(files, 0, [state_array[:,1:5] monitor_ratio],res,"w")
 end
 
 
