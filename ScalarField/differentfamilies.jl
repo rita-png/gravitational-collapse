@@ -30,7 +30,7 @@ sigmas = [0.1 0.2 0.4 0.5 0.6]
 global kk=0
 for sigma in sigmas
     global kk=kk+1
-    global dir = subdir*string(k)
+    global dir = subdir*string(kk)
     println("dir is ", dir)
     while(run <= runmax)
 
