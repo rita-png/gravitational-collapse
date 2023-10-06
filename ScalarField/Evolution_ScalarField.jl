@@ -94,8 +94,7 @@ time=0
 criticality=0.0
 explode=0.0
 critical_stop=0
-bondimass=0
-evol_stats = [criticality A sigma r0 time explode run bondimass]
+evol_stats = [criticality A sigma r0 time explode run]
 monitor_ratio = zeros(L)
 
 run=int(run)
@@ -109,7 +108,7 @@ end
 
 ginit=speed(initX,state_array[:,1],state_array[:,2])
 
-finaltime=5.0
+finaltime=3.0
 stats,T_interp=timeevolution(state_array,finaltime,run)#timeevolution(state_array,finaltime,dir,run)
 
 if bisection==true
