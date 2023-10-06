@@ -380,7 +380,7 @@ function integrator(X,derpsi_func,data)
 end
 
 
-function print_muninn(files, t, data, res, mode)
+function print_muninn(files, t, data, res, mode, X)
     #mode is "a" for append or "w" for write
     j=1
     if bisection==false
@@ -390,9 +390,9 @@ function print_muninn(files, t, data, res, mode)
                 @printf file "\"Time = %.10e\n" t
                 for i in 1:length(data[:,1])
                     if loggrid==true&&i>=4&&i<=L-3
-                        @printf file "% .10e % .10e\n" inverse(data[i,5]) data[i,j]
+                        @printf file "% .10e % .10e\n" inverse(X[i]) data[i,j]
                     else
-                        @printf file "% .10e % .10e\n" data[i,5] data[i,j]
+                        @printf file "% .10e % .10e\n" X[i] data[i,j]
                     end
                 end
                 println(file) # insert empty line to indicate end of data set
@@ -412,9 +412,9 @@ function print_muninn(files, t, data, res, mode)
                 @printf file "\"Time = %.10e\n" t
                 for i in 1:length(data[:,1])
                     if loggrid==true&&i>=4&&i<=L-3
-                        @printf file "% .10e % .10e\n" inverse(data[i,5]) data[i,j]
+                        @printf file "% .10e % .10e\n" inverse(X[i]) data[i,j]
                     else
-                        @printf file "% .10e % .10e\n" data[i,5] data[i,j]
+                        @printf file "% .10e % .10e\n" X[i] data[i,j]
                     end
                 end
                 println(file) # insert empty line to indicate end of data set
@@ -1082,9 +1082,9 @@ function timeevolution(state_array,finaltime,run)
         if (((bisection==true)&&(iter%150==0))||((bisection==true)&&(t>2.0)&&(iter%75==0)))||((bisection==false)&&(iter%500==0))
         #if iter%1==0
             if zeroformat==true
-                zero_print_muninn(files, t, [state_array[:,1:5] monitor_ratio],res,"a")
+                zero_print_muninn(files, t, [state_array[:,1:4] monitor_ratio],res,"a",state_array[:,5])
             else
-                print_muninn(files, t, [state_array[:,1:5] monitor_ratio],res,"a")
+                print_muninn(files, t, [state_array[:,1:4] monitor_ratio],res,"a",state_array[:,5])
             end
         end
 
@@ -1103,7 +1103,7 @@ function timeevolution(state_array,finaltime,run)
             global time = t
             break
         end"""
-        if maximum(monitor_ratio)>0.6
+        if maximum(monitor_ratio)>0.55
             print(" monitor ratio is ", maximum(monitor_ratio))
             global criticality = true
             global time = t
