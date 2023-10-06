@@ -14,7 +14,7 @@ global bisection=false
 global twod=false
 
 res=m;
-N=2.0^m*800.0/2.0
+N=2.0^m*100.0/2.0
 println("running for resolution ", res, ", N = ", N, ", A = ", A)
 if compactified==true
     Xf=1.0
