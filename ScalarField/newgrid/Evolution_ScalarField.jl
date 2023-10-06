@@ -125,7 +125,8 @@ end
 time=0.0
 criticality=0.0
 explode=0.0
-evol_stats = [criticality A sigma r0 time explode run]
+maxever_mr=0.0
+evol_stats = [criticality A sigma r0 time explode run maxever_mr]
 global monitor_ratio = zeros(L);
 
 run=int(run)

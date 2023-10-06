@@ -911,7 +911,13 @@ function RHS(y0,x1,time,func,i,data)
     return z[:]
 end
 
-
+function test_m(m_scri,state_array)
+    if state_array[L-3,1]>m_scri
+        return true
+    else
+        return false
+    end
+end
 # Defining the function in the RHS of the evolution equation system
 using Base.Threads
 
@@ -997,7 +1003,8 @@ function timeevolution(state_array,finaltime,run)
     T_array = [0.0]
     iter = 0
     k=0
-
+    global mscri = 0
+    global maxever_mr = 0
     while t<finaltime#@TRACK
         
         
@@ -1052,9 +1059,6 @@ function timeevolution(state_array,finaltime,run)
         state_array=ghost(state_array)
         
         
-        
-
-        
 
         #threshold for apparent black hole formation
         monitor_ratio=zeros(L)
@@ -1074,18 +1078,26 @@ function timeevolution(state_array,finaltime,run)
             break
         end
 
-
-        """if (iter%100==0)&&(bisection==true)
-            print(" monitor ratio is ", maximum(monitor_ratio))
-        end"""
-
-        if (((bisection==true)&&(iter%150==0))||((bisection==true)&&(t>2.0)&&(iter%75==0)))||((bisection==false)&&(iter%500==0))
+        if (((bisection==true)&&(iter%100==0))||((bisection==true)&&(t>2.0)&&(iter%50==0)))||((bisection==false)&&(iter%500==0))
         #if iter%1==0
             if zeroformat==true
                 zero_print_muninn(files, t, [state_array[:,1:4] monitor_ratio],res,"a",state_array[:,5])
             else
                 print_muninn(files, t, [state_array[:,1:4] monitor_ratio],res,"a",state_array[:,5])
             end
+        end
+
+
+        if maximum(monitor_ratio)>maxever_mr
+            maxever_mr = maximum(monitor_ratio)
+        end
+
+
+        if maximum(monitor_ratio)>0.53
+            print(" monitor ratio is ", maximum(monitor_ratio))
+            global criticality = true
+            global time = t
+            break
         end
 
         if maximum(abs.(state_array[4:L-3,4]))>0.8
@@ -1095,23 +1107,15 @@ function timeevolution(state_array,finaltime,run)
             break
         end
 
-        """if maximum(monitor_ratio)>0.7&&k==0
-            global criticality = true
-            k=k+1
-            println("Supercritical evolution! At time ", t, ", iteration = ", iter)
-            println("t = ", t, "iteration ", iter, " monitor ratio = ", maximum(monitor_ratio))
+        if test_m(m_scri,state_array)==true
+            println("\n\nWARNING, M GROWING AT SCRI!\n\n")
+            global criticality=true
             global time = t
-            break
-        end"""
-        if maximum(monitor_ratio)>0.55
-            print(" monitor ratio is ", maximum(monitor_ratio))
-            global criticality = true
-            global time = t
+            global explode = true
             break
         end
-
-
- 
+        global m_scri=state_array[L-3,1]
+        
         
         if isnan(state_array[L-3,4])
             if criticality==false
@@ -1136,7 +1140,7 @@ function timeevolution(state_array,finaltime,run)
         global criticality = false
     end
 
-    global evol_stats = [criticality A sigma r0 time explode run]
+    global evol_stats = [criticality A sigma r0 time explode run maxever_mr]
 
     
     return evol_stats, T_array
