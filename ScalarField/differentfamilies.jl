@@ -27,9 +27,9 @@ global run = 1
 global runmax = 30
 sigmas = [0.1 0.2 0.4 0.5 0.6]
 
-k=0
+global kk=0
 for sigma in sigmas
-    k=k+1
+    global kk=kk+1
     global dir = subdir*string(k)
     println("dir is ", dir)
     while(run <= runmax)
