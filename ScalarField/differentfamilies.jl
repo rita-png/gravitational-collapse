@@ -7,7 +7,7 @@ using CSV, Tables, DataFrames, Plots, Printf
 include("./ScalarField.jl");
 
 global bisection = true
-global loggrid = true
+global loggrid = false
 global compactified = true
 global zeroformat = false
 
