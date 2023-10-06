@@ -1003,7 +1003,7 @@ function timeevolution(state_array,finaltime,run)
     T_array = [0.0]
     iter = 0
     k=0
-    global m_scri = 0
+    global m_scri = 1000
     global maxever_mr = 0
     while t<finaltime#@TRACK
         
