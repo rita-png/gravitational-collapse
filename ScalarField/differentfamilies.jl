@@ -24,7 +24,7 @@ global twod = false
 #or find sigma* for an A*?
 
 global run = 1
-global runmax = 30
+global runmax = 40
 sigmas = [0.1 0.2 0.4 0.5 0.6]
 
 global kk=0
