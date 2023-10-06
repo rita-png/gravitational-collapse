@@ -109,7 +109,7 @@ end
 
 ginit=speed(initX,state_array[:,1],state_array[:,2])
 
-finaltime=2.2
+finaltime=5.0
 stats,T_interp=timeevolution(state_array,finaltime,run)#timeevolution(state_array,finaltime,dir,run)
 
 if bisection==true

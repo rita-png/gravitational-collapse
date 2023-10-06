@@ -14,7 +14,7 @@ global bisection=false
 global twod=true
 
 res=m;
-N=2.0^m*200.0/2.0
+N=2.0^m*800.0/2.0
 println("running for resolution ", res, ", N = ", N, ", A = ", A)
 if compactified==true
     Xf=1.0
@@ -34,7 +34,8 @@ Tf=Nt*dt; #final time
 
 print(N)
 
-global dir = "/home/ritapsantos/data/ritapsantos"#global dir = "/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA"
+#global dir = "/home/ritapsantos/data/ritapsantos"
+global dir = "/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA"
 
 using Printf
 include("./ScalarField.jl");
@@ -132,25 +133,26 @@ global monitor_ratio = zeros(L);
 #CSV.write(dir*"/parameters.csv", Tables.table(evol_stats), writeheader=true, header=["criticality", "A", "sigma", "r0", "time", "explode", "run"])
 
 ginit=speed(initX,state_array[:,1],state_array[:,2])
-println(update_dt(initX,state_array[:,1],state_array[:,2],dx,ginit)/dt)
+#println(update_dt(initX,state_array[:,1],state_array[:,2],dx,ginit)/dt)
 
 using Base.Threads
 Threads.nthreads()
 
 if m==1
-    #global dt=2e-5 #N=200
+    #global dt=2e-4 #N=200
+    global dt=2e-4/2/2/2 #N=200
     #global dt=2e-5/2/2/2 #N=1600
     #global dt=5e-5 #N=150
     #global dt=5e-5/2/2/2/2
-    global dt=5e-6 #N=200 new smaller
+    #global dt=5e-6 #N=200 new smaller
 elseif m==2
-    #global dt=1e-5
+    global dt=1e-4
     #global dt=5e-5/2
-    global dt=5e-6/2 #N=200 new smaller
+    #global dt=5e-6/2 #N=200 new smaller
 else
-    #global dt=1e-5/2
+    global dt=1e-4/2
     #global dt=5e-5/2/2
-    global dt=5e-6/2/2 #N=200 new smaller
+    #global dt=5e-6/2/2 #N=200 new smaller
 end
 
 finaltime=5.0
