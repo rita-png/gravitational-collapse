@@ -11,7 +11,7 @@ global compactified=true
 global loggrid=false
 global zeroformat=false
 global bisection=false
-global twod=true
+global twod=false
 
 res=m;
 N=2.0^m*800.0/2.0
@@ -139,8 +139,8 @@ using Base.Threads
 Threads.nthreads()
 
 if m==1
-    #global dt=2e-4 #N=200
-    global dt=2e-4/2/2/2 #N=200
+    #global dt=  #N=200
+    global dt=2e-4 #N=200
     #global dt=2e-5/2/2/2 #N=1600
     #global dt=5e-5 #N=150
     #global dt=5e-5/2/2/2/2
@@ -149,10 +149,12 @@ elseif m==2
     global dt=1e-4
     #global dt=5e-5/2
     #global dt=5e-6/2 #N=200 new smaller
-else
+elseif m==3
     global dt=1e-4/2
     #global dt=5e-5/2/2
     #global dt=5e-6/2/2 #N=200 new smaller
+else
+    global dt=1e-4/2/2 #N=200
 end
 
 finaltime=5.0
