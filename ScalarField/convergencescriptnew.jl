@@ -157,7 +157,7 @@ else
     global dt=1e-4/2/2 #N=200
 end
 
-finaltime=5.0
+finaltime=2.5
 evol_stats, T_interp = timeevolution(state_array,finaltime,run);
 #CSV.write(dir*"/timearray$res.csv", Tables.table(T_interp), writeheader=false);
 #CSV.write(dir*"/parameters.csv", Tables.table(evol_stats), writeheader=false);
