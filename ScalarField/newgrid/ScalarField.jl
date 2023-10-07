@@ -878,7 +878,8 @@ function RHS(y0,x1,time,func,i,data)
                 end
             else
                 xt = x1
-
+                x=inverse(x)
+                r=x/(1-x)
                 #arctan grid #novissimo 7out
                 z[1] = ((r - 2.0 * y0[1]) * 2.0 .* pi .* r * ((r*derpsi(x1)-y0[3])/r^2.0) ^ 2.0)/(1-x)^2*jacobian(xt)
                 z[2] = (2.0 .* pi .* r * ((r*derpsi(x1)-y0[3])/r^2.0) ^ 2.0)/(1-x)^2*jacobian(xt)
