@@ -23,12 +23,14 @@ global twod = false
 #find A* for different sigmas than 0.3 - doing this rn
 #or find sigma* for an A*?
 
-global run = 1
-global runmax = 40
-sigmas = [0.1 0.2 0.4 0.5 0.6]
 
-global kk=0
+#ja corri para sigma=0.1, differrentfamilies1
+sigmas = [0.2 0.4 0.5 0.6]
+
+global kk=1
 for sigma in sigmas
+    global run = 1
+    global runmax = 40
     global kk=kk+1
     global dir = subdir*string(kk)
     println("dir is ", dir)
