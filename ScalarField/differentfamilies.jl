@@ -9,7 +9,7 @@ include("./ScalarField.jl");
 global bisection = true
 global loggrid = false
 global compactified = true
-global zeroformat = false
+global zeroformat = true
 
 
 
@@ -24,7 +24,7 @@ global twod = false
 #or find sigma* for an A*?
 
 
-#ja corri para sigma=0.1, differrentfamilies1
+#ja corri para sigma=0.1, called it differrentfamilies0 now
 sigmas = [0.2 0.4 0.5 0.6]
 
 global kk=1
