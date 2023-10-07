@@ -47,15 +47,6 @@ for sigma in sigmas
             df = CSV.read(dir*"/bisectionsearch/muninnDATA/even/parameters.csv", DataFrame)
         end
 
-        if (df[run+1, :Column1]) == 0.0 #:criticality
-            println("\nNon critical!")
-            push!(plt_A_non_crit, A)
-            push!(plt_x1, run)
-        else
-            println("\nCritical!")
-            push!(plt_A_crit, A)
-            push!(plt_x2, run)
-        end
         println("\nA = ",df[run+1, :Column2], " sigma = ", df[run+1, :Column3], " r0 = ", df[run+1, :Column4], " Final time = ", df[run+1, :Column5], " explode = ", df[run+1, :Column6])
 
         #println(df[1, :explode])
