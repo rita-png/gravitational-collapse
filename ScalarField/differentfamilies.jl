@@ -22,7 +22,8 @@ global twod = false
 
 #find A* for different sigmas than 0.3 - doing this rn
 #or find sigma* for an A*?
-
+global run = 1
+global runmax = 40
 
 #ja corri para sigma=0.1, called it differrentfamilies0 now
 sigmas = [0.2 0.4 0.5 0.6]
