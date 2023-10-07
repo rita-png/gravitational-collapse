@@ -10,18 +10,12 @@ global twod = false
 global bisection=false
 m=res
 run = 1
-global dir = "/home/ritapsantos/data/ritapsantos/convergenceuneven"
 
 ## grid
-"""Agrid=0.35
+Agrid=0.35
 kgrid=0.7
 mgrid=0.5#0.55
-fgrid=5"""
-#grid 4
-Agrid=0.58
-kgrid=0.47
-mgrid=0.51#0.55
-fgrid=1.0
+fgrid=5
 
 function compactify(r)
     return r/(1+r)
@@ -48,11 +42,13 @@ else
 end
 
 res=m;
-N=2.0^m*300.0/2.0
+N=2.0^m*100.0/2.0
 
 dx=(Xf-ori)/N
 
 println("running for resolution ", res, " N1 = ", N, ", A = ", A)
+
+global dir = "/home/ritapsantos/data/ritapsantos/convergenceuneven"
 
 using Printf
 include("./ScalarField.jl");
@@ -137,23 +133,19 @@ Threads.nthreads()
 
 if bisection==false
     if m==1
-        global dt=0.00001/2 #new for N=200
-        #global dt=0.0002 #N=200
-        #global dt=0.0002/2/2/2 #N=1600
-        
+        global dt=0.0004 #N=100
     elseif m==2
-        global dt=0.00001/2/2 #new for N=200
-        #global dt=2e-5/5/2 #N=200
-        #global dt=0.0002/2 #N=200
-        
+        global dt=0.0002 #N=200
+    elseif m==3
+        global dt=0.0002/2 #N=200
+    elseif m==4
+        global dt=0.0002/2/2 #N=200
     else
-        global dt=0.00001/2/2/2 #new for N=200
-        #global dt=0.0002/2/2 #N=200
-        
+        global dt=0.0002/2/2/2 #N=1600
     end
-    finaltime=5.0
+    finaltime=2.5
 else
-    finaltime=5.0
+    finaltime=2.5
 end
 
 

@@ -170,7 +170,7 @@ function speed(X, m, beta)
     return z
 end
 
-function update_dt(X, m, beta,dt,t)
+function update_dt(X, m, beta,dt)
 
     monitor_ratio = zeros(L)
     
@@ -180,7 +180,6 @@ function update_dt(X, m, beta,dt,t)
     if loggrid==false
         dx=X[5]-X[4]
     else
-        #dx=X[5]-X[4]
         aux=zeros(L-7)
         for i in 1:L-7
             aux[i]=inverse(initX1[i+1])-inverse(initX1[i])
@@ -188,16 +187,10 @@ function update_dt(X, m, beta,dt,t)
         dx=minimum(aux)
     end
 
-    #println("aux is ",aux)
-    #println("dx is", dx)
+
     #return  dx/g*0.01
 
-    if t>2&&t<2.1
-        return dx/g*0.1
-    else
-        return dx/g*0.5
-    end
-    #return dx/g*0.5#/2/10
+    return dx/g*0.5/2
 end
 
 function find_origin(X)
@@ -380,7 +373,7 @@ function integrator(X,derpsi_func,data)
 end
 
 
-function print_muninn(files, t, data, res, mode, X)
+function print_muninn(files, t, data, res, mode)
     #mode is "a" for append or "w" for write
     j=1
     if bisection==false
@@ -390,9 +383,9 @@ function print_muninn(files, t, data, res, mode, X)
                 @printf file "\"Time = %.10e\n" t
                 for i in 1:length(data[:,1])
                     if loggrid==true&&i>=4&&i<=L-3
-                        @printf file "% .10e % .10e\n" inverse(X[i]) data[i,j]
+                        @printf file "% .10e % .10e\n" inverse(data[i,5]) data[i,j]
                     else
-                        @printf file "% .10e % .10e\n" X[i] data[i,j]
+                        @printf file "% .10e % .10e\n" data[i,5] data[i,j]
                     end
                 end
                 println(file) # insert empty line to indicate end of data set
@@ -412,9 +405,9 @@ function print_muninn(files, t, data, res, mode, X)
                 @printf file "\"Time = %.10e\n" t
                 for i in 1:length(data[:,1])
                     if loggrid==true&&i>=4&&i<=L-3
-                        @printf file "% .10e % .10e\n" inverse(X[i]) data[i,j]
+                        @printf file "% .10e % .10e\n" inverse(data[i,5]) data[i,j]
                     else
-                        @printf file "% .10e % .10e\n" X[i] data[i,j]
+                        @printf file "% .10e % .10e\n" data[i,5] data[i,j]
                     end
                 end
                 println(file) # insert empty line to indicate end of data set
@@ -497,9 +490,9 @@ end
 function dissipation(y,i,eps)
 
     if twod==true
-        return dissipation4(y,i,eps)
+        return dissipation6(y,i,0.0065)
     else
-        return dissipation6(y,i,eps) 
+        return dissipation4(y,i,eps) 
     end
 end
 
@@ -713,7 +706,7 @@ function hessian_control(data, t)
 
     dx=x[6]-x[5]
 
-    control=100000
+    control=10000
     result=false
 
     hess=zeros(length(data[:,4]))
@@ -878,16 +871,28 @@ function RHS(y0,x1,time,func,i,data)
                 end
             else
                 xt = x1
-                x=inverse(x)
-                r=x/(1-x)
-                #arctan grid #novissimo 7out
-                z[1] = ((r - 2.0 * y0[1]) * 2.0 .* pi .* r * ((r*derpsi(x1)-y0[3])/r^2.0) ^ 2.0)/(1-x)^2*jacobian(xt)
-                z[2] = (2.0 .* pi .* r * ((r*derpsi(x1)-y0[3])/r^2.0) ^ 2.0)/(1-x)^2*jacobian(xt)
 
-                #z[2]=-((2*Agrid*fgrid*pi*(-1+inverse(xt))*(y0[3]+((1+fgrid^2*(kgrid-xt)^2)*(-1+inverse(xt))*(inverse(xt))*z[3])/(Agrid*fgrid))^2)/((1+fgrid^2*(kgrid-xt)^2)*(inverse(xt))^3))
-                #z[1]=(mgrid+Agrid*atan(fgrid*(-kgrid + xt)) + 2*(-1 + mgrid + Agrid* atan(fgrid*(-kgrid + xt)))*y0[1])/(1 - mgrid + Agrid*atan(fgrid*(kgrid - xt))) * z[2]
+                #arctan grid
+                
+                z[2]=-((2*Agrid*fgrid*pi*(-1+inverse(xt))*(y0[3]+((1+fgrid^2*(kgrid-xt)^2)*(-1+inverse(xt))*(inverse(xt))*z[3])/(Agrid*fgrid))^2)/((1+fgrid^2*(kgrid-xt)^2)*(inverse(xt))^3))
+                z[1]=(mgrid+Agrid*atan(fgrid*(-kgrid + xt)) + 2*(-1 + mgrid + Agrid* atan(fgrid*(-kgrid + xt)))*y0[1])/(1 - mgrid + Agrid*atan(fgrid*(kgrid - xt))) * z[2]
 
-              
+                #half cheby
+                #z[1]= (-1-2*y0[1]+sec((pi*xt)/2)) * 1/2*cot((pi*xt)/2)*csc((pi*xt)/4)^2*(pi*cot((pi*xt)/4)*y0[3]-2*cos((pi*xt)/2)*z[3])^2
+                #z[2]= 1/2*cot((pi*xt)/2)*csc((pi*xt)/4)^2*(pi*cot((pi*xt)/4)*y0[3]-2*cos((pi*xt)/2)*z[3])^2
+                
+                
+                #complete cheby
+                #z[1] = -1/16*csc((pi*xt)/2)^8*sin(pi*xt)^3*(-2*pi*y0[3]+sin(pi*xt)*z[3]) * (((-1+cos(pi*xt)+2*(1+cos(pi*xt))*y0[1]))/(1+cos(pi*xt))) #(2.0 .* h(x) .* (pi .* y0[3] + sqrt(-((-1+x) .* x)) .* h(x) .* (-pi .+ h(x)) .* z[3])^2)/(sqrt(-((-1+x) .* x)) .* (pi-h(x))^3) .* ((pi - h(x) .* (1.0 .+ 2.0 .* y0[1])))/h(x)
+                #z[2] = 1/16*csc((pi*xt)/2)^8*sin(pi*xt)^3*(-2*pi*y0[3]+sin(pi*xt)*z[3]) #(2.0 .* h(x) .* (pi .* y0[3] + sqrt(-((-1+x) .* x)) .* h(x) .* (-pi .+ h(x)) .* z[3])^2)/(sqrt(-((-1+x) .* x)) .* (pi-h(x))^3)
+                #x=x1
+                #z[1] = - 2.0 .* pi .* (-1.0 .+ x) .* (y0[3] .+ (-1 + x) .* x .* z[3]) .^ 2.0 ./ x .^ 3.0 .* ( x ./ (1.0 .-x ) .- 2 .* y0[1])
+                #z[2] = - 2.0 .* pi .* (-1.0 .+ x) .* (y0[3] .+ (-1 + x) .* x .* z[3]) .^ 2.0 ./ x .^ 3.0
+                """if abs.(x1 .- 1.0)<10^(-15)||abs.(x1)<10^(-15)
+                    z[1] = 0.0
+                    z[2] = 0.0
+                    z[3] = 0.0
+                end"""
                 if abs.(x .- 1.0)<10^(-15)
                     z[1] = 0.0
                 end
@@ -899,13 +904,7 @@ function RHS(y0,x1,time,func,i,data)
     return z[:]
 end
 
-function test_m(m_scri,state_array)
-    if state_array[L-3,1]>m_scri
-        return true
-    else
-        return false
-    end
-end
+
 # Defining the function in the RHS of the evolution equation system
 using Base.Threads
 
@@ -991,8 +990,7 @@ function timeevolution(state_array,finaltime,run)
     T_array = [0.0]
     iter = 0
     k=0
-    global m_scri = 1000
-    global maxever_mr = 0
+
     while t<finaltime#@TRACK
         
         
@@ -1000,11 +998,8 @@ function timeevolution(state_array,finaltime,run)
 
         #update time increment
         if bisection==true
-            global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,t)
+            global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt)
         end
-        
-        #global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt)
-        
 
         t = t + dt
         if ((iter%100==0)&&(bisection==true))||((iter%100==0)&&(bisection==false))
@@ -1047,6 +1042,9 @@ function timeevolution(state_array,finaltime,run)
         state_array=ghost(state_array)
         
         
+        run=int(run)
+
+        
 
         #threshold for apparent black hole formation
         monitor_ratio=zeros(L)
@@ -1066,42 +1064,38 @@ function timeevolution(state_array,finaltime,run)
             break
         end
 
-        if (((bisection==true)&&(iter%100==0))||((bisection==true)&&(t>2.0)&&(iter%50==0)))||((bisection==false)&&(iter%500==0))
+
+        if (iter%100==0)&&(bisection==true)
+            print(" monitor ratio is ", maximum(monitor_ratio))
+        end
+
+        if ((bisection==true)&&(iter%100==0))||((bisection==false)&&(iter%500==0))
         #if iter%1==0
             if zeroformat==true
-                zero_print_muninn(files, t, [state_array[:,1:4] monitor_ratio],res,"a",state_array[:,5])
+                zero_print_muninn(files, t, state_array[:,1:5],res,"a")
             else
-                print_muninn(files, t, [state_array[:,1:4] monitor_ratio],res,"a",state_array[:,5])
+                print_muninn(files, t, state_array[:,1:5],res,"a")
             end
         end
 
 
-        if maximum(monitor_ratio)>maxever_mr
-            maxever_mr = maximum(monitor_ratio)
-        end
-
-
-        if maximum(monitor_ratio)>0.6
+        """if maximum(monitor_ratio)>0.7&&k==0
+            global criticality = true
+            k=k+1
+            println("Supercritical evolution! At time ", t, ", iteration = ", iter)
+            println("t = ", t, "iteration ", iter, " monitor ratio = ", maximum(monitor_ratio))
+            global time = t
+            break
+        end"""
+        if maximum(monitor_ratio)>0.995
             print(" monitor ratio is ", maximum(monitor_ratio))
             global criticality = true
             global time = t
             break
         end
 
-        if maximum(abs.(state_array[4:L-3,4]))>0.8
-            println("State array is >1.1!")
-            global criticality=true
-            global time = t
-            break
-        end
 
-        if test_m(m_scri,state_array)==true
-            println("\n\nWARNING, M GROWING AT SCRI!\n\n")
-            global time = t
-            global explode = true
-        end
-        global m_scri=state_array[L-3,1]
-        
+ 
         
         if isnan(state_array[L-3,4])
             if criticality==false
@@ -1121,12 +1115,12 @@ function timeevolution(state_array,finaltime,run)
         global time = t
     end
 
-    if t>2.2
-        global time = 2.2
+    if t>2.9
+        global time = 3.0
         global criticality = false
     end
 
-    global evol_stats = [criticality A sigma r0 time explode run maxever_mr]
+    global evol_stats = [criticality A sigma r0 time explode run]
 
     
     return evol_stats, T_array
