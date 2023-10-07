@@ -56,8 +56,8 @@ global zeroformat = false
 
 N=2000.0 #grid 3, tmux 4
 global dir = "/home/ritapsantos/data/ritapsantos/new4thuneven"
-global low_bound = 0.12478820688815903#0.12474609375000001#0.1245
-global high_bound = 0.12484450738017039#0.15#0.12475#0.1250
+global low_bound = 0.12465050144332973-0.02#0.12478820688815903#0.12474609375000001#0.1245
+global high_bound = 0.12465050144332973+0.02#0.126#0.12484450738017039#0.15#0.12475#0.1250
 global twod = false
 
 ##OR##
