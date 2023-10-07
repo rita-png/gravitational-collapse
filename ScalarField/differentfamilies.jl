@@ -15,8 +15,8 @@ global zeroformat = false
 
 N=2000.0
 global subdir = "/home/ritapsantos/data/ritapsantos/differentfamilies"
-global low_bound = 0.08
-global high_bound = 0.170
+global low_bound = 0.01
+global high_bound = 0.240
 global twod = false
 
 

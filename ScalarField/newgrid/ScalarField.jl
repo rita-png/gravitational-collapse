@@ -1099,7 +1099,6 @@ function timeevolution(state_array,finaltime,run)
             println("\n\nWARNING, M GROWING AT SCRI!\n\n")
             global time = t
             global explode = true
-            break
         end
         global m_scri=state_array[L-3,1]
         
