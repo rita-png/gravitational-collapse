@@ -156,4 +156,4 @@ else
 end
 
 
-evol_stats, T_interp = timeevolution(state_array,finaltime,run);
+evol_stats, T_interp = timeevolution(state_array,finaltime,dir*"/res$res",run);
