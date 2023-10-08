@@ -1,4 +1,4 @@
-resol=[1,2,3,4,5]
+resol=[4,5]
 
 for ress in resol
     A=0.1#0.01
