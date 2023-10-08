@@ -19,16 +19,16 @@ fgrid=5"""
 #fgrid=4.5
 
 #grid 3
-#Agrid=0.44
-#kgrid=0.47
-#mgrid=0.5
-#fgrid=4.0
+Agrid=0.44
+kgrid=0.47
+mgrid=0.5
+fgrid=4.0
 
 #grid 4
-Agrid=0.58
-kgrid=0.47
-mgrid=0.51#0.55
-fgrid=1.0
+#Agrid=0.58
+#kgrid=0.47
+#mgrid=0.51#0.55
+#fgrid=1.0
 
 #### CONFIG #### DON'T FORGET TO CHOOSE GRID
 
@@ -46,11 +46,11 @@ global zeroformat = false
 
 ##OR##
 
-#N=1000.0 #grid 4, tmux 2 ongoing
-#global dir = "/home/ritapsantos/data/ritapsantos"
-#global low_bound = 0.12465050144332973-0.02#0.12478820688815903#0.12474609375000001#0.1245
-#global high_bound = 0.12465050144332973+0.02#0.126#0.12484450738017039#0.15#0.12475#0.1250
-#global twod = true
+N=1000.0 #grid 4->3, tmux 2 ongoing
+global dir = "/home/ritapsantos/data/ritapsantos"
+global low_bound = 0.12465050144332973-0.02#0.12478820688815903#0.12474609375000001#0.1245
+global high_bound = 0.12465050144332973+0.02#0.126#0.12484450738017039#0.15#0.12475#0.1250
+global twod = true
 
 ##OR##
 
@@ -69,11 +69,11 @@ global twod = false"""
 #global twod = false
 #### CONFIG ####
 
-N=5000.0 #grid 4, tmux 6 ongoing
-global dir = "/home/ritapsantos/data/ritapsantos/2nduneven"
-global low_bound = 0.12465050144332973-0.02#0.12478820688815903#0.12474609375000001#0.1245
-global high_bound = 0.12465050144332973+0.02#0.126#0.12484450738017039#0.15#0.12475#0.1250
-global twod = true
+#N=5000.0 #grid 4, tmux 6 ongoing
+#global dir = "/home/ritapsantos/data/ritapsantos/2nduneven"
+#global low_bound = 0.12465050144332973-0.02#0.12478820688815903#0.12474609375000001#0.1245
+#global high_bound = 0.12465050144332973+0.02#0.126#0.12484450738017039#0.15#0.12475#0.1250
+#global twod = true
 
 
 
