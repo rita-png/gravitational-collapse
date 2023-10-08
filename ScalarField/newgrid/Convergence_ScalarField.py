@@ -45,9 +45,9 @@ for resolution in res:
     k=1
 
     for var in vars:
-        dir = "/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA/muninnDATA/res{}/{}.txt".format(resolution,var)
+        #dir = "/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/StoredDATA/03-07/muninnDATA/res{}/{}.txt".format(resolution,var)
         #dir = "/home/rita13santos/Desktop/muninnDATA/res{}/{}.txt".format(resolution,var)
-    
+        dir = "/home/ritapsantos/data/ritapsantos/datachebygrid"
     
         print(dir)
 
@@ -110,6 +110,7 @@ print(datam[0][0][1]) # datam indexes give res, time then gridpoint
 
 
 L=len(datam[0][0])-6 # grid length without the ghostpoints
+print("LENGTH OF GRID IS ", L )
 dx=datagrid[0][0][1]-datagrid[0][0][0]
 
 
@@ -178,7 +179,7 @@ with plt.style.context('bmh'):
 plt.legend()
 plt.xlabel('x')
 plt.ylabel('m2(x)-m1(x)')
-plt.show()
+#plt.show()
 
 
 # # Pointwise convergence tests: plots for thesis project report 
@@ -238,7 +239,7 @@ diffs_4_2.append(np.subtract(auxgrid,aux2grid))
     
 
 plt.legend()
-plt.show()"""
+#plt.show()"""
 
 
 # # L2 norm convergence tests
@@ -405,7 +406,9 @@ with plt.style.context('bmh'):
     ax[1].set_xlabel('time')
     ax[1].set_ylabel('Q(t)')
 
-plt.show()
+plt.savefig("myImagePDF.pdf", format="pdf", bbox_inches="tight")
+
+#plt.show()
 
 
 # In[13]:
