@@ -537,14 +537,24 @@ function DDer(y,i,k,X)
     return z
 end
 
-function Der_array(y,k,X)
+function Der_array(y,k,X) #return derivative of array in order to r
 
     z=zeros(length(y[:,k]))
-    for i in 4:L-3
-        z[i]=Der(y,i,k,X)
+    if compactified==false
+        for i in 4:L-3
+            z[i]=Der(y,i,k,X)
+        end
+    else
+        for i in 4:L-3
+            xx=X[i]
+            rr=xx/(1-xx)
+            z[i]=Der(y,i,k,X)/(1+rr)^2 #df/dr=df/dx*dx/dr
+        end
     end
+
     return z
 end
+
 #matrix
 function unevenDer(y,i,k,X,spls)
 
@@ -671,7 +681,7 @@ end
 
 
 
-
+#solving for psi,r
 function derpsi_evol(y,i,X)
     
     #psi,r
@@ -683,11 +693,13 @@ function derpsi_evol(y,i,X)
         
         if loggrid==false
             ## psi,r evol equation
+            
+            #same eq from scalarfield.jl file uniform grid but index 4->6
+            
             x=X[i]
             r = x/(1-x)
-            
-            dy=(1/(2*r^3))*exp(2*y[i,2])*(-2*y[i,1]*y[i,3]+2*r*y[i,3]*Der(y,i,1,X)-2*r^2*y[i,3]*Der(y,i,2,X)+4*r*y[i,1]*y[i,3]*Der(y,i,2,X)+2*r*y[i,1]*y[i,6]-2*r^2*Der(y,i,1,X)*y[i,6]+2*r^3*Der(y,i,2,X)*y[i,6]-4*r^2*y[i,1]*Der(y,i,2,X)*y[i,6]+r^3*Der(y,i,6,X)-2*r^2*y[i,1]*Der(y,i,6,X))
-    
+            dy=(1/(2*r^3))*exp(2*y[i,2])*(r^3*(1-x)^2*Der(y,i,6,X)-2*r^2*(1-x)^2*Der(y,i,6,X)*y[i,1]+2*r*y[i,1]*y[i,6]-2*y[i,1]*y[i,3]-2*r^2*(1-x)^2*y[i,6]*Der(y,i,1,X)+2*r*(1-x)^2*y[i,3]*Der(y,i,1,X)+2*r^3*(1-x)^2*y[i,6]*Der(y,i,2,X)-4*r^2*(1-x)^2*y[i,1]*y[i,6]*Der(y,i,2,X)-2*r^2*(1-x)^2*y[i,3]*Der(y,i,2,X)+4*r*(1-x)^2*y[i,1]*y[i,3]*Der(y,i,2,X))
+
         else
 
             ##psi,r evol equation
@@ -739,7 +751,7 @@ end
 
 function RHS(y0,x1,time,func,i,data)
     
-    #state array is [m beta psi xchi,u xchi psi,r xchi,r r]
+    #state array is [m beta psi xxchi,u xchi,r psi,r xchi r]
     z=zeros(length(y0))
     
     derxchi = func[1]
@@ -764,60 +776,45 @@ function RHS(y0,x1,time,func,i,data)
         if abs.(x1 .- 1.0)<10^(-15)
             z[3]=0.0
         else
-            z[3]=derpsi(x1)/(1-x1)^2
+            z[3]=derpsi(x1)/(1-x1)^2 #df/dx = df/dr*dr/dx
         end
     end
     
-    
-
-    #necessary functions
-    
-
-    if compactified==false
-        r=x1
-        x=r/(1+r)
-        chi = xchi(r)/x
-        deruchi = y0[4] / x #chi,u = (xchi),u / x
-        derphi = -y0[3]/r^2+derpsi(r)/r #phi,r = -psi/r^2 + psi,r/r
-        derchi = (derxchi(r)-1/(1+r)^2*chi)/x #chi,r = ((xchi),r - 1/(1+r)^2*chi)/x
-    else
-        x=x1
-        r=x/(1-x)
-        chi = xchi(x1)/x
-        deruchi = y0[4] / x #chi,u = (xchi),u / x
-        derphi = -y0[3]/r^2+derpsi(x1)/r #phi,r = -psi/r^2 + psi,r/r
-        derchi = (derxchi(x1)-1/(1+r)^2*chi)/x #chi,r = ((xchi),r - 1/(1+r)^2*chi)/x
-    end
     
     #beta
     if x1<10^(-15)
         z[2] = 0.0
     else
         if compactified==false
-            z[2] = 2*pi*r*((derphi)^2 + (2*(r*(r^2+1)*derchi+2*chi))/(r^2+1)^4)
+            z[2] = (4*pi*(-1+r*(2+r))^2*xchi(x1)^2)/(r*(1+r^2)^4)+(8*pi*(1+r*(-3+r+r^2))*xchi(x1)*derxchi(x1))/(1+r^2)^3+(4*pi*(-1+r)^2*r*derxchi(x1)^2)/(1+r^2)^2+(2*pi*(y0[3]-r*derpsi(x1))^2)/r^3
         else
             x=x1
             r=x/(1-x)
-            z[2] = 1/(1-x1)^2*(2*pi*r*((derphi)^2 + (2*(r*(r^2+1)*derchi+2*chi))/(r^2+1)^4))
+            z[2] = 1/(1-x1)^2*((4*pi*(-1+r*(2+r))^2*xchi(x1)^2)/(r*(1+r^2)^4)+(8*pi*(1+r*(-3+r+r^2))*xchi(x1)*derxchi(x1))/(1+r^2)^3+(4*pi*(-1+r)^2*r*derxchi(x1)^2)/(1+r^2)^2+(2*pi*(y0[3]-r*derpsi(x1))^2)/r^3)
             if abs.(x1 .- 1.0)<10^(-15)
                 z[2]=0.0
             end
         end
     end
 
-    #xchi,u
+    #xxchi,u
+    
     if x1<10^(-15)
-        z[4] = 0.0
+        z[4] = 0.0 #?
     else
         if compactified==false
             r=x1
-            z[4] = 1/(1+r)^2*deruchi + 1/(2*(r^2+1)^5*(1+r))*(exp(2*y0[2])*((r^2+1)*((r^2+1)^4-4*pi*r^2*chi^2*(r^2*chi+2*r^2+2)^2)*derchi+r*chi*(chi*(chi*(-8*pi*r^2*chi*(r^2*chi+4*r^2+4)-(r^2+1)^2*(r^4+r^2+32*pi))-3*(r^2+1)^4)-2*(r^2+1)^4))+4*r^2*(2*pi*(r^2+1)*(r*(r^2+1)*derchi+2*chi)^2-(r^2+2)*(r^4+2*r^2+2))*deruchi-4*deruchi)
+            z[4] = (1/(-1+r))r*(-(y0[4]/r^2)-(1/(2*r^2*(1+r)^2))*(2*(-1+r)^2*y0[4]-(1/((1+r^2)^5))*(1+r)*(4*(-1+r)^2*y0[4]+exp(2*y0[2])*((1-r)*xchi(x1)*(2*r^2*(1+r^2)^4+(1-r)*xchi(x1)*(3*r*(1+r^2)^4+(1-r)*xchi(x1)*((1+r^2)^2*(32*pi+r^2+r^4)+8*pi*(1-r)*r*xchi(x1)*(4+4*r^2-(-1+r)*r*xchi(x1)))))+(1+r^2)*((1+r^2)^4-4*pi*(-1+r)^2*xchi(x1)^2*(2+2*r^2-(-1+r)*r*xchi(x1))^2)*(xchi(x1)+(-1+r)*r*derxchi(x1)))+4*(-1+r)^2*y0[4]*(r^2*(2+r^2)*(2+2*r^2+r^4)-2*pi*(1+r^2)*(2*(-1+r)*xchi(x1)+(1+r^2)*(xchi(x1)+(-1+r)*r*derxchi(x1)))^2))))
         else
             x=x1
             r=x/(1-x)
-            z[4] = 1/(1-x1)^2 * (1/(1+r)^2*deruchi + 1/(2*(r^2+1)^5*(1+r))*(exp(2*y0[2])*((r^2+1)*((r^2+1)^4-4*pi*r^2*chi^2*(r^2*chi+2*r^2+2)^2)*derchi+r*chi*(chi*(chi*(-8*pi*r^2*chi*(r^2*chi+4*r^2+4)-(r^2+1)^2*(r^4+r^2+32*pi))-3*(r^2+1)^4)-2*(r^2+1)^4))+4*r^2*(2*pi*(r^2+1)*(r*(r^2+1)*derchi+2*chi)^2-(r^2+2)*(r^4+2*r^2+2))*deruchi-4*deruchi))
-            
+            z[4] = 1/(1-x1)^2*((1/(-1+r))r*(-(y0[4]/r^2)-(1/(2*r^2*(1+r)^2))*(2*(-1+r)^2*y0[4]-(1/((1+r^2)^5))*(1+r)*(4*(-1+r)^2*y0[4]+exp(2*y0[2])*((1-r)*xchi(x1)*(2*r^2*(1+r^2)^4+(1-r)*xchi(x1)*(3*r*(1+r^2)^4+(1-r)*xchi(x1)*((1+r^2)^2*(32*pi+r^2+r^4)+8*pi*(1-r)*r*xchi(x1)*(4+4*r^2-(-1+r)*r*xchi(x1)))))+(1+r^2)*((1+r^2)^4-4*pi*(-1+r)^2*xchi(x1)^2*(2+2*r^2-(-1+r)*r*xchi(x1))^2)*(xchi(x1)+(-1+r)*r*derxchi(x1)))+4*(-1+r)^2*y0[4]*(r^2*(2+r^2)*(2+2*r^2+r^4)-2*pi*(1+r^2)*(2*(-1+r)*xchi(x1)+(1+r^2)*(xchi(x1)+(-1+r)*r*derxchi(x1)))^2)))))
+
+
             if abs.(x1 .- 1.0)<10^(-15)
+                z[4]=0.0
+            end
+            if abs.(x1 .- 1.0/2.0)<10^(-15)
                 z[4]=0.0
             end
         end
@@ -828,12 +825,13 @@ function RHS(y0,x1,time,func,i,data)
         z[1] = 0.0
     else
         if compactified==false
-            #z[1] = (2*pi*r)*(r-2*y0[1])*derphi^2
-            z[1] = (2*pi*r)/((r^2+1)^3)*(2*(r^2+1)*r^2*exp(-2*y0[2])*derchi*((r-2*y0[1])*exp(2*y0[2])*derchi-r*deruchi)+(r^2+1)^3*(r-2*y0[1])*derphi^2+(4*(-4*y0[1]+r^5+2*r^3+3*r)*chi^2)/(r^2+1)+4*r*chi*(2*(r-2*y0[1])*derchi-r*exp(-2*y0[2])*deruchi)+4*r^3*chi^3+(r^5*chi^4)/(r^2+1))
+            
+            z[1] = (4*exp(-2*y0[2])*pi*(-1+r)^2*(-1+r*(2+r))*y0[4]*xchi(x1))/(1+r^2)^3+(4*pi*(r*(3+(-2+r)*r)*(1+r*(-2+r+2*r^3))-2*(-1+r*(2+r))^2*y0[1])*xchi(x1)^2)/(r*(1+r^2)^4)-(8*pi*(-1+r)^3*r*xchi(x1)^3)/(1+r^2)^3+(2*pi*(-1+r)^4*r^2*xchi(x1)^4)/(1+r^2)^4+((4*exp(-2*y0[2])*pi*(-1+r)^3*r*y0[4])/(1+r^2)^2+(8*pi*(1+r*(-3+r+r^2))*(r-2*y0[1])*xchi(x1))/(1+r^2)^3)*derxchi(x1)+(4*pi*(-1+r)^2*r*(r-2*y0[1])*derxchi(x1)^2)/(1+r^2)^2+2*pi*r*(r-2*y0[1])*(-(y0[3]/r^2)+derpsi(x1)/r)^2
         else
             x=x1
             r=x/(1-x)
-            z[1] = 1/(1-x1)^2*((2*pi*r)/((r^2+1)^3)*(2*(r^2+1)*r^2*exp(-2*y0[2])*derchi*((r-2*y0[1])*exp(2*y0[2])*derchi-r*deruchi)+(r^2+1)^3*(r-2*y0[1])*derphi^2+(4*(-4*y0[1]+r^5+2*r^3+3*r)*chi^2)/(r^2+1)+4*r*chi*(2*(r-2*y0[1])*derchi-r*exp(-2*y0[2])*deruchi)+4*r^3*chi^3+(r^5*chi^4)/(r^2+1)))
+            z[1] = 1/(1-x1)^2*((4*exp(-2*y0[2])*pi*(-1+r)^2*(-1+r*(2+r))*y0[4]*xchi(x1))/(1+r^2)^3+(4*pi*(r*(3+(-2+r)*r)*(1+r*(-2+r+2*r^3))-2*(-1+r*(2+r))^2*y0[1])*xchi(x1)^2)/(r*(1+r^2)^4)-(8*pi*(-1+r)^3*r*xchi(x1)^3)/(1+r^2)^3+(2*pi*(-1+r)^4*r^2*xchi(x1)^4)/(1+r^2)^4+((4*exp(-2*y0[2])*pi*(-1+r)^3*r*y0[4])/(1+r^2)^2+(8*pi*(1+r*(-3+r+r^2))*(r-2*y0[1])*xchi(x1))/(1+r^2)^3)*derxchi(x1)+(4*pi*(-1+r)^2*r*(r-2*y0[1])*derxchi(x1)^2)/(1+r^2)^2+2*pi*r*(r-2*y0[1])*(-(y0[3]/r^2)+derpsi(x1)/r)^2)
+
             if abs.(x1 .- 1.0)<10^(-15)
                 z[1]=0.0
             end
@@ -904,7 +902,7 @@ function RHS(y0,x1,time,func,i,data)
     return z[:]
 end"""
 
-# Defining the function in the RHS of the evolution equation system
+# Defining the function in the RHS of the ution equation system
 using Base.Threads
 function SF_RHS(data,t,X)
     
@@ -914,7 +912,7 @@ function SF_RHS(data,t,X)
     # update interpolation of psi,x
     xchi_func = Spline1D(X[4:L-3], data[4:L-3,7],  k=4);
 
-    data[4:L-3,5]=derivative(xchi_func, initX1; nu=1)#Der_array(state_array,7,initX)[4:L-3]
+    data[4:L-3,5]= Der_array(state_array,7,initX)[4:L-3]#derivative(xchi_func, initX1; nu=1)#Der_array(state_array,7,initX)[4:L-3]
 
     derxchi_func = Spline1D(X[4:L-3], data[4:L-3,5],  k=4);
     derpsi_func = Spline1D(X[4:L-3], data[4:L-3,6],  k=4);
@@ -941,6 +939,11 @@ function SF_RHS(data,t,X)
     #deruxchi_func = Spline1D(X[4:L-3],data[4:L-3,5],k=4)
         
     Threads.@threads for i in 4:L-3 #ORI
+        if compactified==false
+            xvar=X[i]/(1+X[i])
+        else
+            xvar=X[i]
+        end
 
         if X[i]<10^(-15) #left
             dy[i,6]= +1.0/2.0 * (Der(data,i,6,X))  - dissipation(data,i,epsilon)[6]
@@ -949,11 +952,11 @@ function SF_RHS(data,t,X)
 
         elseif abs.(X[i] .- 1.0)<10^(-15)
             dy[i,6]= 0.0 - dissipation(data,i,epsilon)[6]
-            dy[i,7] = data[i,5] - dissipation(data,i,epsilon)[7]
+            dy[i,7] = data[i,4] - dissipation(data,i,epsilon)[7] #xvar=1
             
         else
             dy[i,6]=derpsi_evol(data,i,X) - dissipation(data,i,epsilon)[6]
-            dy[i,7] = data[i,5] - dissipation(data,i,epsilon)[7]
+            dy[i,7] = data[i,4]/xvar - dissipation(data,i,epsilon)[7] #solving for xchi in the next slice. (xchi),u=(xxchi),u/x
             
         end
 
@@ -1028,7 +1031,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         # update interpolation of psi,x
         xchi_func = Spline1D(X[4:L-3], state_array[4:L-3,7],  k=4);
 
-        state_array[4:L-3,5]=derivative(xchi_func, initX1; nu=1)#Der_array(state_array,7,initX)[4:L-3]
+        state_array[4:L-3,5]=Der_array(state_array,7,initX)[4:L-3]#derivative(xchi_func, initX1; nu=1)#Der_array(state_array,7,initX)[4:L-3]
 
         derxchi_func = Spline1D(X[4:L-3], state_array[4:L-3,5],  k=4);
         derpsi_func = Spline1D(X[4:L-3], state_array[4:L-3,6],  k=4);
