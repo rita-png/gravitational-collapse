@@ -47,7 +47,7 @@ for resolution in res:
     for var in vars:
         #dir = "/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/StoredDATA/03-07/muninnDATA/res{}/{}.txt".format(resolution,var)
         #dir = "/home/rita13santos/Desktop/muninnDATA/res{}/{}.txt".format(resolution,var)
-        dir = "/home/ritapsantos/data/ritapsantos/datachebygrid"
+        dir = "/home/ritapsantos/data/ritapsantos/datachebygrid/03-07/muninnDATA/res{}/{}.txt".format(resolution,var)
     
         print(dir)
 
