@@ -38,7 +38,7 @@ global compactified = true
 global zeroformat = false
 
 
-#N=6000.0 #grid 3, tmux 3
+#N=6000.0 #grid 3, tmux 3 descontinuado
 #global dir = "/home/ritapsantos/data/ritapsantos/4thuneven"
 #global low_bound = 0.1245
 #global high_bound = 0.12475#0.1250
@@ -46,11 +46,11 @@ global zeroformat = false
 
 ##OR##
 
-N=1000.0 #grid 4, tmux 2
-global dir = "/home/ritapsantos/data/ritapsantos"
-global low_bound = 0.12465050144332973-0.02#0.12478820688815903#0.12474609375000001#0.1245
-global high_bound = 0.12465050144332973+0.02#0.126#0.12484450738017039#0.15#0.12475#0.1250
-global twod = true
+#N=1000.0 #grid 4, tmux 2 ongoing
+#global dir = "/home/ritapsantos/data/ritapsantos"
+#global low_bound = 0.12465050144332973-0.02#0.12478820688815903#0.12474609375000001#0.1245
+#global high_bound = 0.12465050144332973+0.02#0.126#0.12484450738017039#0.15#0.12475#0.1250
+#global twod = true
 
 ##OR##
 
@@ -61,13 +61,19 @@ global high_bound = 0.12465050144332973+0.02#0.126#0.12484450738017039#0.15#0.12
 global twod = false"""
 
 
-##OR##
+##OR## descontinuado
 #N=10000 #grid 4, tmux 5
 #global dir = "/home/ritapsantos/data/ritapsantos/gridfour"
 #global low_bound = 0.1246#0.1245 #these bounds were guessed
 #global high_bound = 0.1247#0.1250
 #global twod = false
 #### CONFIG ####
+
+N=5000.0 #grid 4, tmux 6 ongoing
+global dir = "/home/ritapsantos/data/ritapsantos/2nduneven"
+global low_bound = 0.12465050144332973-0.02#0.12478820688815903#0.12474609375000001#0.1245
+global high_bound = 0.12465050144332973+0.02#0.126#0.12484450738017039#0.15#0.12475#0.1250
+global twod = true
 
 
 
