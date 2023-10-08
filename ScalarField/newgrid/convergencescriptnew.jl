@@ -28,13 +28,6 @@ end
 
 using Printf
 
-if loggrid==true
-    ori=(tan(-mgrid/Agrid)/fgrid+kgrid)#0.0#Float128(0.0)#0.0;
-    Xf=(tan((1-mgrid)/Agrid)/fgrid+kgrid)
-else
-    ori=0.0
-    Xf=1.0
-end
 
 res=m;
 N=2.0^m*100.0/2.0
@@ -49,14 +42,17 @@ using Printf
 include("./ScalarField.jl");
 #include("/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/myspline.jl");
 
+ori=0.0#Float128(0.0)#0.0;
 initX1 = nothing
-
+N=int(N)
 initX1=range(ori, stop=Xf, step=dx);
 #initX1=create_range(ori,Xf,dx,N)
-#initX = range(round(ori-3.0*dx,digits=10), stop=Xf+3.0*dx, step=dx)
+initX = range(round(ori-3.0*dx,digits=10), stop=Xf+3.0*dx, step=dx)
 #initX=create_range(ori-3.0*dx,Xf+3.0*dx,dx,N+6)
 
-L=length(initX1)+6;#length(initX)
+L=length(initX);
+println("step size is  ", dx)
+println("the time step is ", dt)
 
 if loggrid==true
     global originalX=initX
