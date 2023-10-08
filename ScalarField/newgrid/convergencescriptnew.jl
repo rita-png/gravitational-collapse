@@ -53,7 +53,6 @@ initX = range(round(ori-3.0*dx,digits=10), stop=Xf+3.0*dx, step=dx)
 
 L=length(initX);
 println("step size is  ", dx)
-println("the time step is ", dt)
 
 if loggrid==true
     global originalX=initX
