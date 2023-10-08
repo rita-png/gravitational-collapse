@@ -54,6 +54,7 @@ initX = range(round(ori-3.0*dx,digits=10), stop=Xf+3.0*dx, step=dx)
 L=length(initX);
 println("step size is  ", dx)
 
+using Dierckx
 if loggrid==true
     global originalX=initX
     xtilde=gridfunc(initX1)
@@ -65,7 +66,7 @@ if loggrid==true
 end;
 #initX=[ori-3*dx; ori-2*dx; ori-dx; collect(initX1); Xf+dx; Xf+2*dx; Xf+3*dx];
 
-using Dierckx
+
 
 
 ####
