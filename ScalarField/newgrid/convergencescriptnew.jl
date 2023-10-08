@@ -10,7 +10,18 @@ global twod = false
 global bisection=false
 m=res
 run = 1
+global dir = "/home/ritapsantos/data/ritapsantos/convergenceuneven"
 
+## grid
+"""Agrid=0.35
+kgrid=0.7
+mgrid=0.5#0.55
+fgrid=5"""
+#grid 4
+Agrid=0.58
+kgrid=0.47
+mgrid=0.51#0.55
+fgrid=1.0
 
 function compactify(r)
     return r/(1+r)
@@ -28,45 +39,37 @@ end
 
 using Printf
 
+if loggrid==true
+    ori=(tan(-mgrid/Agrid)/fgrid+kgrid)#0.0#Float128(0.0)#0.0;
+    Xf=(tan((1-mgrid)/Agrid)/fgrid+kgrid)
+else
+    ori=0.0
+    Xf=1.0
+end
 
 res=m;
-N=2.0^m*100.0/2.0
-ori=0.0
-Xf=1.0
+N=2.0^m*300.0/2.0
+
 dx=(Xf-ori)/N
 
 println("running for resolution ", res, " N1 = ", N, ", A = ", A)
-
-global dir = "/home/ritapsantos/data/ritapsantos/chebyconvergence"
 
 using Printf
 include("./ScalarField.jl");
 #include("/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/myspline.jl");
 
-ori=0.0#Float128(0.0)#0.0;
 initX1 = nothing
-N=int(N)
+
 initX1=range(ori, stop=Xf, step=dx);
 #initX1=create_range(ori,Xf,dx,N)
-initX = range(round(ori-3.0*dx,digits=10), stop=Xf+3.0*dx, step=dx)
+#initX = range(round(ori-3.0*dx,digits=10), stop=Xf+3.0*dx, step=dx)
 #initX=create_range(ori-3.0*dx,Xf+3.0*dx,dx,N+6)
 
-L=length(initX);
-println("step size is  ", dx)
+L=length(initX1)+6;#length(initX)
+
+initX=[ori-3*dx; ori-2*dx; ori-dx; collect(initX1); Xf+dx; Xf+2*dx; Xf+3*dx];
 
 using Dierckx
-if loggrid==true
-    global originalX=initX
-    xtilde=gridfunc(initX1)
-    initX1=xtilde
-    initX=collect(initX)
-    initX[4:L-3]=xtilde
-    #global dergrid_func = der_grid(initX)
-    global jacobian_func = Spline1D(originalX[4:L-3], analytic_jacobian(originalX[4:L-3]),  k=4);
-end;
-#initX=[ori-3*dx; ori-2*dx; ori-dx; collect(initX1); Xf+dx; Xf+2*dx; Xf+3*dx];
-
-
 
 
 ####
@@ -91,13 +94,12 @@ state_array[:,4] = initderpsi
 state_array=ghost(state_array)
 
 ####
-"""if loggrid==true
+if loggrid==true
     derpsi_func = Spline1D(inverse(initX[4:L-3]), state_array[4:L-3,4],  k=4);
 else
     derpsi_func = Spline1D(initX[4:L-3], state_array[4:L-3,4],  k=4);
-end;"""
+end;
 
-derpsi_func = Spline1D(initX[4:L-3], state_array[4:L-3,4],  k=4);
 
 y0=[0.0 0.0 0.0]
 
@@ -135,25 +137,24 @@ Threads.nthreads()
 
 if bisection==false
     if m==1
-        #global dt=0.0004 #N=100
-        global dt=5e-5 #N=100
-    elseif m==2
+        global dt=0.00001/2 #new for N=200
         #global dt=0.0002 #N=200
-        global dt=5e-5/2
-    elseif m==3
-        #global dt=0.0002/2 #N=200
-        global dt=5e-5/2/2
-    elseif m==4
-        #global dt=0.0002/2/2 #N=200
-        global dt=5e-5/2/2/2
-    else
         #global dt=0.0002/2/2/2 #N=1600
-        global dt=5e-5/2/2/2/2
+        
+    elseif m==2
+        global dt=0.00001/2/2 #new for N=200
+        #global dt=2e-5/5/2 #N=200
+        #global dt=0.0002/2 #N=200
+        
+    else
+        global dt=0.00001/2/2/2 #new for N=200
+        #global dt=0.0002/2/2 #N=200
+        
     end
-    finaltime=2.5
+    finaltime=5.0
 else
-    finaltime=2.5
+    finaltime=5.0
 end
 
 
-evol_stats, T_interp = timeevolution(state_array,finaltime,dir*"/res$res",run);
+evol_stats, T_interp = timeevolution(state_array,finaltime,run);
