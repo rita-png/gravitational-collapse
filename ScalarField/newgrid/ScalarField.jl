@@ -878,15 +878,16 @@ function RHS(y0,x1,time,func,i,data)
                 end
             else
                 xt = x1
-
+                
+                #x=inverse(xt)
+                #r=x/(1-x)
                 #arctan grid #novissimo 7out
-                z[1] = ((r - 2.0 * y0[1]) * 2.0 .* pi .* r * ((r*derpsi(x1)-y0[3])/r^2.0) ^ 2.0)/(1-x)^2*jacobian(xt)
-                z[2] = (2.0 .* pi .* r * ((r*derpsi(x1)-y0[3])/r^2.0) ^ 2.0)/(1-x)^2*jacobian(xt)
+                #z[1] = ((r - 2.0 * y0[1]) * 2.0 .* pi .* r * ((r*derpsi(x1)-y0[3])/r^2.0) ^ 2.0)/(1-x)^2*jacobian(xt)
+                #z[2] = (2.0 .* pi .* r * ((r*derpsi(x1)-y0[3])/r^2.0) ^ 2.0)/(1-x)^2*jacobian(xt)
 
-                #z[2]=-((2*Agrid*fgrid*pi*(-1+inverse(xt))*(y0[3]+((1+fgrid^2*(kgrid-xt)^2)*(-1+inverse(xt))*(inverse(xt))*z[3])/(Agrid*fgrid))^2)/((1+fgrid^2*(kgrid-xt)^2)*(inverse(xt))^3))
-                #z[1]=(mgrid+Agrid*atan(fgrid*(-kgrid + xt)) + 2*(-1 + mgrid + Agrid* atan(fgrid*(-kgrid + xt)))*y0[1])/(1 - mgrid + Agrid*atan(fgrid*(kgrid - xt))) * z[2]
+                z[2]=-((2*Agrid*fgrid*pi*(-1+inverse(xt))*(y0[3]+((1+fgrid^2*(kgrid-xt)^2)*(-1+inverse(xt))*(inverse(xt))*z[3])/(Agrid*fgrid))^2)/((1+fgrid^2*(kgrid-xt)^2)*(inverse(xt))^3))
+                z[1]=(mgrid+Agrid*atan(fgrid*(-kgrid + xt)) + 2*(-1 + mgrid + Agrid* atan(fgrid*(-kgrid + xt)))*y0[1])/(1 - mgrid + Agrid*atan(fgrid*(kgrid - xt))) * z[2]
 
-              
                 if abs.(x .- 1.0)<10^(-15)
                     z[1] = 0.0
                 end
@@ -1098,7 +1099,6 @@ function timeevolution(state_array,finaltime,run)
             println("\n\nWARNING, M GROWING AT SCRI!\n\n")
             global time = t
             global explode = true
-            break
         end
         global m_scri=state_array[L-3,1]
         
