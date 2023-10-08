@@ -11,11 +11,6 @@ global bisection=false
 m=res
 run = 1
 
-## grid
-Agrid=0.35
-kgrid=0.7
-mgrid=0.5#0.55
-fgrid=5
 
 function compactify(r)
     return r/(1+r)
@@ -48,7 +43,7 @@ dx=(Xf-ori)/N
 
 println("running for resolution ", res, " N1 = ", N, ", A = ", A)
 
-global dir = "/home/ritapsantos/data/ritapsantos/convergenceuneven"
+global dir = "/home/ritapsantos/data/ritapsantos/chebyconvergence"
 
 using Printf
 include("./ScalarField.jl");
@@ -63,7 +58,16 @@ initX1=range(ori, stop=Xf, step=dx);
 
 L=length(initX1)+6;#length(initX)
 
-initX=[ori-3*dx; ori-2*dx; ori-dx; collect(initX1); Xf+dx; Xf+2*dx; Xf+3*dx];
+if loggrid==true
+    global originalX=initX
+    xtilde=gridfunc(initX1)
+    initX1=xtilde
+    initX=collect(initX)
+    initX[4:L-3]=xtilde
+    #global dergrid_func = der_grid(initX)
+    global jacobian_func = Spline1D(originalX[4:L-3], analytic_jacobian(originalX[4:L-3]),  k=4);
+end;
+#initX=[ori-3*dx; ori-2*dx; ori-dx; collect(initX1); Xf+dx; Xf+2*dx; Xf+3*dx];
 
 using Dierckx
 
@@ -90,12 +94,13 @@ state_array[:,4] = initderpsi
 state_array=ghost(state_array)
 
 ####
-if loggrid==true
+"""if loggrid==true
     derpsi_func = Spline1D(inverse(initX[4:L-3]), state_array[4:L-3,4],  k=4);
 else
     derpsi_func = Spline1D(initX[4:L-3], state_array[4:L-3,4],  k=4);
-end;
+end;"""
 
+derpsi_func = Spline1D(initX[4:L-3], state_array[4:L-3,4],  k=4);
 
 y0=[0.0 0.0 0.0]
 
@@ -133,15 +138,20 @@ Threads.nthreads()
 
 if bisection==false
     if m==1
-        global dt=0.0004 #N=100
+        #global dt=0.0004 #N=100
+        global dt=5e-5 #N=100
     elseif m==2
-        global dt=0.0002 #N=200
+        #global dt=0.0002 #N=200
+        global dt=5e-5/2
     elseif m==3
-        global dt=0.0002/2 #N=200
+        #global dt=0.0002/2 #N=200
+        global dt=5e-5/2/2
     elseif m==4
-        global dt=0.0002/2/2 #N=200
+        #global dt=0.0002/2/2 #N=200
+        global dt=5e-5/2/2/2
     else
-        global dt=0.0002/2/2/2 #N=1600
+        #global dt=0.0002/2/2/2 #N=1600
+        global dt=5e-5/2/2/2/2
     end
     finaltime=2.5
 else
