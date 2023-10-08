@@ -31,7 +31,8 @@ using Printf
 
 res=m;
 N=2.0^m*100.0/2.0
-
+ori=0.0
+Xf=1.0
 dx=(Xf-ori)/N
 
 println("running for resolution ", res, " N1 = ", N, ", A = ", A)
