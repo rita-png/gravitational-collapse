@@ -26,9 +26,10 @@ global run = 1
 global runmax = 40
 
 #ja corri para sigma=0.1, called it differrentfamilies0 now
-sigmas = [0.2 0.4 0.5 0.6]
+# 0.2 is differrentfamilies1
+sigmas = [0.4 0.5 0.6]
 
-global kk=1
+global kk=2
 for sigma in sigmas
     global run = 1
     global runmax = 40
