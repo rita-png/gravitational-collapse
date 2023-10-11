@@ -26,11 +26,16 @@ global run = 1
 global runmax = 40
 
 #ja corri para sigma=0.1, called it differrentfamilies0 now
-# 0.2 is differrentfamilies1
-sigmas = [0.4 0.5 0.6]
+# 0.2 is differrentfamilies2
+# difffams 1 nao existe
+# 0.4 is differentfamilies3
+# 0.5 0.6 will be difffams 4 and 5
+sigmas = [0.5 0.6]
 
-global kk=2
+global kk=3
 for sigma in sigmas
+    global low_bound = 0.01
+    global high_bound = 0.240
     global run = 1
     global runmax = 40
     global kk=kk+1
