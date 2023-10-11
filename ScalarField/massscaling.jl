@@ -26,8 +26,8 @@ global twod = false
 
 
 #A_critic = 0.12465049029170887 #oolon
-A_critic = 0.12465049029170887 #baltasar
-
+A_critic = 0.14985093340204908 #baltasar
+sigma=0.4
 
 exponents = collect(-30:0.5:-7)
 
