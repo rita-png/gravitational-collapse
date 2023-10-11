@@ -1102,7 +1102,7 @@ function timeevolution(state_array,finaltime,run)
             global time = t
             break
         end
-
+        
         if (((bisection==true)&&(iter%100==0))||((bisection==true)&&(t>2.0)&&(iter%50==0)))||((bisection==false)&&(iter%500==0))
         #if iter%1==0
             if zeroformat==true
