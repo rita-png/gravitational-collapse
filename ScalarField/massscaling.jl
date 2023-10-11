@@ -10,8 +10,9 @@ include("./ScalarField.jl");
 
 ####started 21/09####
 global N=2000.0
-global dir = "/home/ritapsantos/data/ritapsantos/massscaling"
-
+#global dir = "/home/ritapsantos/data/ritapsantos/massscaling"
+##OR##
+global dir = "/home/ritapsantos/data/ritapsantos/massscalingtwo"
 
 
 ####
@@ -19,17 +20,17 @@ global dir = "/home/ritapsantos/data/ritapsantos/massscaling"
 global bisection = true
 global loggrid = false
 global compactified = true
-global zeroformat = true
+global zeroformat = false
 global twod = false
 
 #### CONFIG ####
 
 
-#A_critic = 0.12465049029170887 #oolon
-A_critic = 0.14985093340204908 #baltasar
-sigma=0.4
+A_critic = 0.12465049029170887 #oolon
+#A_critic = 0.14985093340204908 #baltasar
+#sigma=0.4
 
-exponents = collect(-30:0.5:-7)
+exponents = collect(-15:1:-7)
 
 global run = 1
 global runmax = length(exponents)
@@ -41,8 +42,9 @@ while(run <= runmax)
     println("\n########")
     println("\nBisection search run ##", run, "; A = ", A," N = ", N,", exponent = ", exponents[run],"\n")
 
-    global ARGS = [A,run,N,sigma]
-    include("./Evolution_ScalarField_Diff_Families.jl");
+    global ARGS = [A,run,N]
+    #include("./Evolution_ScalarField_Diff_Families.jl");
+    include("./Evolution_ScalarField.jl");
     if loggrid==true
         df = CSV.read(dir*"/bisectionsearch/muninnDATA/uneven/parameters.csv", DataFrame)
     else

@@ -666,7 +666,7 @@ function RHS(y0,x1,time,func,i,data)
         else
             if loggrid==false
                 x=x1
-                z[1] = - 2.0 .* pi .* (-1.0 .+ x) .* (y0[3] .+ (-1 + x) .* x .* z[3]) .^ 2.0 ./ x .^ 3.0 .* ( x ./ (1.0 .-x ) .- 2 .* y0[1])#in the limit this is 2 pi (y0[3])^2
+                z[1] = - 2.0 .* pi .* (-1.0 .+ x) .* (y0[3] .+ (-1 + x) .* x .* z[3]) .^ 2.0 ./ x .^ 3.0 .* ( x ./ (1.0 .-x ) .- 2 .* y0[1])
                 z[2] = - 2.0 .* pi .* (-1.0 .+ x) .* (y0[3] .+ (-1 + x) .* x .* z[3]) .^ 2.0 ./ x .^ 3.0
                 if abs.(x1 .- 1.0)<10^(-15)
                     z[1] = 0.0
@@ -813,7 +813,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         run=int(run)
 
         #if iter%500==0
-        if (iter%500==0&&t>0.5)||(t>1.5&&iter%50==0)
+        if (iter%1000==0&&t>0.5)||((iter%20==0)&&(t>=2.00&&t<=2.046))
             if zeroformat==true
                 zero_print_muninn(files, t, state_array[:,1:5],res,"a")
             else
@@ -847,6 +847,11 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
             break
         end"""
         
+        """if isnan(state_array[L-3,4])==0.0 #if derpsi isnt a NAN, update it!
+            global mass=state_array[L-3,1]
+        end"""
+        
+
         if isnan(state_array[L-3,4])
             if criticality==false
                 global time = iter
