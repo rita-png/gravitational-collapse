@@ -63,7 +63,7 @@ global zeroformat = true
 
 ##OR##
 
-N"""=2000.0 #grid 3, bisec4 balta
+"""N=2000.0 #grid 3, bisec4 balta
 global dir = "/home/ritapsantos/data/ritapsantos/2nduneven"
 global low_bound = 0.12490990085739222#this was subcritical from parameters.csv 1000
 global high_bound = 0.12465050144332973+0.02#0.126#0.12484450738017039#0.15#0.12475#0.1250
