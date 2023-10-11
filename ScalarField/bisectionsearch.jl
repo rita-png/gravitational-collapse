@@ -8,12 +8,21 @@ include("./ScalarField.jl");
 
 #### CONFIG ####
 
-global N=10000.0 #dont forget to change sigma in Evolution_scalarfield.jl
+global N=2000.0 #dont forget to change sigma in Evolution_scalarfield.jl
+#sigma=0.3
+global dir = "/home/ritapsantos/data/ritapsantos/monitorratio"
+
+global low_bound = 0.12465049029170885
+global high_bound = 0.12465049029170885
+
+##OR##
+
+"""global N=10000.0 #dont forget to change sigma in Evolution_scalarfield.jl
 #sigma=0.4
 global dir = "/home/ritapsantos/data/ritapsantos/4theven"
 
 global low_bound = 0.14985093340204908#-0.001
-global high_bound = 0.14985093340204908+0.001
+global high_bound = 0.14985093340204908+0.001"""
 
 
 ##OR##
@@ -31,7 +40,7 @@ global high_bound = 0.12465050166602559#0.125#0.12465052097457974#0.124660501443
 global bisection = true
 global loggrid = false
 global compactified = true
-global zeroformat = true
+global zeroformat = false
 
 
 #global dir = "/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA"
@@ -41,7 +50,7 @@ global zeroformat = true
 
 
 global run = 1
-global runmax = 40
+global runmax = 2
 
 plt_A_crit = Vector{Float64}()
 plt_A_non_crit = Vector{Float64}()
