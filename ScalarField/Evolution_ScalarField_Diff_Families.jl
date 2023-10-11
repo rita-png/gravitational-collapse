@@ -94,7 +94,8 @@ time=0
 criticality=0.0
 explode=0.0
 critical_stop=0
-evol_stats = [criticality A sigma r0 time explode run]
+bondimass=0
+evol_stats = [criticality A sigma r0 time explode run bondimass]
 monitor_ratio = zeros(L)
 
 run=int(run)
