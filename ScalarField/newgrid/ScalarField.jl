@@ -417,49 +417,6 @@ function print_muninn(files, t, data, res, mode)
         end
     end
 end
-"""function print_muninn(files, t, data, res, mode, X)
-    #mode is "a" for append or "w" for write
-    j=1
-    if bisection==false
-        for fl in files #normal run
-            
-            open(dir*"/muninnDATA/res$res/$fl.txt", mode) do file
-                @printf file "\"Time = %.10e\n" t
-                for i in 1:length(data[:,1])
-                    if loggrid==true&&i>=4&&i<=L-3
-                        @printf file "% .10e % .10e\n" inverse(X[i]) data[i,j]
-                    else
-                        @printf file "% .10e % .10e\n" X[i] data[i,j]
-                    end
-                end
-                println(file) # insert empty line to indicate end of data set
-                end
-            j=j+1
-        end
-    else
-        if loggrid==true
-            auxdir= dir*"/bisectionsearch/muninnDATA/uneven"
-        else
-            auxdir= dir*"/bisectionsearch/muninnDATA/even"
-        end
-
-        for fl in files #bisection search
-            
-            open(auxdir*"/run$run/$fl.txt", mode) do file
-                @printf file "\"Time = %.10e\n" t
-                for i in 1:length(data[:,1])
-                    if loggrid==true&&i>=4&&i<=L-3
-                        @printf file "% .10e % .10e\n" inverse(X[i]) data[i,j]
-                    else
-                        @printf file "% .10e % .10e\n" X[i] data[i,j]
-                    end
-                end
-                println(file) # insert empty line to indicate end of data set
-                end
-            j=j+1
-        end
-    end
-end"""
 
 
 # 0 dimension output, save every variable at the ori and scri+
