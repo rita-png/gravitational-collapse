@@ -25,7 +25,9 @@ global twod = false
 #### CONFIG ####
 
 
-A_critic = 0.12465049029170887
+#A_critic = 0.12465049029170887 #oolon
+A_critic = 0.12465049029170887 #baltasar
+
 
 exponents = collect(-30:0.5:-7)
 
