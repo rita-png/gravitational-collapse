@@ -116,9 +116,9 @@ global files=["m", "beta", "psi", "derpsi", "monitorratio"]
 
 
 if zeroformat==true
-    zero_print_muninn(files, 0, [state_array[:,1:5]],res,"w")
+    zero_print_muninn(files, 0, state_array[:,1:5],res,"w")
 else
-    print_muninn(files, 0, [state_array[:,1:5]],res,"w")
+    print_muninn(files, 0, state_array[:,1:5],res,"w")
 end
 
 
