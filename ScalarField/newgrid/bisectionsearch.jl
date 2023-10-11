@@ -23,7 +23,7 @@ fgrid=4.0
 global bisection = true
 global loggrid = true
 global compactified = true
-global zeroformat = true
+global zeroformat = false
 
 ##OR##
 
