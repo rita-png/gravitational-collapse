@@ -379,8 +379,45 @@ function integrator(X,derpsi_func,data)
     return integral
 end
 
-
-function print_muninn(files, t, data, res, mode, X)
+function print_muninn(files, t, data, res, mode)
+    #mode is "a" for append or "w" for write
+    j=1
+    LL=length(state_array[1,:])
+    if bisection==false
+        for fl in files #normal run
+            
+            open(dir*"/muninnDATA/res$res/$fl.txt", mode) do file
+            #open("./DATA/muninnDATA/res$res/$fl.txt", mode) do file
+                @printf file "\"Time = %.10e\n" t
+                for i in 1:length(data[:,1])
+                    @printf file "% .10e % .10e\n" data[i,LL] data[i,j]
+                end
+                println(file) # insert empty line to indicate end of data set
+                end
+            j=j+1
+        end
+    else
+        if loggrid==true
+            auxdir= dir*"/bisectionsearch/muninnDATA/uneven"
+        else
+            auxdir= dir*"/bisectionsearch/muninnDATA/even"
+        end
+        
+        for fl in files #bisection search
+            
+            open(auxdir*"/run$run/$fl.txt", mode) do file
+            #open("./DATA/bisectionsearch/muninnDATA/run$run/$fl.txt", mode) do file
+                @printf file "\"Time = %.10e\n" t
+                for i in 1:length(data[:,1])
+                    @printf file "% .10e % .10e\n" data[i,LL] data[i,j]
+                end
+                println(file) # insert empty line to indicate end of data set
+                end
+            j=j+1
+        end
+    end
+end
+"""function print_muninn(files, t, data, res, mode, X)
     #mode is "a" for append or "w" for write
     j=1
     if bisection==false
@@ -422,7 +459,7 @@ function print_muninn(files, t, data, res, mode, X)
             j=j+1
         end
     end
-end
+end"""
 
 
 # 0 dimension output, save every variable at the ori and scri+
@@ -1069,9 +1106,9 @@ function timeevolution(state_array,finaltime,run)
         if (((bisection==true)&&(iter%100==0))||((bisection==true)&&(t>2.0)&&(iter%50==0)))||((bisection==false)&&(iter%500==0))
         #if iter%1==0
             if zeroformat==true
-                zero_print_muninn(files, t, [state_array[:,1:4] monitor_ratio],res,"a")
+                zero_print_muninn(files, t, [state_array[:,1:5]],res,"a")
             else
-                print_muninn(files, t, [state_array[:,1:4] monitor_ratio],res,"a")
+                print_muninn(files, t, [state_array[:,1:5]],res,"a")
             end
         end
 
