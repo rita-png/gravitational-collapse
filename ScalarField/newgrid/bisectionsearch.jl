@@ -23,7 +23,7 @@ fgrid=4.0
 global bisection = true
 global loggrid = true
 global compactified = true
-global zeroformat = false
+global zeroformat = true
 
 ##OR##
 
@@ -35,12 +35,35 @@ global twod = true"""
 
 ##OR##
 
-N=2000.0 #grid 3, tmux 6
-global dir = "/home/ritapsantos/data/ritapsantos/new4thuneven"
+#N=2000.0 #grid 3, tmux 6
+#global dir = "/home/ritapsantos/data/ritapsantos/new4thuneven"
+#global low_bound = 0.12490990085739222#this was subcritical from parameters.csv 1000
+#global high_bound = 0.12465050144332973+0.02#0.126#0.12484450738017039#0.15#0.12475#0.1250
+#global twod = false
+
+##OR##
+
+N=5000.0 #grid 3, bisec2 balta
+global dir = "/home/ritapsantos/data/ritapsantos"
 global low_bound = 0.12490990085739222#this was subcritical from parameters.csv 1000
 global high_bound = 0.12465050144332973+0.02#0.126#0.12484450738017039#0.15#0.12475#0.1250
 global twod = false
 
+##OR##
+
+"""N=10000.0 #grid 3, bisec3 balta
+global dir = "/home/ritapsantos/data/ritapsantos/4thuneven"
+global low_bound = 0.12490990085739222#this was subcritical from parameters.csv 1000
+global high_bound = 0.12465050144332973+0.02#0.126#0.12484450738017039#0.15#0.12475#0.1250
+global twod = false"""
+
+##OR##
+
+"""N=2000.0 #grid 3, bisec4 balta
+global dir = "/home/ritapsantos/data/ritapsantos/2nduneven"
+global low_bound = 0.12490990085739222#this was subcritical from parameters.csv 1000
+global high_bound = 0.12465050144332973+0.02#0.126#0.12484450738017039#0.15#0.12475#0.1250
+global twod = true"""
 #### CONFIG ####
 
 
