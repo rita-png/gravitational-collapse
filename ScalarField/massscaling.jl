@@ -41,8 +41,8 @@ while(run <= runmax)
     println("\n########")
     println("\nBisection search run ##", run, "; A = ", A," N = ", N,", exponent = ", exponents[run],"\n")
 
-    global ARGS = [A,run,N]
-    include("./Evolution_ScalarField.jl");
+    global ARGS = [A,run,N,sigma]
+    include("./Evolution_ScalarField_Diff_Families.jl");
     if loggrid==true
         df = CSV.read(dir*"/bisectionsearch/muninnDATA/uneven/parameters.csv", DataFrame)
     else
