@@ -6,18 +6,6 @@ using CSV, Tables, DataFrames, Plots, Printf
 
 include("./ScalarField.jl");
 
-# grid 1
-"""Agrid=0.35
-kgrid=0.7
-mgrid=0.5#0.55
-fgrid=5"""
-
-#grid 2, newnew
-#Agrid=0.42
-#kgrid=0.5
-#mgrid=0.5
-#fgrid=4.5
-
 #grid 3
 Agrid=0.44
 kgrid=0.47
@@ -37,43 +25,25 @@ global loggrid = true
 global compactified = true
 global zeroformat = false
 
-
-#N=6000.0 #grid 3, tmux 3 descontinuado
-#global dir = "/home/ritapsantos/data/ritapsantos/4thuneven"
-#global low_bound = 0.1245
-#global high_bound = 0.12475#0.1250
-#global twod = false
-
 ##OR##
 
-N=1000.0 #grid 4->3, tmux 2 ongoing
+"""N=1000.0 #grid 4->3, tmux 2 ongoing
 global dir = "/home/ritapsantos/data/ritapsantos"
 global low_bound = 0.12465050144332973-0.02#0.12478820688815903#0.12474609375000001#0.1245
 global high_bound = 0.12465050144332973+0.02#0.126#0.12484450738017039#0.15#0.12475#0.1250
-global twod = true
+global twod = true"""
 
 ##OR##
 
-"""N=2000.0 #grid 3, tmux 4
+N=2000.0 #grid 3, tmux 6
 global dir = "/home/ritapsantos/data/ritapsantos/new4thuneven"
-global low_bound = 0.12465050144332973-0.02#0.12478820688815903#0.12474609375000001#0.1245
+global low_bound = 0.12490990085739222#this was subcritical from parameters.csv 1000
 global high_bound = 0.12465050144332973+0.02#0.126#0.12484450738017039#0.15#0.12475#0.1250
-global twod = false"""
+global twod = false
 
-
-##OR## descontinuado
-#N=10000 #grid 4, tmux 5
-#global dir = "/home/ritapsantos/data/ritapsantos/gridfour"
-#global low_bound = 0.1246#0.1245 #these bounds were guessed
-#global high_bound = 0.1247#0.1250
-#global twod = false
 #### CONFIG ####
 
-#N=5000.0 #grid 4, tmux 6 ongoing
-#global dir = "/home/ritapsantos/data/ritapsantos/2nduneven"
-#global low_bound = 0.12465050144332973-0.02#0.12478820688815903#0.12474609375000001#0.1245
-#global high_bound = 0.12465050144332973+0.02#0.126#0.12484450738017039#0.15#0.12475#0.1250
-#global twod = true
+
 
 
 
