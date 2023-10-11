@@ -57,7 +57,7 @@ state_array=[initm initbeta initpsi initderpsi initX];
 
 #PSI
 r0=0.7#0.3
-sigma=0.3
+sigma=0.4
 initpsi[4:L-3] = init_gaussian(initX1,r0,sigma,A)
 
 state_array[:,3] = initpsi

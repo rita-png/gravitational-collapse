@@ -865,8 +865,8 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         global time = 3.0
         global criticality = false
     end
-    mass=state_array[L-3,1]
-    global evol_stats = [criticality A sigma r0 time explode run mass]
+    
+    global evol_stats = [criticality A sigma r0 time explode run]
 
     return evol_stats, T_array
 
