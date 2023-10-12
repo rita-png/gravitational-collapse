@@ -458,31 +458,58 @@ function ghostscri(y)
     return y
 end
 
-function dissipation(y,i,eps)
+function parity(xchi)
+
+    L=length(xchi)
+    xchi[1]=-xchi[7]
+    xchi[2]=-xchi[6]
+    xchi[3]=-xchi[5]
+    xchi[4]=0
+
+    xchi[L-2]=extrapolate_out(xchi[L-6], xchi[L-5], xchi[L-4], xchi[L-3])
+    xchi[L-1]=extrapolate_out(xchi[L-5], xchi[L-4], xchi[L-3], xchi[L-2])
+    xchi[L]=extrapolate_out(xchi[L-4], xchi[L-3], xchi[L-2], xchi[L-1])
+
+    return xchi
+end
+
+function dissipation(y,i,eps,var)
 
     if twod==true
-        return dissipation4(y,i,eps)
+        return dissipation4(y,i,eps,var)
     else
-        return dissipation6(y,i,eps) 
+        return dissipation6(y,i,eps,var) 
     end
 end
 
 #6th order dissipation, added to 4th order original scheme
-function dissipation6(y,i,eps)
-    if i==4
-        delta6= (19*y[i,:]-142*y[i+1,:]+464*y[i+2,:]-866*y[i+3,:]+1010*y[i+4,:]-754*y[i+5,:]+352*y[i+6,:]-94*y[i+7,:]+11*y[i+8,:])/2;
-    elseif i==5
-        delta6= (11*y[i-1,:]-80*y[i,:]+254*y[i+1,:]-460*y[i+2,:]+520*y[i+3,:]-376*y[i+4,:]+170*y[i+5,:]-44*y[i+6,:]+5*y[i+7,:])/2;
-    elseif i==6
-        delta6= (5*y[i-2,:]-34*y[i-1,:]+100*y[i,:]-166*y[i+1,:]+170*y[i+2,:]-110*y[i+3,:]+44*y[i+4,:]-10*y[i+5,:]+y[i+6,:])/2;
-    elseif i==L-3
-        delta6= (19*y[i,:]-142*y[i-1,:]+464*y[i-2,:]-866*y[i-3,:]+1010*y[i-4,:]-754*y[i-5,:]+352*y[i-6,:]-94*y[i-7,:]+11*y[i-8,:])/2;
-    elseif i==L-4
-        delta6= (11*y[i+1,:]-80*y[i,:]+254*y[i-1,:]-460*y[i-2,:]+520*y[i-3,:]-376*y[i-4,:]+170*y[i-5,:]-44*y[i-6,:]+5*y[i-7,:])/2;
-    elseif i==L-5
-        delta6= (5*y[i+2,:]-34*y[i+1,:]+100*y[i,:]-166*y[i-1,:]+170*y[i-2,:]-110*y[i-3,:]+44*y[i-4,:]-10*y[i-5,:]+y[i-6,:])/2;
+function dissipation6(y,i,eps,var)
+    if var==6
+        if i==4
+            delta6= (19*y[i,:]-142*y[i+1,:]+464*y[i+2,:]-866*y[i+3,:]+1010*y[i+4,:]-754*y[i+5,:]+352*y[i+6,:]-94*y[i+7,:]+11*y[i+8,:])/2;
+        elseif i==5
+            delta6= (11*y[i-1,:]-80*y[i,:]+254*y[i+1,:]-460*y[i+2,:]+520*y[i+3,:]-376*y[i+4,:]+170*y[i+5,:]-44*y[i+6,:]+5*y[i+7,:])/2;
+        elseif i==6
+            delta6= (5*y[i-2,:]-34*y[i-1,:]+100*y[i,:]-166*y[i+1,:]+170*y[i+2,:]-110*y[i+3,:]+44*y[i+4,:]-10*y[i+5,:]+y[i+6,:])/2;
+        elseif i==L-3
+            delta6= (19*y[i,:]-142*y[i-1,:]+464*y[i-2,:]-866*y[i-3,:]+1010*y[i-4,:]-754*y[i-5,:]+352*y[i-6,:]-94*y[i-7,:]+11*y[i-8,:])/2;
+        elseif i==L-4
+            delta6= (11*y[i+1,:]-80*y[i,:]+254*y[i-1,:]-460*y[i-2,:]+520*y[i-3,:]-376*y[i-4,:]+170*y[i-5,:]-44*y[i-6,:]+5*y[i-7,:])/2;
+        elseif i==L-5
+            delta6= (5*y[i+2,:]-34*y[i+1,:]+100*y[i,:]-166*y[i-1,:]+170*y[i-2,:]-110*y[i-3,:]+44*y[i-4,:]-10*y[i-5,:]+y[i-6,:])/2;
+        else
+            delta6=(y[i+3,:]-6*y[i+2,:]+15*y[i+1,:]-20*y[i,:]+15*y[i-1,:]-6*y[i-2,:]+y[i-3,:]);
+        end
     else
-        delta6=(y[i+3,:]-6*y[i+2,:]+15*y[i+1,:]-20*y[i,:]+15*y[i-1,:]-6*y[i-2,:]+y[i-3,:]);
+        if i==L-3
+            delta6= (19*y[i,:]-142*y[i-1,:]+464*y[i-2,:]-866*y[i-3,:]+1010*y[i-4,:]-754*y[i-5,:]+352*y[i-6,:]-94*y[i-7,:]+11*y[i-8,:])/2;
+        elseif i==L-4
+            delta6= (11*y[i+1,:]-80*y[i,:]+254*y[i-1,:]-460*y[i-2,:]+520*y[i-3,:]-376*y[i-4,:]+170*y[i-5,:]-44*y[i-6,:]+5*y[i-7,:])/2;
+        elseif i==L-5
+            delta6= (5*y[i+2,:]-34*y[i+1,:]+100*y[i,:]-166*y[i-1,:]+170*y[i-2,:]-110*y[i-3,:]+44*y[i-4,:]-10*y[i-5,:]+y[i-6,:])/2;
+        else
+            delta6=(y[i+3,:]-6*y[i+2,:]+15*y[i+1,:]-20*y[i,:]+15*y[i-1,:]-6*y[i-2,:]+y[i-3,:]);
+        end
     end
 
 return (-1)^3*eps*1/(dx)*delta6
@@ -490,17 +517,27 @@ end
 
 
 #4th order  dissipation, added to 2nd order original scheme
-function dissipation4(y,i,eps)#0.02
-    if i==4
-        delta4=(-13/6*y[i+5,:]+71/6*y[i+4,:]-77/3*y[i+3,:]+83/3*y[i+2,:]-89/6*y[i+1,:]+19/6*y[i,:])
-    elseif i==5
-        delta4=(-7/6*y[i+4,:]+41/6*y[i+3,:]-47/3*y[i+2,:]+53/3*y[i+1,:]-59/6*y[i,:]+13/6*y[i-1,:])
-    elseif i==L-3
-        delta4=-(-13/6*y[i-5,:]+71/6*y[i-4,:]-77/3*y[i-3,:]+83/3*y[i-2,:]-89/6*y[i-1,:]+19/6*y[i,:])
-    elseif i==L-4
-        delta4=-(-7/6*y[i-4,:]+41/6*y[i-3,:]-47/3*y[i-2,:]+53/3*y[i-1,:]-59/6*y[i,:]+13/6*y[i+1,:])
+function dissipation4(y,i,eps,var)#0.02
+    if var==6
+        if i==4
+            delta4=(-13/6*y[i+5,:]+71/6*y[i+4,:]-77/3*y[i+3,:]+83/3*y[i+2,:]-89/6*y[i+1,:]+19/6*y[i,:])
+        elseif i==5
+            delta4=(-7/6*y[i+4,:]+41/6*y[i+3,:]-47/3*y[i+2,:]+53/3*y[i+1,:]-59/6*y[i,:]+13/6*y[i-1,:])
+        elseif i==L-3
+            delta4=-(-13/6*y[i-5,:]+71/6*y[i-4,:]-77/3*y[i-3,:]+83/3*y[i-2,:]-89/6*y[i-1,:]+19/6*y[i,:])
+        elseif i==L-4
+            delta4=-(-7/6*y[i-4,:]+41/6*y[i-3,:]-47/3*y[i-2,:]+53/3*y[i-1,:]-59/6*y[i,:]+13/6*y[i+1,:])
+        else
+            delta4=(y[i+2,:]-4*y[i+1,:]+6*y[i,:]-4*y[i-1,:]+y[i-2,:]);
+        end
     else
-        delta4=(y[i+2,:]-4*y[i+1,:]+6*y[i,:]-4*y[i-1,:]+y[i-2,:]);
+        if i==L-3
+            delta4=-(-13/6*y[i-5,:]+71/6*y[i-4,:]-77/3*y[i-3,:]+83/3*y[i-2,:]-89/6*y[i-1,:]+19/6*y[i,:])
+        elseif i==L-4
+            delta4=-(-7/6*y[i-4,:]+41/6*y[i-3,:]-47/3*y[i-2,:]+53/3*y[i-1,:]-59/6*y[i,:]+13/6*y[i+1,:])
+        else
+            delta4=(y[i+2,:]-4*y[i+1,:]+6*y[i,:]-4*y[i-1,:]+y[i-2,:]);
+        end
     end
     return (-1)^2*eps*1/(dx)*delta4
 end
@@ -550,10 +587,10 @@ function DDer(y,i,k,X)
     return z
 end
 
-function Der_array(y,k,X)
+function Der_array(y,k,X)#returns darray/dr or darray/dx if non compactified
 
     z=zeros(length(y[:,k]))
-    if compactified==false #returns darray/dr
+    """if compactified==false 
         for i in 4:L-3
             z[i]=Der(y,i,k,X)
         end
@@ -564,8 +601,19 @@ function Der_array(y,k,X)
             rr=xx/(1-xx)
             z[i]=Der(y,i,k,X)#*(1+rr)^2
         end
-    end
+    end"""
 
+    for i in 4:L-3
+        z[i] = (-y[i+2,k]+8*y[i+1,k]-8*y[i-1,k]+y[i-2,k])/(12*(X[i+1]-X[i]))
+        """if i==L-3 # right boundary TEM
+            z[i] = (-27*y[i,k]+58*y[i-1,k]-56*y[i-2,k]+36*y[i-3,k]-13*y[i-4,k]+2*y[i-5,k])/(12*(X[i]-X[i-1])) #fixed this *-1
+        elseif i==L-4 # right boundary TEM
+            z[i] = (-2*y[i+1,k]-15*y[i,k]+28*y[i-1,k]-16*y[i-2,k]+6*y[i-3,k]-y[i-4,k])/(12*(X[i+1]-X[i]))
+        else # central
+            z[i] = (-y[i+2,k]+8*y[i+1,k]-8*y[i-1,k]+y[i-2,k])/(12*(X[i+1]-X[i]))
+        end"""
+    end
+    
     return z
 end
 
@@ -844,17 +892,24 @@ function RHS(y0,x1,time,func,i,data)
     else
         if compactified==false
             
-            z[1] = (4*exp(-2*y0[2])*pi*(1+r)^2*(-1+(-2+r)*r)*y0[4]*xchi(x1))/(1+r^2)^3+(4*pi*(r*(3+r*(2+r))*(1+r*(2+r+2*r^3))-2*(-1+(-2+r)*r)^2*y0[1])*xchi(x1)^2)/(r*(1+r^2)^4)+(8*pi*r*(1+r)^3*xchi(x1)^3)/(1+r^2)^3+(2*pi*r^2*(1+r)^4*xchi(x1)^4)/(1+r^2)^4+(-((4*exp(-2*y0[2])*pi*r*(1+r)^3*y0[4])/(1+r^2)^2)-(8*pi*(1+r)*(-1+(-2+r)*r)*(r-2*y0[1])*xchi(x1))/(1+r^2)^3)*derxchi(x1)+(4*pi*r*(1+r)^2*(r-2*y0[1])*derxchi(x1)^2)/(1+r^2)^2+2*pi*r*(r-2*y0[1])*(-(y0[3]/r^2)+derpsi(x1)/r)^2
+            #1st z[1] = (4*exp(-2*y0[2])*pi*(1+r)^2*(-1+(-2+r)*r)*y0[4]*xchi(x1))/(1+r^2)^3+(4*pi*(r*(3+r*(2+r))*(1+r*(2+r+2*r^3))-2*(-1+(-2+r)*r)^2*y0[1])*xchi(x1)^2)/(r*(1+r^2)^4)+(8*pi*r*(1+r)^3*xchi(x1)^3)/(1+r^2)^3+(2*pi*r^2*(1+r)^4*xchi(x1)^4)/(1+r^2)^4+(-((4*exp(-2*y0[2])*pi*r*(1+r)^3*y0[4])/(1+r^2)^2)-(8*pi*(1+r)*(-1+(-2+r)*r)*(r-2*y0[1])*xchi(x1))/(1+r^2)^3)*derxchi(x1)+(4*pi*r*(1+r)^2*(r-2*y0[1])*derxchi(x1)^2)/(1+r^2)^2+2*pi*r*(r-2*y0[1])*(-(y0[3]/r^2)+derpsi(x1)/r)^2
+            #10/10
+            z[1] = 1/(1+r^2)^3*2*pi*r*((4*(1+r)^2*(3*r+2*r^3+r^5-4*y0[1])*xchi(x1)^2)/(r^2+r^4)+4*(1+r)^3*xchi(x1)^3+(r*(1+r)^4*xchi(x1)^4)/(1+r^2)-(4*(1+r)*xchi(x1)*(exp(-2*y0[2])*r*(1+r)^2*y0[4]-2*(r-2*y0[1])*(-xchi(x1)+r*(1+r)*derxchi(x1))))/r^2+(2*exp(-2*y0[2])*(1+r^2)*(-xchi(x1)+r*(1+r)*derxchi(x1))*(-r*(1+r)^2*y0[4]+exp(2*y0[2])*(r-2*y0[1])*(-xchi(x1)+r*(1+r)*derxchi(x1))))/r^2+(1+r^2)^3*(r-2*y0[1])*(-(y0[3]/r^2)+derpsi(x1)/r)^2)
+            
         else
             x=x1
             r=x/(1-x)
-            z[1] = 1/(1-x1)^2*((4*exp(-2*y0[2])*pi*(1+r)^2*(-1+(-2+r)*r)*y0[4]*xchi(x1))/(1+r^2)^3+(4*pi*(r*(3+r*(2+r))*(1+r*(2+r+2*r^3))-2*(-1+(-2+r)*r)^2*y0[1])*xchi(x1)^2)/(r*(1+r^2)^4)+(8*pi*r*(1+r)^3*xchi(x1)^3)/(1+r^2)^3+(2*pi*r^2*(1+r)^4*xchi(x1)^4)/(1+r^2)^4+(-((4*exp(-2*y0[2])*pi*r*(1+r)^3*y0[4])/(1+r^2)^2)-(8*pi*(1+r)*(-1+(-2+r)*r)*(r-2*y0[1])*xchi(x1))/(1+r^2)^3)*derxchi(x1)+(4*pi*r*(1+r)^2*(r-2*y0[1])*derxchi(x1)^2)/(1+r^2)^2+2*pi*r*(r-2*y0[1])*(-(y0[3]/r^2)+derpsi(x1)/r)^2)
-            #z[1] = (1/((1-2*x+2*x^2)^4))*2*pi*((2*(x*(3-10*x+13*x^2-8*x^3+8*x^4-8*x^5+4*x^6)+2*(-1+x)^3*(1-2*x^2)^2*y0[1])*xchi(x1)^2)/x+4*x*(1-2*x+2*x^2)*xchi(x1)^3+x^2*xchi(x1)^4-4*(-1+x)^2*(-1+2*x-4*x^3+4*x^4)*(x+2*(-1+x)*y0[1])*xchi(x1)*derxchi(x1)-2*exp(-2*y0[2])*(1-2*x+2*x^2)*y0[4]*((1-2*x^2)*xchi(x1)+x*(1-2*x+2*x^2)*derxchi(x1))+x*(1-2*x+2*x^2)^2*(x+2*(-1+x)*y0[1])*(2*(-1+x)^2*derxchi(x1)^2+(1-2*x+2*x^2)^2*(-(y0[3]/r^2)+derpsi(x1)/r)^2))
+            #1st z[1] = 1/(1-x1)^2*((4*exp(-2*y0[2])*pi*(1+r)^2*(-1+(-2+r)*r)*y0[4]*xchi(x1))/(1+r^2)^3+(4*pi*(r*(3+r*(2+r))*(1+r*(2+r+2*r^3))-2*(-1+(-2+r)*r)^2*y0[1])*xchi(x1)^2)/(r*(1+r^2)^4)+(8*pi*r*(1+r)^3*xchi(x1)^3)/(1+r^2)^3+(2*pi*r^2*(1+r)^4*xchi(x1)^4)/(1+r^2)^4+(-((4*exp(-2*y0[2])*pi*r*(1+r)^3*y0[4])/(1+r^2)^2)-(8*pi*(1+r)*(-1+(-2+r)*r)*(r-2*y0[1])*xchi(x1))/(1+r^2)^3)*derxchi(x1)+(4*pi*r*(1+r)^2*(r-2*y0[1])*derxchi(x1)^2)/(1+r^2)^2+2*pi*r*(r-2*y0[1])*(-(y0[3]/r^2)+derpsi(x1)/r)^2)
+            #2nd z[1] = (1/((1-2*x+2*x^2)^4))*2*pi*((2*(x*(3-10*x+13*x^2-8*x^3+8*x^4-8*x^5+4*x^6)+2*(-1+x)^3*(1-2*x^2)^2*y0[1])*xchi(x1)^2)/x+4*x*(1-2*x+2*x^2)*xchi(x1)^3+x^2*xchi(x1)^4-4*(-1+x)^2*(-1+2*x-4*x^3+4*x^4)*(x+2*(-1+x)*y0[1])*xchi(x1)*derxchi(x1)-2*exp(-2*y0[2])*(1-2*x+2*x^2)*y0[4]*((1-2*x^2)*xchi(x1)+x*(1-2*x+2*x^2)*derxchi(x1))+x*(1-2*x+2*x^2)^2*(x+2*(-1+x)*y0[1])*(2*(-1+x)^2*derxchi(x1)^2+(1-2*x+2*x^2)^2*(-(y0[3]/r^2)+derpsi(x1)/r)^2))
+            z[1] = 1/(1-x1)^2*(1/(1+r^2)^3*2*pi*r*((4*(1+r)^2*(3*r+2*r^3+r^5-4*y0[1])*xchi(x1)^2)/(r^2+r^4)+4*(1+r)^3*xchi(x1)^3+(r*(1+r)^4*xchi(x1)^4)/(1+r^2)-(4*(1+r)*xchi(x1)*(exp(-2*y0[2])*r*(1+r)^2*y0[4]-2*(r-2*y0[1])*(-xchi(x1)+r*(1+r)*derxchi(x1)*(1-x)^2)))/r^2+(2*exp(-2*y0[2])*(1+r^2)*(-xchi(x1)+r*(1+r)*derxchi(x1)*(1-x)^2)*(-r*(1+r)^2*y0[4]+exp(2*y0[2])*(r-2*y0[1])*(-xchi(x1)+r*(1+r)*derxchi(x1)*(1-x)^2)))/r^2+(1+r^2)^3*(r-2*y0[1])*(-(y0[3]/r^2)+derpsi(x1)/r)^2))
+            
+            #10/10
+            
 
 
-            #in principle i dont need this
+            #2nd in principle i dont need this
             if abs.(x1 .- 1.0)<10^(-15)
-                z[1]= 0.0#2*pi*(4*xchi(x1)^2+4*xchi(x1)^3+xchi(x1)^4-2*exp(-2*y0[2])*y0[4]*(-xchi(x1)+derxchi(x1))+(-(y0[3]/r^2)+derpsi(x1)/r)^2)
+                z[1]= (-4*exp(-2*y0[2])*pi*y0[4])*derxchi(x1)+4*pi*derxchi(x1)^2
             end
         end
     end 
@@ -870,18 +925,15 @@ function SF_RHS(data,t,X)
     L=length(X)
     dy=zeros((L,length(data[1,:])));
 
+    
+
+    data[:,7]=parity(data[:,7])
+    data[4:L-3,5]= Der_array(data,7,initX)[4:L-3]#derivative(xchi_func, initX1; nu=1)#
+    data[L-3,5]=data[L-4,5]
+
     # update interpolation of psi,x
     xchi_func = Spline1D(X[4:L-3], data[4:L-3,7],  k=4);
-
-    data[4:L-3,5]= Der_array(data,7,initX)[4:L-3]#derivative(xchi_func, initX1; nu=1)#
-    data[4,5]= extrapolate_in(data[5,5], data[6,5], data[7,5], data[8,5])#isto
-    #aquidata[8,5] = extrapolate_in(data[9,5], data[10,5],data[11,5],data[12,5])
-    #data[7,5] = extrapolate_in(data[8,5], data[9,5], data[10,5],data[11,5])
-    #data[6,5] = extrapolate_in(data[7,5], data[8,5], data[9,5], data[10,5])
-    #data[5,5] = extrapolate_in(data[6,5], data[7,5], data[8,5], data[9,5])
-    #data[4,5] = extrapolate_in(data[5,5], data[6,5], data[7,5], data[8,5])
-
-    derxchi_func = Spline1D(X[4:L-3], data[4:L-3,5],  k=4);
+    derxchi_func = Spline1D(X[1:L], data[1:L,5],  k=4);
     derpsi_func = Spline1D(X[4:L-3], data[4:L-3,6],  k=4);
     
     
@@ -916,33 +968,30 @@ function SF_RHS(data,t,X)
         end
 
         if X[i]<10^(-15) #left
-            dy[i,6]= +1.0/2.0 * (1/(1-X[i])^2 * Der(data,i,6,X) + 2/(1-X[i])^3*data[i,6])  - dissipation(data,i,epsilon)[6]#+1.0/2.0 * (Der(data,i,6,X))  - dissipation(data,i,epsilon)[6]
+            dy[i,6]= +1.0/2.0 * (1/(1-X[i])^2 * Der(data,i,6,X) + 2/(1-X[i])^3*data[i,6])  - dissipation(data,i,epsilon,6)[6]#+1.0/2.0 * (Der(data,i,6,X))  - dissipation(data,i,epsilon)[6]
             #dy[i,6]= +1.0/2.0 * (1/(1-x)^2 * Der(data,i,6,X) + 2/(1-x)^3*data[i,6])  - dissipation(data,i,epsilon)[6]#- dissipation4(data,i,0.02)[6];
-            dy[i,7] = 0.0 - dissipation(data,i,epsilon)[7] #is this really 0?
+            dy[i,7] = 0.0 - dissipation(data,i,epsilon,7)[7]
 
         elseif abs.(X[i] .- 1.0)<10^(-15)
-            dy[i,6]= 0.0 - dissipation(data,i,epsilon)[6]
-            dy[i,7] = data[i,4] - dissipation(data,i,epsilon)[7] #xvar=1
+            dy[i,6]= 0.0 - dissipation(data,i,epsilon,6)[6]
+            dy[i,7] = data[i,4]/xvar - dissipation(data,i,epsilon,7)[7] #xvar=1
             
         else
-            dy[i,6]=derpsi_evol(data,i,X) - dissipation(data,i,epsilon)[6]
-            dy[i,7] = data[i,4]/xvar - dissipation(data,i,epsilon)[7] #solving for xchi in the next slice. (xchi),u=(xxchi),u/x
+            dy[i,6]=derpsi_evol(data,i,X) - dissipation(data,i,epsilon,6)[6]
+            dy[i,7] = data[i,4]/xvar - dissipation(data,i,epsilon,7)[7] #solving for xchi in the next slice. (xchi),u=(xxchi),u/x
             
         end
         #dy[4,6]=extrapolate_in(dy[5,6], dy[6,6], dy[7,6], dy[8,6])
 
-        dy[8,7] = extrapolate_in(dy[9,7], dy[10,7], dy[11,7], dy[12,7]) - dissipation(data,8,epsilon)[7]
-        dy[7,7] = extrapolate_in(dy[8,7], dy[9,7], dy[10,7], dy[11,7]) - dissipation(data,7,epsilon)[7]
-        dy[6,7] = extrapolate_in(dy[7,7], dy[8,7], dy[9,7], dy[10,7]) - dissipation(data,6,epsilon)[7]
-        dy[5,7] = extrapolate_in(dy[6,7], dy[7,7], dy[8,7], dy[9,7]) - dissipation(data,5,epsilon)[7]
-        dy[4,7] = extrapolate_in(dy[5,7], dy[6,7], dy[7,7], dy[8,7]) - dissipation(data,5,epsilon)[7]
+        #dy[8,7] = extrapolate_in(dy[9,7], dy[10,7], dy[11,7], dy[12,7]) - dissipation(data,8,epsilon,7)[7]
+        #dy[7,7] = extrapolate_in(dy[8,7], dy[9,7], dy[10,7], dy[11,7]) - dissipation(data,7,epsilon,7)[7]
+        #dy[6,7] = extrapolate_in(dy[7,7], dy[8,7], dy[9,7], dy[10,7]) - dissipation(data,6,epsilon,7)[7]
+        #dy[5,7] = extrapolate_in(dy[6,7], dy[7,7], dy[8,7], dy[9,7]) - dissipation(data,5,epsilon,7)[7]
+        #dy[4,7] = extrapolate_in(dy[5,7], dy[6,7], dy[7,7], dy[8,7]) - dissipation(data,5,epsilon,7)[7]
 
         
     end
     
-    
-    #extrapolate_in(dy[5,7], dy[6,7], dy[7,7], dy[8,7]) - dissipation(data,4,epsilon)[6]
-    #println("dy[4,7]=",dy[4,7])
     
     
 
@@ -1010,14 +1059,14 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         #state_array[7,7] = extrapolate_in(state_array[8,7], state_array[9,7], state_array[10,7],state_array[11,7])
         #state_array[6,7] = extrapolate_in(state_array[7,7], state_array[8,7], state_array[9,7], state_array[10,7])
         #state_array[5,7] = extrapolate_in(state_array[6,7], state_array[7,7], state_array[8,7], state_array[9,7])
-        state_array[4,7] = 0.0
+        
 
-
-        # update interpolation of psi,x
-        xchi_func = Spline1D(X[4:L-3], state_array[4:L-3,7],  k=4);
-
+        state_array[:,7]=parity(state_array[:,7])
+        
         state_array[4:L-3,5]=Der_array(state_array,7,initX)[4:L-3]#derivative(xchi_func, initX[4:L-3]; nu=1)#
-        state_array[4,5]=extrapolate_in(state_array[5,5], state_array[6,5], state_array[7,5], state_array[8,5])#isto
+
+        state_array[L-3,5]=state_array[L-4,5]
+        #state_array[4,5]=extrapolate_in(state_array[5,5], state_array[6,5], state_array[7,5], state_array[8,5])#isto
         #aqui
         #state_array[8,5] = extrapolate_in(state_array[9,5], state_array[10,5],state_array[11,5],state_array[12,5])
         #state_array[7,5] = extrapolate_in(state_array[8,5], state_array[9,5], state_array[10,5],state_array[11,5])
@@ -1025,7 +1074,9 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         #state_array[5,5] = extrapolate_in(state_array[6,5], state_array[7,5], state_array[8,5], state_array[9,5])
         #state_array[4,5] = extrapolate_in(state_array[5,5], state_array[6,5], state_array[7,5], state_array[8,5])
 
-        derxchi_func = Spline1D(X[4:L-3], state_array[4:L-3,5],  k=4);
+        # update interpolation of psi,x
+        xchi_func = Spline1D(X[4:L-3], state_array[4:L-3,7],  k=4);
+        derxchi_func = Spline1D(X[1:L], state_array[1:L,5],  k=4);
         derpsi_func = Spline1D(X[4:L-3], state_array[4:L-3,6],  k=4);
         
 
