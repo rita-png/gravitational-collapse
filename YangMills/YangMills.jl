@@ -880,7 +880,7 @@ function RHS(y0,x1,time,func,i,data)
 
             #inprinciple i dont need this
             """if abs.(x1 .- 1.0)<10^(-15)
-                z[4]= 1/2  (4  y0[4]-E^(2 y0[2]) (xchi(x1) (2 +xchi(x1) (3+xchi(x1)))))
+                z[4]= 1/2  (4  y0[4]-exp.(2 y0[2]) (xchi(x1) (2 +xchi(x1) (3+xchi(x1)))))
             end"""
             
         end
@@ -1018,7 +1018,42 @@ function doublegrid(X)
 
 end
 
+function masslossfunc(y)
+    z=zeros(L)
+    T00w=zeros(L)
+    T01w=zeros(L)
+    T11w=zeros(L)
 
+    for i in 4:L-3
+
+        if compactified==true
+            r=y[i,8]
+            der=y[i,5] #(x\[Chi]^(0,1))[u,r]=y[i,5]
+        else
+            x=y[i,8]
+            r=x/(1-x)
+            der=y[i,5]*(x-1)^2 #(x\[Chi]^(0,1))[u,r]=y[i,5]*(x-1)^2
+        end
+        
+        T00w[i]=(1/(2*r^5*(1+r^2)^4))*(4*r^3*(1+r)^4*(1+r^2)^2*y[i,4]^2+exp(4*y[i,2])*(r-2*y[i,1])*((1+r^2)^2-(1+r^2+r*(1+r)*y[i,7])^2)^2+2*exp(2*y[i,2])*r^2*(1+r)^2*(1+r^2)*(r-2*y[i,1])*y[i,4]*((-1-2*r+r^2)*y[i,7]-r*(1+r+r^2+r^3)*der)+2*exp(4*y[i,2])*r*(r-2*y[i,1])^2*((-1-2*r+r^2)*y[i,7]-r*(1+r+r^2+r^3)*der)^2)
+
+        T01w[i]=(1/(2*(r+r^3)^4))*exp(2*y[i,2])*((1+r^2)^4-2*(1+r^2)^2*(1+r^2+r*(1+r)*y[i,7])^2+(1+r^2+r*(1+r)*y[i,7])^4+2*exp(-2*y[i,2])*r^2*(1+r)^2*(1+r^2)*y[i,4]*((-1+(-2+r)*r)*y[i,7]-r*(1+r)*(1+r^2)*der)+2*r*(r-2*y[i,1])*((1-(-2+r)*r)*y[i,7]+r*(1+r)*(1+r^2)*der)^2)
+    
+        T11w[i]=(2*((1+2*r-r^2)*y[i,7]+r*(1+r+r^2+r^3)*der)^2)/(r^2*(1+r^2)^4)
+
+        #T00s[i]=(\[Psi]^(1,0))[u,r]^2/r^2+(E^(4 y[i,2]) (r-2 y[i,1]) (y[i,3]-r y[i,6]) ((r-2 y[i,1]) (y[i,3]-r y[i,6])+2 E^(-2 y[i,2]) r^2 (\[Psi]^(1,0))[u,r]))/(2 r^6)
+
+        #T01s[i]=(E^(2 y[i,2]) (r-2 y[i,1]) (y[i,3]-r y[i,6])^2)/(2 r^5)
+
+        #T11s[i]=(y[i,3]-r y[i,6])^2/r^4
+
+        z[i]=-4*exp(-2*y[i,2])*pi*r^2*T00w[i]+8*pi*r*T01w[i]*(r-2*y[i,1])-2*exp(2*y[i,2])*pi*T11w[i]*(r-2*y[i,1])^2
+    
+    end
+    
+    
+    return z
+end
 function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run)
 
     t=0.0
@@ -1096,14 +1131,14 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
 
         run=int(run)
 
-        print_muninn(files, t, state_array[:,:],res,"a")
+        massloss[4:L-3] = masslossfunc(state_array)
         
-        if iter%500==0
+        if iter%250==0
         #if (iter%100==0&&t>0.5)||(t>1.5&&iter%5==0)||(t>=2.04&&t<=2.046)
             if zeroformat==true
-                zero_print_muninn(files, t, state_array[:,:],res,"a")
+                zero_print_muninn(files, t, [state_array[:,:] massloss],res,"a")
             else
-                print_muninn(files, t, state_array[:,:],res,"a")
+                print_muninn(files, t, [state_array[:,:] massloss],res,"a")
             end
 
         end
