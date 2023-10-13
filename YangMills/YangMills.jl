@@ -359,10 +359,10 @@ end
 
 
 using Printf
-function print_muninn(files, t, data, res, mode)
+function print_muninn(files, t, data, res, mode, grid)
     #mode is "a" for append or "w" for write
     j=1
-    LL=length(state_array[1,:])
+    #LL=length(state_array[1,:])
     if bisection==false
         for fl in files #normal run
             
@@ -370,7 +370,7 @@ function print_muninn(files, t, data, res, mode)
             #open("./DATA/muninnDATA/res$res/$fl.txt", mode) do file
                 @printf file "\"Time = %.10e\n" t
                 for i in 1:length(data[:,1])
-                    @printf file "% .10e % .10e\n" data[i,LL] data[i,j]
+                    @printf file "% .10e % .10e\n" grid[i] data[i,j]
                 end
                 println(file) # insert empty line to indicate end of data set
                 end
@@ -1060,6 +1060,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
     T_array = [0.0]
     iter = 0
     k=0
+    massloss=zeros(L)
     while t<finaltime#@TRACK
 
         iter = iter + 1
@@ -1131,14 +1132,15 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
 
         run=int(run)
 
-        massloss[4:L-3] = masslossfunc(state_array)
+        massloss[4:L-3] = masslossfunc(state_array)[4:L-3]
         
-        if iter%250==0
+        
+        if iter%50==0
         #if (iter%100==0&&t>0.5)||(t>1.5&&iter%5==0)||(t>=2.04&&t<=2.046)
             if zeroformat==true
-                zero_print_muninn(files, t, [state_array[:,:] massloss],res,"a")
+                zero_print_muninn(files, t, state_array[:,:],res,"a")
             else
-                print_muninn(files, t, [state_array[:,:] massloss],res,"a")
+                print_muninn(files, t, [state_array[:,1:7] massloss ],res,"a",state_array[:,8])
             end
 
         end
