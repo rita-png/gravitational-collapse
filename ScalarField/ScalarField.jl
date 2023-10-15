@@ -774,7 +774,6 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
     T_array = [0.0]
     iter = 0
     k=0
-    global mass=0
     while t<finaltime#@TRACK
 
         iter = iter + 1
@@ -836,22 +835,12 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
             println("Supercritical evolution! At time ", t, ", iteration = ", iter)
             println("t = ", t, "iteration ", iter, " monitor ratio = ", maximum(monitor_ratio))
             global time = t
-
-            iii=argmax(monitor_ratio)
-            global mass=state_array[iii,1]
-
-            break
         end
 
         """if criticality == true
             break
         end"""
         
-        """if isnan(state_array[L-3,4])==0.0 #if derpsi isnt a NAN, update it!
-            global mass=state_array[L-3,1]
-        end"""
-        
-
         if isnan(state_array[L-3,4])
             if criticality==false
                 global time = iter
@@ -877,7 +866,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         global criticality = false
     end
     
-    global evol_stats = [criticality A sigma r0 time explode run mass]
+    global evol_stats = [criticality A sigma r0 time explode run]
 
     return evol_stats, T_array
 

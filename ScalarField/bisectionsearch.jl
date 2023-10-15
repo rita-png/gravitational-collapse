@@ -8,59 +8,37 @@ include("./ScalarField.jl");
 
 #### CONFIG ####
 
-global N=2000.0 #dont forget to change sigma in Evolution_scalarfield.jl
-#sigma=0.3
-global dir = "/home/ritapsantos/data/ritapsantos/monitorratio"
-
-global low_bound = 0.12465049029170885
-global high_bound = 0.12465049029170885
-
-##OR##
-
-"""global N=10000.0 #dont forget to change sigma in Evolution_scalarfield.jl
-#sigma=0.4
-global dir = "/home/ritapsantos/data/ritapsantos/4theven"
-
-global low_bound = 0.14985093340204908#-0.001
-global high_bound = 0.14985093340204908+0.001"""
 
 
-##OR##
+global N=20000.0
+global dir = "/home/ritapsantos/data/ritapsantos/moreres"
 
-"""global N=20000.0  #dont forget to change sigma in Evolution_scalarfield.jl
-#sigma=0.3
-global dir = "/home/ritapsantos/data/ritapsantos"
-
-#0.124648615151412<A*<0.125#
-global low_bound = 0.1246505016555535#0.124648615151412#0.124#0.12465050144332973#0.12465050144332965#0.12465049985051155
-global high_bound = 0.12465050166602559#0.125#0.12465052097457974#0.12466050144332981#0.12465050251698608#0.125"""
 
 ####
 
 global bisection = true
 global loggrid = false
 global compactified = true
-global zeroformat = false
+global zeroformat = true
 
-
-#global dir = "/home/rita13santos/Desktop/MSc Thesis/Git/ScalarField/DATA"
 
 #### CONFIG ####
 
 
 
 global run = 1
-global runmax = 2
+global runmax = 3
 
 plt_A_crit = Vector{Float64}()
 plt_A_non_crit = Vector{Float64}()
 plt_x1 = Vector{Int64}()
 plt_x2 = Vector{Int64}()
 
-
+As=[0.124650500,0.12465049]
+i=0
 while(run <= runmax)
-
-    A = (low_bound + high_bound) / 2
+    i=i+1
+    A = As[i]
 
     println("\n########")
     println("\nBisection search run ##", run, "\nLow bound = ",low_bound,"; High bound = ", high_bound,"; A = ", A," N = ", N,"\n")
@@ -96,14 +74,3 @@ while(run <= runmax)
     end
     global run = run + 1
 end
-
-
-
-using Plots
-
-p = scatter(plt_x1, plt_A_non_crit, show=true, xaxis="x", yaxis="Amplitude A", title="Horizon formation",label="Non-critical evolution");
-p = scatter!(plt_x2, plt_A_crit,label="Critical evolution");
-savefig("bisectionsearch.png")
-display(p)
-
-readline()
