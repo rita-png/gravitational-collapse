@@ -37,7 +37,7 @@ plt_x2 = Vector{Int64}()
 As=[0.124650500,0.12465049]
 global ii=0
 while(run <= runmax)
-    ii=ii+1
+    global ii=ii+1
     A = As[ii]
 
     println("\n########")
