@@ -35,10 +35,10 @@ plt_x1 = Vector{Int64}()
 plt_x2 = Vector{Int64}()
 
 As=[0.124650500,0.12465049]
-i=0
+global ii=0
 while(run <= runmax)
-    i=i+1
-    A = As[i]
+    ii=ii+1
+    A = As[ii]
 
     println("\n########")
     println("\nBisection search run ##", run, "\nLow bound = ",low_bound,"; High bound = ", high_bound,"; A = ", A," N = ", N,"\n")
