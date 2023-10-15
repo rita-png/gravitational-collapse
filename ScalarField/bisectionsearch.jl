@@ -41,7 +41,7 @@ while(run <= runmax)
     A = As[ii]
 
     println("\n########")
-    println("\nBisection search run ##", run, "\nLow bound = ",low_bound,"; High bound = ", high_bound,"; A = ", A," N = ", N,"\n")
+    println("\nBisection search run ##", run, "; A = ", A," N = ", N,"\n")
 
     global ARGS = [A,run,N]
     include("./Evolution_ScalarField.jl");
