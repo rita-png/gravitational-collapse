@@ -69,24 +69,40 @@ end
     return z
 end"""
 
-function init_xchi(r,r0,sigma,A)
+function init_xxxchi(r,r0,sigma,A)
 
     n=length(r);
 
-    # inputted argument r is actually an x
-    if n==1
-        x=r
-        #rr=x/(1-x)
-        z=A*x*exp(-(x-r0)^2/sigma^2)+A*x*exp(-((x+r0)^2/sigma^2))
-        
-    else
-        z=zeros(n);
-        for i in 1:n-1
-            x=r
-            #rr = x/(1-x)
-            z[i]=A*x[i]*exp(-(x[i]-r0)^2/sigma^2)+A*x[i]*exp(-((x[i]+r0)^2/sigma^2))
+    if compactified==false
+        if n==1
+
+            x=r/(1+r)
+            z=A*x^3*exp(-(x-r0)^2/sigma^2)+A*x^3*exp(-((x+r0)^2/sigma^2))
+            
+        else
+            z=zeros(n);
+            for i in 1:n-1
+                x=r[i]/(1+r[i])
+                z[i]=A*x^3*exp(-(x-r0)^2/sigma^2)+A*x^3*exp(-((x+r0)^2/sigma^2))
+            end
+            #z[n]=0.0#avoid nan at x=1
         end
-        #z[n]=0.0#avoid nan at x=1
+    else
+        # inputted argument r is actually an x
+        if n==1
+            x=r
+            #rr=x/(1-x)
+            z=A*x*exp(-(x-r0)^2/sigma^2)+A*x*exp(-((x+r0)^2/sigma^2))
+            
+        else
+            z=zeros(n);
+            for i in 1:n-1
+                x=r
+                #rr = x/(1-x)
+                z[i]=A*x[i]*exp(-(x[i]-r0)^2/sigma^2)+A*x[i]*exp(-((x[i]+r0)^2/sigma^2))
+            end
+            #z[n]=0.0#avoid nan at x=1
+        end
     end
     
     return z
@@ -482,6 +498,35 @@ function ghostscri(y)
     return y
 end
 
+function parity(xchi)
+
+    L=length(xchi)
+    xchi[1]=-xchi[7]
+    xchi[2]=-xchi[6]
+    xchi[3]=-xchi[5]
+    xchi[4]=0
+
+    xchi[L-2]=extrapolate_out(xchi[L-6], xchi[L-5], xchi[L-4], xchi[L-3])
+    xchi[L-1]=extrapolate_out(xchi[L-5], xchi[L-4], xchi[L-3], xchi[L-2])
+    xchi[L]=extrapolate_out(xchi[L-4], xchi[L-3], xchi[L-2], xchi[L-1])
+
+    return xchi
+end
+
+function secondparity(derxchi)
+
+    L=length(derxchi)
+    derxchi[1]=derxchi[7]
+    derxchi[2]=derxchi[6]
+    derxchi[3]=derxchi[5]
+
+    derxchi[L-2]=extrapolate_out(derxchi[L-6], derxchi[L-5], derxchi[L-4], derxchi[L-3])
+    derxchi[L-1]=extrapolate_out(derxchi[L-5], derxchi[L-4], derxchi[L-3], derxchi[L-2])
+    derxchi[L]=extrapolate_out(derxchi[L-4], derxchi[L-3], derxchi[L-2], derxchi[L-1])
+
+    return derxchi
+end
+
 function dissipation(y,i,eps,var)
 
     if twod==true
@@ -808,25 +853,6 @@ function derpsi_evol(y,i,X)
     return dy
 end
 
-#solving for W,r
-function derW_evol(y,i,X)
-    
-    #chi,r
-    if compactified == false
-        r=X[i]
-        dy=1/2*DDer(y,i,6,X)
-    else
-        
-            
-        x=X[i]
-        r = x/(1-x) #these Der funcs are in order to x
-            
-        dy=0
-
-    end
-    return dy
-end
-
 
 function boundarySF(y,X)
 
@@ -860,11 +886,13 @@ end
 
 function RHS(y0,x1,time,func,i,data)
     
-    #state array is [m beta psi W psi,r W,r r]
+    #state array is [m beta psi xxchi,u xchi,r psi,r xchi r]
     z=zeros(length(y0))
     
-    derpsi = func[1]
-    derW = func[2]
+    derxxxchi = func[1] #this is (xchi),r in non compactified code but is (xchi),x in compactified
+    derpsi = func[2]
+    xxxchi = func[3]
+    derrxxxchi = func[4]
 
     #coords
     r=0
@@ -887,23 +915,39 @@ function RHS(y0,x1,time,func,i,data)
             z[3]=derpsi(x1)/(1-x1)^2 #df/dx = df/dr*dr/dx
         end
     end
-
-    #W
-    if compactified==false
-        r=x1
-        z[4]=derW(r)
-    else
-        #W
-        if abs.(x1 .- 1.0)<10^(-15)
-            z[4]=0.0
-        else
-            z[4]=derW(x1)/(1-x1)^2 #df/dx = df/dr*dr/dx
-        end
-    end
     
     
     #beta
     z[2]=0
+
+    #xxxchi,u
+    if x1<10^(-15)
+        z[4] = 0.0
+    else
+        if compactified==false
+            r=x1
+
+            if source==false
+                extraterms=0.0
+            else
+                extraterms=-(((3-r+10*r^2-r^4+r^5)*xxxchi(x1))/(r*(1+r)^2*(1+r^2)^2))-((1-r+4*r^2-6*r^3+3*r^4+3*r^5)*xxxchi(x1))/(r^2*(1+r)^2*(1+r^2)^2)-(3*(1+r)^3*xxxchi(x1)^2)/(2*r^3*(1+r^2))-((1+r)^6*xxxchi(x1)^3)/(2*r^4*(1+r^2)^2)
+            end
+            
+            z[4] = extraterms + ((1-r+2*r^2+2*r^3+r^4+3*r^5)*y0[4])/(r*(1+r)^2*(1+r^2)^2)+(2*(1-r+4*r^2-6*r^3+3*r^4+3*r^5)*xxxchi(x1)+r*(1+r+r^2+r^3)*((-2+4*r-6*r^2)*derxxxchi(x1)+r*(1+r+r^2+r^3)*derrxxxchi(x1)))/(2*r^2*(1+r)^2*(1+r^2)^2)
+
+            #z[4] = (1/(2*(1+r)^2))*(-4*(1+r)*y0[4]+2xchi(x1)+2*derxchi(x1)+4*r*derxchi(x1)+r*derrxchi(x1)+r^2*derrxchi(x1))
+
+        else
+            x=x1
+            r=x/(1-x)
+            derxchii=derxchi(x1)*(1-x1)^2
+            derrxchii=derxchi(x1)*2*(-1+x)^3+derrxchi(x1)*(1-x1)^4
+            #dx/dr=(1-x1)^2
+            #ddx/dr^2=2*(-1+x)^3
+            z[4] = 0 #?
+
+        end
+    end 
 
     #m
     z[1]=0
@@ -919,12 +963,23 @@ function SF_RHS(data,t,X)
     L=length(X)
     dy=zeros((L,length(data[1,:])));
 
+
+    data[:,7]=parity(data[:,7])
+    data[4:L-3,5]=Der_array(data,7,initX)[4:L-3]
+    #data[L-3,5]=data[L-4,5]
+
+    data[:,5]=secondparity(data[:,5])
+    aux=Der_array(data,5,initX)
+    aux[4]=0
+    aux[L-3]=aux[L-4]
+
     # update interpolation of psi,x
-    derpsi_func = Spline1D(X[4:L-3], data[4:L-3,5],  k=4);
-    derW_func = Spline1D(X[4:L-3], data[4:L-3,6],  k=4);
-    
-    
-    funcs=[derpsi_func derW_func];
+    derxxxchi_func = Spline1D(X[4:L-3], data[4:L-3,5],  k=4);
+    derpsi_func = Spline1D(X[4:L-3], data[4:L-3,6],  k=4);
+    xxxchi_func = Spline1D(X[4:L-3], data[4:L-3,7],  k=4);
+    derrxxxchi_func = Spline1D(X[4:L-3], aux[4:L-3], k=4);
+
+    funcs=[derxxxchi_func derpsi_func xxxchi_func derrxxxchi_func];
 
     # update m, beta and psi data
     y0=[0.0 0.0 0.0 0.0]
@@ -950,31 +1005,26 @@ function SF_RHS(data,t,X)
         end
 
         if X[i]<10^(-15) #left
-            dy[i,4]=derW_evol(data,i,X) - dissipation(data,i,epsilon,6)[4]
-
             dy[i,6]= +1.0/2.0 * (1/(1-X[i])^2 * Der(data,i,6,X) + 2/(1-X[i])^3*data[i,6])  - dissipation(data,i,epsilon,6)[6]#+1.0/2.0 * (Der(data,i,6,X))  - dissipation(data,i,epsilon)[6]
             #dy[i,6]= +1.0/2.0 * (1/(1-x)^2 * Der(data,i,6,X) + 2/(1-x)^3*data[i,6])  - dissipation(data,i,epsilon)[6]#- dissipation4(data,i,0.02)[6];
-            #dy[i,7] = 0.0 - dissipation(data,i,epsilon,7)[7]
+            dy[i,7] = data[i,4] - dissipation(data,i,epsilon,7)[7]
+            
 
         elseif abs.(X[i] .- 1.0)<10^(-15)
-            dy[i,4]=derW_evol(data,i,X) - dissipation(data,i,epsilon,6)[4]
-
             dy[i,6]= 0.0 - dissipation(data,i,epsilon,6)[6]
-            #dy[i,7] = data[i,5]/xvar - dissipation(data,i,epsilon,7)[7] #xvar=1
+            dy[i,7] = data[i,4] - dissipation(data,i,epsilon,7)[7] #xvar=1
             
         else
-            dy[i,4]=derW_evol(data,i,X) - dissipation(data,i,epsilon,6)[4]
-
             dy[i,6]=derpsi_evol(data,i,X) - dissipation(data,i,epsilon,6)[6]
-            #dy[i,7] = data[i,5]/xvar - dissipation(data,i,epsilon,7)[7] #solving for xchi in the next slice. (xchi),u=(xxchi),u/x
+            dy[i,7] = data[i,4] - dissipation(data,i,epsilon,7)[7] #solving for xchi in the next slice. (xchi),u=(xxxchi),u/x
             
         end
     
     end
+    #dy[1,7] = extrapolate_in(dy[5,7], dy[6,7], dy[7,7], dy[8,7]) #- dissipation(data,5,epsilon,7)[7]
     
     
-    
-
+    #to avoid having to do /xvar, make data[i,4] be xxxchi! pi is now xxxchi,u
     #dy=ghost(dy)
     return dy
 
@@ -1052,7 +1102,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         end"""
         t = t + dt
         
-        if iter%10==0
+        if iter%100==0
             println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
         end
         #println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
@@ -1063,7 +1113,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         X=initX #state_array[:,5]
         X1=X[4:L-3]
 
-        #evolve psi,r and W,r
+        #evolve psi,r and xchi
         if twod==true
             state_array[:,:] = twod_rungekutta4molstep(SF_RHS,state_array[:,:],T_array,iter,X) #evolve psi,x
         else
@@ -1071,11 +1121,22 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         end
         
 
-        # update interpolation of psi,x
-        derpsi_func = Spline1D(X[4:L-3], state_array[4:L-3,5],  k=4);
-        derW_func = Spline1D(X[4:L-3], state_array[4:L-3,6],  k=4);
+        state_array[:,7]=parity(state_array[:,7])
+        state_array[4:L-3,5]=Der_array(state_array,7,initX)[4:L-3]
+        #state_array[L-3,5]=state_array[L-4,5]
 
-        funcs=[derpsi_func derW_func];
+        state_array[:,5]=secondparity(state_array[:,5])
+        aux=Der_array(state_array,5,initX)
+        aux[4]=0
+        aux[L-3]=aux[L-4]
+
+        # update interpolation of psi,x
+        derxxxchi_func = Spline1D(X[4:L-3], state_array[4:L-3,5],  k=4);
+        derpsi_func = Spline1D(X[4:L-3], state_array[4:L-3,6],  k=4);
+        xxxchi_func = Spline1D(X[4:L-3], state_array[4:L-3,7],  k=4);
+        derrxxxchi_func = Spline1D(X[4:L-3], aux[4:L-3], k=4);
+
+        funcs=[derxxxchi_func derpsi_func xxxchi_func derrxxxchi_func];
 
         #evolve m and beta together, new
         y0=[0.0 0.0 0.0 0.0]
@@ -1088,13 +1149,15 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
 
         run=int(run)
 
+        massloss[4:L-3] = masslossfunc(state_array)[4:L-3]
         
-        if iter%1==0
+        
+        if iter%10==0
         #if (iter%100==0&&t>0.5)||(t>1.5&&iter%5==0)||(t>=2.04&&t<=2.046)
             if zeroformat==true
                 zero_print_muninn(files, t, state_array[:,:],res,"a")
             else
-                print_muninn(files, t, state_array[:,1:6],res,"a",initX)
+                print_muninn(files, t, [state_array[:,1:7] massloss ],res,"a",state_array[:,8])
             end
 
         end
