@@ -77,13 +77,14 @@ function init_xchi(r,r0,sigma,A)
         if n==1
 
             x=r/(1+r)
-            z=A*x*exp(-(x-r0)^2/sigma^2)+A*x*exp(-((x+r0)^2/sigma^2))
-            
+            #z=A*x*exp(-(x-r0)^2/sigma^2)+A*x*exp(-((x+r0)^2/sigma^2))
+            z=r^3
         else
             z=zeros(n);
             for i in 1:n
                 x=r[i]/(1+r[i])
-                z[i]=A*x*exp(-(x-r0)^2/sigma^2)+A*x*exp(-((x+r0)^2/sigma^2))
+                #z[i]=A*x*exp(-(x-r0)^2/sigma^2)+A*x*exp(-((x+r0)^2/sigma^2))
+                z[i]=r[i]^3
             end
             #z[n]=0.0#avoid nan at x=1
         end
@@ -352,52 +353,6 @@ function twod_n_rk4wrapper(f,y0,x,u,spl_funcs,data) # u depicts T array, or M!!
 end
 
 
-function integrator(X,derpsi_func,data)
-
-    L=length(X)
-    ori=find_origin(X)
-
-    integral = zeros(L)
-
-    #taylor
-    auxdata=zeros(L,4)
-    auxdata[4:L-3,4]=DDer_array(state_array,4,initX)
-    
-    D3phi = auxdata[4,4]
-
-    auxdata2=zeros(L,4)
-    auxdata2[4:L-3,4]=DDer_array(auxdata,4,initX)
-    D5phi = auxdata2[4,4]
-    
-
-
-    for i in ori:L-3
-
-        if i == 4
-            integral[i] = 0.0
-        elseif i == 5
-            h = X[i]-X[i-1]
-            #integral[i] = h * (55/24*derpsi_func(X[i])-59/24*derpsi_func(X[i+1])+37/24*derpsi_func(X[i+2])-9/24*derpsi_func(X[i+3]))
-            integral[i] = data[4,4] + 3*D3phi*X[i]^2/(3*2) + 5*D5phi*X[i]^4/(5*4*3*2)
-        elseif i == 6
-            h = X[i] - X[i-2]
-            #integral[i] = h * (55/24*derpsi_func(X[i])-59/24*derpsi_func(X[i+1])+37/24*derpsi_func(X[i+2])-9/24*derpsi_func(X[i+3]))
-            integral[i] = data[4,4] + 3*D3phi*X[i]^2/(3*2) + 5*D5phi*X[i]^4/(5*4*3*2)
-        elseif i == 7
-            h = X[i] - X[i-3]
-            integral[i] = data[4,4] + 3*D3phi*X[i]^2/(3*2) + 5*D5phi*X[i]^4/(5*4*3*2)
-            #integral[i] = h * (55/24*derpsi_func(X[i])-59/24*derpsi_func(X[i+1])+37/24*derpsi_func(X[i+2])-9/24*derpsi_func(X[i+3]))
-        else
-            h = X[i]-X[i-1]
-            integral[i] = integral[i-1] + h * (55/24*derpsi_func(X[i-1]) - 59/24*derpsi_func(X[i-2]) + 37/24*derpsi_func(X[i-3]) - 9/24*derpsi_func(X[i-4]))
-        end
-    end
-
-    return integral
-end
-
-
-
 using Printf
 function print_muninn(files, t, data, res, mode, grid)
     #mode is "a" for append or "w" for write
@@ -501,16 +456,31 @@ end
 function parity(xchi)
 
     L=length(xchi)
+    xchi[1]=-xchi[7]
+    xchi[2]=-xchi[6]
+    xchi[3]=-xchi[5]
+    xchi[4]=0
 
-    xchi[3]=extrapolate_in(xchi[4], xchi[5], xchi[6], xchi[7])
-    xchi[2]=extrapolate_in(xchi[3], xchi[4], xchi[5], xchi[6])
-    xchi[1]=extrapolate_in(xchi[2], xchi[3], xchi[4], xchi[5])
- 
+    xchi[L-2]=extrapolate_out(xchi[L-6], xchi[L-5], xchi[L-4], xchi[L-3])
+    xchi[L-1]=extrapolate_out(xchi[L-5], xchi[L-4], xchi[L-3], xchi[L-2])
+    xchi[L]=extrapolate_out(xchi[L-4], xchi[L-3], xchi[L-2], xchi[L-1])
 
-    
     return xchi
 end
 
+function secondparity(derxchi)
+
+    L=length(derxchi)
+    derxchi[1]=derxchi[7]
+    derxchi[2]=derxchi[6]
+    derxchi[3]=derxchi[5]
+
+    derxchi[L-2]=extrapolate_out(derxchi[L-6], derxchi[L-5], derxchi[L-4], derxchi[L-3])
+    derxchi[L-1]=extrapolate_out(derxchi[L-5], derxchi[L-4], derxchi[L-3], derxchi[L-2])
+    derxchi[L]=extrapolate_out(derxchi[L-4], derxchi[L-3], derxchi[L-2], derxchi[L-1])
+
+    return derxchi
+end
 
 function dissipation(y,i,eps,var)
 
@@ -594,7 +564,6 @@ function DDer(y,i,k,X)
 
     if i==4 # left boundary LOP2, TEM
         z = (15/4*y[i,k]-77/6*y[i+1,k]+107/6*y[i+2,k]-13*y[i+3,k]+61/12*y[i+4,k]-5/6*y[i+5,k])/((X[i+1]-X[i]))
-        #z = (54*y[i+6,k]-208*y[i+5,k]+349*y[i+4,k]-336*y[i+3,k]+196*y[i+2,k]-64*y[i+1,k]+9*y[i,k])/(12*(X[i+1]-X[i])) #THIS NEEDS TO BE FIXED
     elseif i==5 # left boundary LOP1, TEM
         z = (-y[i+5,k]+7*y[i+4,k]-21*y[i+3,k]+34*y[i+2,k]-19*y[i+1,k]-9*y[i,k]+9*y[i-1,k])/(12*(X[i+1]-X[i]))
     else # central
@@ -605,190 +574,65 @@ function DDer(y,i,k,X)
     
     return z
 end
+function DDer_array(y,k,X)#4th order accurate 2nd der
 
-function Der_array(y,k,X)#returns darray/dr or darray/dx if non compactified
+    z=zeros(L)
+    for i in 4:L-3
+        if i==4 # left boundary LOP2, TEM
+            z[i] = (15/4*y[i,k]-77/6*y[i+1,k]+107/6*y[i+2,k]-13*y[i+3,k]+61/12*y[i+4,k]-5/6*y[i+5,k])/((X[i+1]-X[i]))
+        elseif i==5 # left boundary LOP1, TEM
+            z[i] = (-y[i+5,k]+7*y[i+4,k]-21*y[i+3,k]+34*y[i+2,k]-19*y[i+1,k]-9*y[i,k]+9*y[i-1,k])/(12*(X[i+1]-X[i]))
+        elseif i==L-3
+            z[i] = (15/4*y[i,k]-77/6*y[i-1,k]+107/6*y[i-2,k]-13*y[i-3,k]+61/12*y[i-4,k]-5/6*y[i-5,k])/((X[i+1]-X[i]))
+        elseif i==L-4
+            z[i] = (-y[i-5,k]+7*y[i-4,k]-21*y[i-3,k]+34*y[i-2,k]-19*y[i-1,k]-9*y[i,k]+9*y[i+1,k])/(12*(X[i+1]-X[i]))
+        else # central
+            z[i] = (-y[i+2,k]+16*y[i+1,k]-30*y[i,k]+16*y[i-1,k]-y[i-2,k])/(12*(X[i+1]-X[i]))
+        end
+
+    end
+    
+    return z
+end
+
+"""function Der_array(y,k,X)#returns darray/dr or darray/dx if non compactified
 
     z=zeros(length(y[:,k]))
-    """if compactified==false 
-        for i in 4:L-3
-            z[i]=Der(y,i,k,X)
-        end
-    else
-        #returns darray/dx
-        for i in 4:L-3
-            xx=X[i]
-            rr=xx/(1-xx)
-            z[i]=Der(y,i,k,X)#*(1+rr)^2
-        end
-    end"""
+ 
 
     for i in 4:L-3
         z[i] = (-y[i+2,k]+8*y[i+1,k]-8*y[i-1,k]+y[i-2,k])/(12*(X[i+1]-X[i]))
-        """if i==L-3 # right boundary TEM
-            z[i] = (-27*y[i,k]+58*y[i-1,k]-56*y[i-2,k]+36*y[i-3,k]-13*y[i-4,k]+2*y[i-5,k])/(12*(X[i]-X[i-1])) #fixed this *-1
-        elseif i==L-4 # right boundary TEM
-            z[i] = (-2*y[i+1,k]-15*y[i,k]+28*y[i-1,k]-16*y[i-2,k]+6*y[i-3,k]-y[i-4,k])/(12*(X[i+1]-X[i]))
-        else # central
-            z[i] = (-y[i+2,k]+8*y[i+1,k]-8*y[i-1,k]+y[i-2,k])/(12*(X[i+1]-X[i]))
-        end"""
+        
     end
     
     return z
-end
+end"""
 
 function Der_arrayLOP(y,k,X)#returns darray/dr or darray/dx if non compactified
 
-    z=zeros(length(y[:,k]))
+z=zeros(length(y[:,k]))
 
-    """for i in 4:L-3
-        if i==L-3 # right boundary TEM
-            z[i] = (-27*y[i,k]+58*y[i-1,k]-56*y[i-2,k]+36*y[i-3,k]-13*y[i-4,k]+2*y[i-5,k])/(12*(X[i]-X[i-1])) #fixed this *-1
-        elseif i==L-4 # right boundary TEM
-            z[i] = (-2*y[i+1,k]-15*y[i,k]+28*y[i-1,k]-16*y[i-2,k]+6*y[i-3,k]-y[i-4,k])/(12*(X[i+1]-X[i]))
-        else # central
-            z[i] = (-y[i+2,k]+8*y[i+1,k]-8*y[i-1,k]+y[i-2,k])/(12*(X[i+1]-X[i]))
-        end
-    end"""
-
-    for i in 4:L-3
-        if i==4 # left boundary LOP1, TEM
-            z[i] = (y[i+3,k]-4*y[i+2,k]+7*y[i+1,k]-4*y[i,k])/(2*(X[i+1]-X[i]))
-        elseif i==L-3
-            z[i] = (-y[i-3,k]+4*y[i-2,k]-7*y[i-1,k]+4*y[i,k])/(2*(X[i]-X[i-1]))
-        else
-            z[i] = (y[i+1,k]-y[i-1,k])/(2*(X[i+1]-X[i]))
-        end
-    end
-    return z
-end
-
-function Der_arrayLOP2(y,k,X)#returns darray/dr or darray/dx if non compactified
-
-    z=zeros(length(y[:,k]))
-    
-    """for i in 4:L-3
-        if i==L-3 # right boundary TEM
-            z[i] = (-27*y[i,k]+58*y[i-1,k]-56*y[i-2,k]+36*y[i-3,k]-13*y[i-4,k]+2*y[i-5,k])/(12*(X[i]-X[i-1])) #fixed this *-1
-        elseif i==L-4 # right boundary TEM
-            z[i] = (-2*y[i+1,k]-15*y[i,k]+28*y[i-1,k]-16*y[i-2,k]+6*y[i-3,k]-y[i-4,k])/(12*(X[i+1]-X[i]))
-        else # central
-            z[i] = (-y[i+2,k]+8*y[i+1,k]-8*y[i-1,k]+y[i-2,k])/(12*(X[i+1]-X[i]))
-        end
-    end"""
-    
-    for i in 4:L-3
-        if L==L-3
-            z[i] = (-y[i-3,k]+4*y[i-2,k]-7*y[i-1,k]+4*y[i,k])/(2*(X[i]-X[i-1]))
-        else
-            z[i] = (y[i+1,k]-y[i-1,k])/(2*(X[i+1]-X[i]))
-        end
-    end
-
-    return z
-end
-
-#matrix
-function unevenDer(y,i,k,X,spls)
-
-    if k==4 #array of spline has variables m, beta and derpsi
-        spl=spls[3]
-    else
-        spl=spls[k]
-    end
-
-    #for L-3 AND L-4 USE CENTRAL 
-    
-
-    dx=X[i+1]-X[i] #shouldnt this dx be constant, for error of derivatives to match?
-
-    if i==4 # left boundary LOP1, TEM
-        dx=X[i+1]-X[i]
-        z = (-27*y[i,k]+58*y[i+1,k]-56*spl(X[i]+2*dx)+36*spl(X[i]+3*dx)-13*spl(X[i]+4*dx)+2*spl(X[i]+5*dx))/(12*(dx))
-    elseif i==5 # left boundary LOP1, TEM
-        dx=X[i+1]-X[i]
-        z = (-2*spl(X[i]-dx)-15*y[i,k]+28*y[i+1,k]-16*spl(X[i]+2*dx)+6*spl(X[i]+3*dx)-spl(X[i]+4*dx))/(12*(dx))
-    """elseif i==L-3
-        dx=X[i]-X[i-1]
-        z = -(-27*y[i,k]+58*y[i-1,k]-56*spl(X[i]-2*dx)+36*spl(X[i]-3*dx)-13*spl(X[i]-4*dx)+2*spl(X[i]-5*dx))/(12*(dx)) #12-06 i did *-1
+"""for i in 4:L-3
+    if i==L-3 # right boundary TEM
+        z[i] = (-27*y[i,k]+58*y[i-1,k]-56*y[i-2,k]+36*y[i-3,k]-13*y[i-4,k]+2*y[i-5,k])/(12*(X[i]-X[i-1])) #fixed this *-1
     elseif i==L-4 # right boundary TEM
-        dx=X[i+1]-X[i]
-        z = -(-2*y[i+1,k]-15*y[i]+28*spl(X[i]-dx)-16*spl(X[i]-2*dx)+6*spl(X[i]-3*dx)-spl(X[i]-4*dx))/(12*(dx)) #12-06 i did *-1"""
-    else
-        
-
-        if(X[i]-dx)<0.0||(X[i]-2*dx)<0.0 #avoid evaluating spline out of domain
-            dx=X[i+1]-X[i]
-            z = (-27*y[i,k]+58*y[i+1,k]-56*spl(X[i]+2*dx)+36*spl(X[i]+3*dx)-13*spl(X[i]+4*dx)+2*spl(X[i]+5*dx))/(12*(dx))
-            #println("warnign at ori, i is ", i)
-        """elseif(X[i]+dx)>1.0||(X[i]+2*dx)>1.0 #avoid evaluating spline out of domain
-            dx=X[i]-X[i-1]
-            #println("warning!, X[i]", X[i], "i is ", i)
-            #z = (spl(X[i]+3*dx)-4*spl(X[i]+2*dx)+7*y[i+1,k]-4*y[i,k])/(2*dx)
-            z = -(-27*y[i,k]+58*y[i-1,k]-56*spl(X[i]-2*dx)+36*spl(X[i]-3*dx)-13*spl(X[i]-4*dx)+2*spl(X[i]-5*dx))/(12*(dx))"""
-        else
-            dx=X[i+1]-X[i]
-            z = (-spl(X[i]+2dx)+8*y[i+1,k]-8*spl(X[i]-dx)+spl(X[i]-2*dx))/(12*(dx))
-        end
+        z[i] = (-2*y[i+1,k]-15*y[i,k]+28*y[i-1,k]-16*y[i-2,k]+6*y[i-3,k]-y[i-4,k])/(12*(X[i+1]-X[i]))
+    else # central
+        z[i] = (-y[i+2,k]+8*y[i+1,k]-8*y[i-1,k]+y[i-2,k])/(12*(X[i+1]-X[i]))
     end
-        
-    return z
-    
-end
-
-
-#array
-"""function unevenDer(y,i,X,spl)
-
-
-    
-
-    dx=X[i+1]-X[i] #shouldnt this dx be constant, for error of derivatives to match?
-
-    if i==4 # left boundary LOP1, TEM
-        dx=X[i+1]-X[i]
-        z = (-27*y[i]+58*y[i+1]-56*spl(X[i]+2*dx)+36*spl(X[i]+3*dx)-13*spl(X[i]+4*dx)+2*spl(X[i]+5*dx))/(12*(X[i+1]-X[i]))
-    elseif i==5 # left boundary LOP1, TEM
-        dx=X[i+1]-X[i]
-        z = (-2*spl(X[i]-dx)-15*y[i]+28*y[i+1]-16*spl(X[i]+2*dx)+6*spl(X[i]+3*dx)-spl(X[i]+4*dx))/(12*(X[i+1]-X[i]))
-    elseif i==L-3
-        dx=X[i]-X[i-1]
-        z = -(-27*y[i]+58*y[i-1]-56*spl(X[i]-2*dx)+36*spl(X[i]-3*dx)-13*spl(X[i]-4*dx)+2*spl(X[i]-5*dx))/(12*(X[i]-X[i-1])) #12-06 i did *-1
-    elseif i==L-4 # right boundary TEM
-        dx=X[i+1]-X[i]
-        z = -(-2*y[i+1]-15*y[i]+28*spl(X[i]-dx)-16*spl(X[i]-2*dx)+6*spl(X[i]-3*dx)-spl(X[i]-4*dx))/(12*(X[i+1]-X[i])) #12-06 i did *-1
-    else
-        dx=X[i+1]-X[i]
-        #z = (y[i+1,k]-spl(X[i]-dx))/(2*dx)
-        z = (-spl(X[i]+2dx)+8*y[i+1]-8*spl(X[i]-dx)+spl(X[i]-2*dx))/(12*(X[i+1]-X[i]))
-
-        if(X[i]-dx)<0.0||(X[i]-2*dx)<0.0 #avoid evaluating spline out of domain
-            dx=X[i+1]-X[i]
-            z = (spl(X[i]+3*dx)-4*spl(X[i]+2*dx)+7*y[i+1]-4*y[i])/(2*dx)
-        end
-        if(X[i]+dx)>1.0||(X[i]+2*dx)>1.0 #avoid evaluating spline out of domain
-            dx=X[i]-X[i-1]
-            z = -(-27*y[i]+58*y[i-1]-56*spl(X[i]-2*dx)+36*spl(X[i]-3*dx)-13*spl(X[i]-4*dx)+2*spl(X[i]-5*dx))/(12*(X[i]-X[i-1]))
-        end
-    end
-        
-    return z
-    
 end"""
 
-
-function Dertest(y,i,X)
-
-    
+for i in 4:L-3
     if i==4 # left boundary LOP1, TEM
-        z = (y[i+3]-4*y[i+2]+7*y[i+1]-4*y[i])/(2*(X[i+1]-X[i]))
+        z[i] = (y[i+3,k]-4*y[i+2,k]+7*y[i+1,k]-4*y[i,k])/(2*(X[i+1]-X[i]))
     elseif i==L-3
-        z = (-y[i-3]+4*y[i-2]-7*y[i-1]+4*y[i])/(2*(X[i]-X[i-1]))
+        z[i] = (-y[i-3,k]+4*y[i-2,k]-7*y[i-1,k]+4*y[i,k])/(2*(X[i]-X[i-1]))
     else
-        z = (y[i+1]-y[i-1])/(2*(X[i+1]-X[i]))
+        z[i] = (y[i+1,k]-y[i-1,k])/(2*(X[i+1]-X[i]))
     end
-        
-    return z
-    
+end
+
+return z
 end
 
 
@@ -967,14 +811,11 @@ function SF_RHS(data,t,X)
     #data[:,7]=parity(data[:,7])
     data[4:L-3,5]=Der_arrayLOP(data,7,initX)[4:L-3]
     #data[L-3,5]=extrapolate_out(data[L-7,5], data[L-6,5], data[L-5,5], data[L-4,5])#aqui
-    #data[L-3,5]=data[L-6,5]#aqui
-    #data[L-4,5]=data[L-6,5]#aqui
-    #data[L-5,5]=data[L-6,5]#aqui
+
 
     #data[:,5]=secondparity(data[:,5])
-    aux=Der_arrayLOP(data,5,initX)
-    #aux[4]=0
-    #aux[L-3]=aux[L-4]#aqui
+    #aux=Der_arrayLOP(data,5,initX)
+    aux=DDer_array(data,7,initX)#novo
 
     # update interpolation of psi,x
     derxchi_func = Spline1D(X[4:L-3], data[4:L-3,5],  k=4);
@@ -1010,7 +851,7 @@ function SF_RHS(data,t,X)
         if X[i]<10^(-15) #left
             dy[i,6]= +1.0/2.0 * (1/(1-X[i])^2 * Der(data,i,6,X) + 2/(1-X[i])^3*data[i,6])  - dissipation(data,i,epsilon,6)[6]#+1.0/2.0 * (Der(data,i,6,X))  - dissipation(data,i,epsilon)[6]
             #dy[i,6]= +1.0/2.0 * (1/(1-x)^2 * Der(data,i,6,X) + 2/(1-x)^3*data[i,6])  - dissipation(data,i,epsilon)[6]#- dissipation4(data,i,0.02)[6];
-            dy[i,7] = data[i,4] - dissipation(data,i,epsilon,7)[7] #data[i,4] - dissipation(data,i,epsilon,7)[7]
+            dy[i,7] = data[i,4] - dissipation(data,i,epsilon,7)[7]
             
 
         elseif abs.(X[i] .- 1.0)<10^(-15)
@@ -1025,7 +866,7 @@ function SF_RHS(data,t,X)
     
     end
     dy[L-3,7]=dy[L-4,7]
-    #dy[4,7]=extrapolate_in(dy[4,7], dy[5,7], dy[6,7], dy[7,7])
+    #dy[L-3,7] = extrapolate_out(dy[L-7,5], dy[L-6,5], dy[L-5,5], dy[L-4,5])#this
     
     #dy=ghost(dy)
     return dy
@@ -1125,16 +966,10 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
 
         #state_array[:,7]=parity(state_array[:,7])
         state_array[4:L-3,5]=Der_arrayLOP(state_array,7,initX)[4:L-3]
-        #state_array[L-3,5]=state_array[L-6,5]#extrapolate_out(state_array[L-7,5], state_array[L-6,5], state_array[L-5,5], state_array[L-4,5])#aqui
-        #state_array[L-4,5]=state_array[L-6,5]
-        #state_array[L-5,5]=state_array[L-6,5]
-        
-        #state_array[L-3,5]=state_array[L-4,5]
+      
 
-        #state_array[:,5]=secondparity(state_array[:,5])
-        aux=Der_arrayLOP(state_array,5,initX)
-        #aux[4]=0
-        #aux[L-3]=aux[L-4]#aqui
+        #aux=Der_arrayLOP(state_array,5,initX)
+        aux=DDer_array(state_array,7,initX)#novo
 
         # update interpolation of psi,x
         derxchi_func = Spline1D(X[4:L-3], state_array[4:L-3,5],  k=4);
@@ -1158,7 +993,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         massloss[4:L-3] = masslossfunc(state_array)[4:L-3]
         
         
-        if iter%10==0
+        if iter%100==0
         #if (iter%100==0&&t>0.5)||(t>1.5&&iter%5==0)||(t>=2.04&&t<=2.046)
             if zeroformat==true
                 zero_print_muninn(files, t, state_array[:,:],res,"a")
