@@ -81,7 +81,7 @@ function init_xchi(r,r0,sigma,A)
             
         else
             z=zeros(n);
-            for i in 1:n-1
+            for i in 1:n
                 x=r[i]/(1+r[i])
                 z[i]=A*x*exp(-(x-r0)^2/sigma^2)+A*x*exp(-((x+r0)^2/sigma^2))
             end
@@ -501,31 +501,16 @@ end
 function parity(xchi)
 
     L=length(xchi)
-    xchi[1]=-xchi[7]
-    xchi[2]=-xchi[6]
-    xchi[3]=-xchi[5]
-    xchi[4]=0
 
-    xchi[L-2]=extrapolate_out(xchi[L-6], xchi[L-5], xchi[L-4], xchi[L-3])
-    xchi[L-1]=extrapolate_out(xchi[L-5], xchi[L-4], xchi[L-3], xchi[L-2])
-    xchi[L]=extrapolate_out(xchi[L-4], xchi[L-3], xchi[L-2], xchi[L-1])
+    xchi[3]=extrapolate_in(xchi[4], xchi[5], xchi[6], xchi[7])
+    xchi[2]=extrapolate_in(xchi[3], xchi[4], xchi[5], xchi[6])
+    xchi[1]=extrapolate_in(xchi[2], xchi[3], xchi[4], xchi[5])
+ 
 
+    
     return xchi
 end
 
-function secondparity(derxchi)
-
-    L=length(derxchi)
-    derxchi[1]=derxchi[7]
-    derxchi[2]=derxchi[6]
-    derxchi[3]=derxchi[5]
-
-    derxchi[L-2]=extrapolate_out(derxchi[L-6], derxchi[L-5], derxchi[L-4], derxchi[L-3])
-    derxchi[L-1]=extrapolate_out(derxchi[L-5], derxchi[L-4], derxchi[L-3], derxchi[L-2])
-    derxchi[L]=extrapolate_out(derxchi[L-4], derxchi[L-3], derxchi[L-2], derxchi[L-1])
-
-    return derxchi
-end
 
 function dissipation(y,i,eps,var)
 
@@ -653,29 +638,53 @@ end
 
 function Der_arrayLOP(y,k,X)#returns darray/dr or darray/dx if non compactified
 
-z=zeros(length(y[:,k]))
+    z=zeros(length(y[:,k]))
 
-"""for i in 4:L-3
-    if i==L-3 # right boundary TEM
-        z[i] = (-27*y[i,k]+58*y[i-1,k]-56*y[i-2,k]+36*y[i-3,k]-13*y[i-4,k]+2*y[i-5,k])/(12*(X[i]-X[i-1])) #fixed this *-1
-    elseif i==L-4 # right boundary TEM
-        z[i] = (-2*y[i+1,k]-15*y[i,k]+28*y[i-1,k]-16*y[i-2,k]+6*y[i-3,k]-y[i-4,k])/(12*(X[i+1]-X[i]))
-    else # central
-        z[i] = (-y[i+2,k]+8*y[i+1,k]-8*y[i-1,k]+y[i-2,k])/(12*(X[i+1]-X[i]))
-    end
-end"""
+    """for i in 4:L-3
+        if i==L-3 # right boundary TEM
+            z[i] = (-27*y[i,k]+58*y[i-1,k]-56*y[i-2,k]+36*y[i-3,k]-13*y[i-4,k]+2*y[i-5,k])/(12*(X[i]-X[i-1])) #fixed this *-1
+        elseif i==L-4 # right boundary TEM
+            z[i] = (-2*y[i+1,k]-15*y[i,k]+28*y[i-1,k]-16*y[i-2,k]+6*y[i-3,k]-y[i-4,k])/(12*(X[i+1]-X[i]))
+        else # central
+            z[i] = (-y[i+2,k]+8*y[i+1,k]-8*y[i-1,k]+y[i-2,k])/(12*(X[i+1]-X[i]))
+        end
+    end"""
 
-for i in 4:L-3
-    if i==4 # left boundary LOP1, TEM
-        z[i] = (y[i+3,k]-4*y[i+2,k]+7*y[i+1,k]-4*y[i,k])/(2*(X[i+1]-X[i]))
-    elseif i==L-3
-        z[i] = (-y[i-3,k]+4*y[i-2,k]-7*y[i-1,k]+4*y[i,k])/(2*(X[i]-X[i-1]))
-    else
-        z[i] = (y[i+1,k]-y[i-1,k])/(2*(X[i+1]-X[i]))
+    for i in 4:L-3
+        if i==4 # left boundary LOP1, TEM
+            z[i] = (y[i+3,k]-4*y[i+2,k]+7*y[i+1,k]-4*y[i,k])/(2*(X[i+1]-X[i]))
+        elseif i==L-3
+            z[i] = (-y[i-3,k]+4*y[i-2,k]-7*y[i-1,k]+4*y[i,k])/(2*(X[i]-X[i-1]))
+        else
+            z[i] = (y[i+1,k]-y[i-1,k])/(2*(X[i+1]-X[i]))
+        end
     end
+    return z
 end
 
-return z
+function Der_arrayLOP2(y,k,X)#returns darray/dr or darray/dx if non compactified
+
+    z=zeros(length(y[:,k]))
+    
+    """for i in 4:L-3
+        if i==L-3 # right boundary TEM
+            z[i] = (-27*y[i,k]+58*y[i-1,k]-56*y[i-2,k]+36*y[i-3,k]-13*y[i-4,k]+2*y[i-5,k])/(12*(X[i]-X[i-1])) #fixed this *-1
+        elseif i==L-4 # right boundary TEM
+            z[i] = (-2*y[i+1,k]-15*y[i,k]+28*y[i-1,k]-16*y[i-2,k]+6*y[i-3,k]-y[i-4,k])/(12*(X[i+1]-X[i]))
+        else # central
+            z[i] = (-y[i+2,k]+8*y[i+1,k]-8*y[i-1,k]+y[i-2,k])/(12*(X[i+1]-X[i]))
+        end
+    end"""
+    
+    for i in 4:L-3
+        if L==L-3
+            z[i] = (-y[i-3,k]+4*y[i-2,k]-7*y[i-1,k]+4*y[i,k])/(2*(X[i]-X[i-1]))
+        else
+            z[i] = (y[i+1,k]-y[i-1,k])/(2*(X[i+1]-X[i]))
+        end
+    end
+
+    return z
 end
 
 #matrix
@@ -1001,7 +1010,7 @@ function SF_RHS(data,t,X)
         if X[i]<10^(-15) #left
             dy[i,6]= +1.0/2.0 * (1/(1-X[i])^2 * Der(data,i,6,X) + 2/(1-X[i])^3*data[i,6])  - dissipation(data,i,epsilon,6)[6]#+1.0/2.0 * (Der(data,i,6,X))  - dissipation(data,i,epsilon)[6]
             #dy[i,6]= +1.0/2.0 * (1/(1-x)^2 * Der(data,i,6,X) + 2/(1-x)^3*data[i,6])  - dissipation(data,i,epsilon)[6]#- dissipation4(data,i,0.02)[6];
-            dy[i,7] = data[i,4] - dissipation(data,i,epsilon,7)[7]
+            dy[i,7] = data[i,4] - dissipation(data,i,epsilon,7)[7] #data[i,4] - dissipation(data,i,epsilon,7)[7]
             
 
         elseif abs.(X[i] .- 1.0)<10^(-15)
@@ -1016,7 +1025,7 @@ function SF_RHS(data,t,X)
     
     end
     dy[L-3,7]=dy[L-4,7]
-    #dy[L-3,7] = extrapolate_out(dy[L-7,5], dy[L-6,5], dy[L-5,5], dy[L-4,5])#this
+    #dy[4,7]=extrapolate_in(dy[4,7], dy[5,7], dy[6,7], dy[7,7])
     
     #dy=ghost(dy)
     return dy
