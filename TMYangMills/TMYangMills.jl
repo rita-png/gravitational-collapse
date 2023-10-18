@@ -77,14 +77,14 @@ function init_xchi(r,r0,sigma,A)
         if n==1
 
             x=r/(1+r)
-            #z=A*x*exp(-(x-r0)^2/sigma^2)+A*x*exp(-((x+r0)^2/sigma^2))
-            z=r^3
+            z=A*x*exp(-(x-r0)^2/sigma^2)+A*x*exp(-((x+r0)^2/sigma^2))
+            
         else
             z=zeros(n);
             for i in 1:n
                 x=r[i]/(1+r[i])
-                #z[i]=A*x*exp(-(x-r0)^2/sigma^2)+A*x*exp(-((x+r0)^2/sigma^2))
-                z[i]=r[i]^3
+                z[i]=A*x*exp(-(x-r0)^2/sigma^2)+A*x*exp(-((x+r0)^2/sigma^2))
+                
             end
             #z[n]=0.0#avoid nan at x=1
         end
@@ -764,35 +764,27 @@ function RHS(y0,x1,time,func,i,data)
     z[2]=0
 
     #xchi,u
-    if x1<10^(-15)
-        z[4] = 0.0
-    """elseif abs.(x1 .- 1.0)<10^(-15)
-        z[4] = 0.0"""
-    else
-        if compactified==false
-            r=x1
+    
 
-            if source==false
-                extraterms=0.0
-            else
-                extraterms=0.0#???
-            end
-            
-            z[4] = extraterms + 1/2*derrxchi(x1)
-
-            #z[4] = (1/(2*(1+r)^2))*(-4*(1+r)*y0[4]+2xchi(x1)+2*derxchi(x1)+4*r*derxchi(x1)+r*derrxchi(x1)+r^2*derrxchi(x1))
-
+    if compactified==false
+        r=x1
+        if source==false
+            extraterms=0.0
         else
-            x=x1
-            r=x/(1-x)
-            derxchii=derxchi(x1)*(1-x1)^2
-            derrxchii=derxchi(x1)*2*(-1+x)^3+derrxchi(x1)*(1-x1)^4
-            #dx/dr=(1-x1)^2
-            #ddx/dr^2=2*(-1+x)^3
-            z[4] = 0 #?
-
+            extraterms=0.0#???
         end
-    end 
+        z[4] = extraterms + 1/2*derrxchi(x1)
+        #z[4] = (1/(2*(1+r)^2))*(-4*(1+r)*y0[4]+2xchi(x1)+2*derxchi(x1)+4*r*derxchi(x1)+r*derrxchi(x1)+r^2*derrxchi(x1))
+    else
+        x=x1
+        r=x/(1-x)
+        derxchii=derxchi(x1)*(1-x1)^2
+        derrxchii=derxchi(x1)*2*(-1+x)^3+derrxchi(x1)*(1-x1)^4
+        #dx/dr=(1-x1)^2
+        #ddx/dr^2=2*(-1+x)^3
+        z[4] = 0 #?
+    end
+
 
     #m
     z[1]=0
@@ -814,8 +806,8 @@ function SF_RHS(data,t,X)
 
 
     #data[:,5]=secondparity(data[:,5])
-    #aux=Der_arrayLOP(data,5,initX)
-    aux=DDer_array(data,7,initX)#novo
+    aux=Der_arrayLOP(data,5,initX)
+    #aux=DDer_array(data,7,initX)#novo
 
     # update interpolation of psi,x
     derxchi_func = Spline1D(X[4:L-3], data[4:L-3,5],  k=4);
@@ -968,8 +960,8 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         state_array[4:L-3,5]=Der_arrayLOP(state_array,7,initX)[4:L-3]
       
 
-        #aux=Der_arrayLOP(state_array,5,initX)
-        aux=DDer_array(state_array,7,initX)#novo
+        aux=Der_arrayLOP(state_array,5,initX)
+        #aux=DDer_array(state_array,7,initX)#novo
 
         # update interpolation of psi,x
         derxchi_func = Spline1D(X[4:L-3], state_array[4:L-3,5],  k=4);
@@ -993,7 +985,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         massloss[4:L-3] = masslossfunc(state_array)[4:L-3]
         
         
-        if iter%100==0
+        if iter%10==0
         #if (iter%100==0&&t>0.5)||(t>1.5&&iter%5==0)||(t>=2.04&&t<=2.046)
             if zeroformat==true
                 zero_print_muninn(files, t, state_array[:,:],res,"a")
