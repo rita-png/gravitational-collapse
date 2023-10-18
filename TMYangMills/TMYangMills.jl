@@ -69,7 +69,7 @@ end
     return z
 end"""
 
-function init_xxxchi(r,r0,sigma,A)
+function init_xchi(r,r0,sigma,A)
 
     n=length(r);
 
@@ -77,13 +77,13 @@ function init_xxxchi(r,r0,sigma,A)
         if n==1
 
             x=r/(1+r)
-            z=A*x^3*exp(-(x-r0)^2/sigma^2)+A*x^3*exp(-((x+r0)^2/sigma^2))
+            z=A*x*exp(-(x-r0)^2/sigma^2)+A*x*exp(-((x+r0)^2/sigma^2))
             
         else
             z=zeros(n);
             for i in 1:n-1
                 x=r[i]/(1+r[i])
-                z[i]=A*x^3*exp(-(x-r0)^2/sigma^2)+A*x^3*exp(-((x+r0)^2/sigma^2))
+                z[i]=A*x*exp(-(x-r0)^2/sigma^2)+A*x*exp(-((x+r0)^2/sigma^2))
             end
             #z[n]=0.0#avoid nan at x=1
         end
@@ -538,32 +538,20 @@ end
 
 #6th order dissipation, added to 4th order original scheme
 function dissipation6(y,i,eps,var)
-    if var==6
-        if i==4
-            delta6= (19*y[i,:]-142*y[i+1,:]+464*y[i+2,:]-866*y[i+3,:]+1010*y[i+4,:]-754*y[i+5,:]+352*y[i+6,:]-94*y[i+7,:]+11*y[i+8,:])/2;
-        elseif i==5
-            delta6= (11*y[i-1,:]-80*y[i,:]+254*y[i+1,:]-460*y[i+2,:]+520*y[i+3,:]-376*y[i+4,:]+170*y[i+5,:]-44*y[i+6,:]+5*y[i+7,:])/2;
-        elseif i==6
-            delta6= (5*y[i-2,:]-34*y[i-1,:]+100*y[i,:]-166*y[i+1,:]+170*y[i+2,:]-110*y[i+3,:]+44*y[i+4,:]-10*y[i+5,:]+y[i+6,:])/2;
-        elseif i==L-3
-            delta6= (19*y[i,:]-142*y[i-1,:]+464*y[i-2,:]-866*y[i-3,:]+1010*y[i-4,:]-754*y[i-5,:]+352*y[i-6,:]-94*y[i-7,:]+11*y[i-8,:])/2;
-        elseif i==L-4
-            delta6= (11*y[i+1,:]-80*y[i,:]+254*y[i-1,:]-460*y[i-2,:]+520*y[i-3,:]-376*y[i-4,:]+170*y[i-5,:]-44*y[i-6,:]+5*y[i-7,:])/2;
-        elseif i==L-5
-            delta6= (5*y[i+2,:]-34*y[i+1,:]+100*y[i,:]-166*y[i-1,:]+170*y[i-2,:]-110*y[i-3,:]+44*y[i-4,:]-10*y[i-5,:]+y[i-6,:])/2;
-        else
-            delta6=(y[i+3,:]-6*y[i+2,:]+15*y[i+1,:]-20*y[i,:]+15*y[i-1,:]-6*y[i-2,:]+y[i-3,:]);
-        end
+    if i==4
+        delta6= (19*y[i,:]-142*y[i+1,:]+464*y[i+2,:]-866*y[i+3,:]+1010*y[i+4,:]-754*y[i+5,:]+352*y[i+6,:]-94*y[i+7,:]+11*y[i+8,:])/2;
+    elseif i==5
+        delta6= (11*y[i-1,:]-80*y[i,:]+254*y[i+1,:]-460*y[i+2,:]+520*y[i+3,:]-376*y[i+4,:]+170*y[i+5,:]-44*y[i+6,:]+5*y[i+7,:])/2;
+    elseif i==6
+        delta6= (5*y[i-2,:]-34*y[i-1,:]+100*y[i,:]-166*y[i+1,:]+170*y[i+2,:]-110*y[i+3,:]+44*y[i+4,:]-10*y[i+5,:]+y[i+6,:])/2;
+    elseif i==L-3
+        delta6= (19*y[i,:]-142*y[i-1,:]+464*y[i-2,:]-866*y[i-3,:]+1010*y[i-4,:]-754*y[i-5,:]+352*y[i-6,:]-94*y[i-7,:]+11*y[i-8,:])/2;
+    elseif i==L-4
+        delta6= (11*y[i+1,:]-80*y[i,:]+254*y[i-1,:]-460*y[i-2,:]+520*y[i-3,:]-376*y[i-4,:]+170*y[i-5,:]-44*y[i-6,:]+5*y[i-7,:])/2;
+    elseif i==L-5
+        delta6= (5*y[i+2,:]-34*y[i+1,:]+100*y[i,:]-166*y[i-1,:]+170*y[i-2,:]-110*y[i-3,:]+44*y[i-4,:]-10*y[i-5,:]+y[i-6,:])/2;
     else
-        if i==L-3
-            delta6= (19*y[i,:]-142*y[i-1,:]+464*y[i-2,:]-866*y[i-3,:]+1010*y[i-4,:]-754*y[i-5,:]+352*y[i-6,:]-94*y[i-7,:]+11*y[i-8,:])/2;
-        elseif i==L-4
-            delta6= (11*y[i+1,:]-80*y[i,:]+254*y[i-1,:]-460*y[i-2,:]+520*y[i-3,:]-376*y[i-4,:]+170*y[i-5,:]-44*y[i-6,:]+5*y[i-7,:])/2;
-        elseif i==L-5
-            delta6= (5*y[i+2,:]-34*y[i+1,:]+100*y[i,:]-166*y[i-1,:]+170*y[i-2,:]-110*y[i-3,:]+44*y[i-4,:]-10*y[i-5,:]+y[i-6,:])/2;
-        else
-            delta6=(y[i+3,:]-6*y[i+2,:]+15*y[i+1,:]-20*y[i,:]+15*y[i-1,:]-6*y[i-2,:]+y[i-3,:]);
-        end
+        delta6=(y[i+3,:]-6*y[i+2,:]+15*y[i+1,:]-20*y[i,:]+15*y[i-1,:]-6*y[i-2,:]+y[i-3,:]);
     end
 
 return (-1)^3*eps*1/(dx)*delta6
@@ -572,27 +560,19 @@ end
 
 #4th order  dissipation, added to 2nd order original scheme
 function dissipation4(y,i,eps,var)#0.02
-    if var==6
-        if i==4
-            delta4=(-13/6*y[i+5,:]+71/6*y[i+4,:]-77/3*y[i+3,:]+83/3*y[i+2,:]-89/6*y[i+1,:]+19/6*y[i,:])
-        elseif i==5
-            delta4=(-7/6*y[i+4,:]+41/6*y[i+3,:]-47/3*y[i+2,:]+53/3*y[i+1,:]-59/6*y[i,:]+13/6*y[i-1,:])
-        elseif i==L-3
-            delta4=-(-13/6*y[i-5,:]+71/6*y[i-4,:]-77/3*y[i-3,:]+83/3*y[i-2,:]-89/6*y[i-1,:]+19/6*y[i,:])
-        elseif i==L-4
-            delta4=-(-7/6*y[i-4,:]+41/6*y[i-3,:]-47/3*y[i-2,:]+53/3*y[i-1,:]-59/6*y[i,:]+13/6*y[i+1,:])
-        else
-            delta4=(y[i+2,:]-4*y[i+1,:]+6*y[i,:]-4*y[i-1,:]+y[i-2,:]);
-        end
+
+    if i==4
+        delta4=(-13/6*y[i+5,:]+71/6*y[i+4,:]-77/3*y[i+3,:]+83/3*y[i+2,:]-89/6*y[i+1,:]+19/6*y[i,:])
+    elseif i==5
+        delta4=(-7/6*y[i+4,:]+41/6*y[i+3,:]-47/3*y[i+2,:]+53/3*y[i+1,:]-59/6*y[i,:]+13/6*y[i-1,:])
+    elseif i==L-3
+        delta4=-(-13/6*y[i-5,:]+71/6*y[i-4,:]-77/3*y[i-3,:]+83/3*y[i-2,:]-89/6*y[i-1,:]+19/6*y[i,:])
+    elseif i==L-4
+        delta4=-(-7/6*y[i-4,:]+41/6*y[i-3,:]-47/3*y[i-2,:]+53/3*y[i-1,:]-59/6*y[i,:]+13/6*y[i+1,:])
     else
-        if i==L-3
-            delta4=-(-13/6*y[i-5,:]+71/6*y[i-4,:]-77/3*y[i-3,:]+83/3*y[i-2,:]-89/6*y[i-1,:]+19/6*y[i,:])
-        elseif i==L-4
-            delta4=-(-7/6*y[i-4,:]+41/6*y[i-3,:]-47/3*y[i-2,:]+53/3*y[i-1,:]-59/6*y[i,:]+13/6*y[i+1,:])
-        else
-            delta4=(y[i+2,:]-4*y[i+1,:]+6*y[i,:]-4*y[i-1,:]+y[i-2,:]);
-        end
+        delta4=(y[i+2,:]-4*y[i+1,:]+6*y[i,:]-4*y[i-1,:]+y[i-2,:]);
     end
+    
     return (-1)^2*eps*1/(dx)*delta4
 end
 
@@ -889,10 +869,10 @@ function RHS(y0,x1,time,func,i,data)
     #state array is [m beta psi xxchi,u xchi,r psi,r xchi r]
     z=zeros(length(y0))
     
-    derxxxchi = func[1] #this is (xchi),r in non compactified code but is (xchi),x in compactified
+    derxchi = func[1] #this is (xchi),r in non compactified code but is (xchi),x in compactified
     derpsi = func[2]
-    xxxchi = func[3]
-    derrxxxchi = func[4]
+    xchi = func[3]
+    derrxchi = func[4]
 
     #coords
     r=0
@@ -920,9 +900,11 @@ function RHS(y0,x1,time,func,i,data)
     #beta
     z[2]=0
 
-    #xxxchi,u
+    #xchi,u
     if x1<10^(-15)
         z[4] = 0.0
+    """elseif abs.(x1 .- 1.0)<10^(-15)
+        z[4] = 0.0"""
     else
         if compactified==false
             r=x1
@@ -930,10 +912,10 @@ function RHS(y0,x1,time,func,i,data)
             if source==false
                 extraterms=0.0
             else
-                extraterms=-(((3-r+10*r^2-r^4+r^5)*xxxchi(x1))/(r*(1+r)^2*(1+r^2)^2))-((1-r+4*r^2-6*r^3+3*r^4+3*r^5)*xxxchi(x1))/(r^2*(1+r)^2*(1+r^2)^2)-(3*(1+r)^3*xxxchi(x1)^2)/(2*r^3*(1+r^2))-((1+r)^6*xxxchi(x1)^3)/(2*r^4*(1+r^2)^2)
+                extraterms=0.0#???
             end
             
-            z[4] = extraterms + ((1-r+2*r^2+2*r^3+r^4+3*r^5)*y0[4])/(r*(1+r)^2*(1+r^2)^2)+(2*(1-r+4*r^2-6*r^3+3*r^4+3*r^5)*xxxchi(x1)+r*(1+r+r^2+r^3)*((-2+4*r-6*r^2)*derxxxchi(x1)+r*(1+r+r^2+r^3)*derrxxxchi(x1)))/(2*r^2*(1+r)^2*(1+r^2)^2)
+            z[4] = extraterms + 1/2*derrxchi(x1)
 
             #z[4] = (1/(2*(1+r)^2))*(-4*(1+r)*y0[4]+2xchi(x1)+2*derxchi(x1)+4*r*derxchi(x1)+r*derrxchi(x1)+r^2*derrxchi(x1))
 
@@ -963,23 +945,25 @@ function SF_RHS(data,t,X)
     L=length(X)
     dy=zeros((L,length(data[1,:])));
 
+    #data[:,7]=parity(data[:,7])
+    data[4:L-3,5]=Der_arrayLOP(data,7,initX)[4:L-3]
+    #data[L-3,5]=extrapolate_out(data[L-7,5], data[L-6,5], data[L-5,5], data[L-4,5])#aqui
+    data[L-3,5]=data[L-6,5]#aqui
+    data[L-4,5]=data[L-6,5]#aqui
+    data[L-5,5]=data[L-6,5]#aqui
 
-    data[:,7]=parity(data[:,7])
-    data[4:L-3,5]=Der_array(data,7,initX)[4:L-3]
-    #data[L-3,5]=data[L-4,5]
-
-    data[:,5]=secondparity(data[:,5])
-    aux=Der_array(data,5,initX)
-    aux[4]=0
-    aux[L-3]=aux[L-4]
+    #data[:,5]=secondparity(data[:,5])
+    aux=Der_arrayLOP(data,5,initX)
+    #aux[4]=0
+    aux[L-3]=aux[L-4]#aqui
 
     # update interpolation of psi,x
-    derxxxchi_func = Spline1D(X[4:L-3], data[4:L-3,5],  k=4);
+    derxchi_func = Spline1D(X[4:L-3], data[4:L-3,5],  k=4);
     derpsi_func = Spline1D(X[4:L-3], data[4:L-3,6],  k=4);
-    xxxchi_func = Spline1D(X[4:L-3], data[4:L-3,7],  k=4);
-    derrxxxchi_func = Spline1D(X[4:L-3], aux[4:L-3], k=4);
+    xchi_func = Spline1D(X[4:L-3], data[4:L-3,7],  k=4);
+    derrxchi_func = Spline1D(X[4:L-3], aux[4:L-3], k=4);
 
-    funcs=[derxxxchi_func derpsi_func xxxchi_func derrxxxchi_func];
+    funcs=[derxchi_func derpsi_func xchi_func derrxchi_func];
 
     # update m, beta and psi data
     y0=[0.0 0.0 0.0 0.0]
@@ -1005,26 +989,24 @@ function SF_RHS(data,t,X)
         end
 
         if X[i]<10^(-15) #left
-            dy[i,6]= +1.0/2.0 * (1/(1-X[i])^2 * Der(data,i,6,X) + 2/(1-X[i])^3*data[i,6])  - dissipation(data,i,epsilon,6)[6]#+1.0/2.0 * (Der(data,i,6,X))  - dissipation(data,i,epsilon)[6]
+            dy[i,6]= +1.0/2.0 * (1/(1-X[i])^2 * Der(data,i,6,X) + 2/(1-X[i])^3*data[i,6])  #- dissipation(data,i,epsilon,6)[6]#+1.0/2.0 * (Der(data,i,6,X))  - dissipation(data,i,epsilon)[6]
             #dy[i,6]= +1.0/2.0 * (1/(1-x)^2 * Der(data,i,6,X) + 2/(1-x)^3*data[i,6])  - dissipation(data,i,epsilon)[6]#- dissipation4(data,i,0.02)[6];
-            dy[i,7] = data[i,4] - dissipation(data,i,epsilon,7)[7]
+            dy[i,7] = data[i,4] #- dissipation(data,i,epsilon,7)[7]
             
 
         elseif abs.(X[i] .- 1.0)<10^(-15)
-            dy[i,6]= 0.0 - dissipation(data,i,epsilon,6)[6]
-            dy[i,7] = data[i,4] - dissipation(data,i,epsilon,7)[7] #xvar=1
+            dy[i,6]= 0.0 #- dissipation(data,i,epsilon,6)[6]
+            dy[i,7] = data[i,4] #- dissipation(data,i,epsilon,7)[7] #xvar=1
             
         else
-            dy[i,6]=derpsi_evol(data,i,X) - dissipation(data,i,epsilon,6)[6]
-            dy[i,7] = data[i,4] - dissipation(data,i,epsilon,7)[7] #solving for xchi in the next slice. (xchi),u=(xxxchi),u/x
+            dy[i,6]=derpsi_evol(data,i,X) #- dissipation(data,i,epsilon,6)[6]
+            dy[i,7] = data[i,4] #- dissipation(data,i,epsilon,7)[7] #solving for xchi in the next slice
             
         end
     
     end
-    #dy[1,7] = extrapolate_in(dy[5,7], dy[6,7], dy[7,7], dy[8,7]) #- dissipation(data,5,epsilon,7)[7]
+    dy[L-3,7] = extrapolate_out(dy[L-7,5], dy[L-6,5], dy[L-5,5], dy[L-4,5])#this
     
-    
-    #to avoid having to do /xvar, make data[i,4] be xxxchi! pi is now xxxchi,u
     #dy=ghost(dy)
     return dy
 
@@ -1121,22 +1103,26 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         end
         
 
-        state_array[:,7]=parity(state_array[:,7])
-        state_array[4:L-3,5]=Der_array(state_array,7,initX)[4:L-3]
+        #state_array[:,7]=parity(state_array[:,7])
+        state_array[4:L-3,5]=Der_arrayLOP(state_array,7,initX)[4:L-3]
+        state_array[L-3,5]=state_array[L-6,5]#extrapolate_out(state_array[L-7,5], state_array[L-6,5], state_array[L-5,5], state_array[L-4,5])#aqui
+        state_array[L-4,5]=state_array[L-6,5]
+        state_array[L-5,5]=state_array[L-6,5]
+        
         #state_array[L-3,5]=state_array[L-4,5]
 
-        state_array[:,5]=secondparity(state_array[:,5])
-        aux=Der_array(state_array,5,initX)
-        aux[4]=0
-        aux[L-3]=aux[L-4]
+        #state_array[:,5]=secondparity(state_array[:,5])
+        aux=Der_arrayLOP(state_array,5,initX)
+        #aux[4]=0
+        aux[L-3]=aux[L-4]#aqui
 
         # update interpolation of psi,x
-        derxxxchi_func = Spline1D(X[4:L-3], state_array[4:L-3,5],  k=4);
+        derxchi_func = Spline1D(X[4:L-3], state_array[4:L-3,5],  k=4);
         derpsi_func = Spline1D(X[4:L-3], state_array[4:L-3,6],  k=4);
-        xxxchi_func = Spline1D(X[4:L-3], state_array[4:L-3,7],  k=4);
-        derrxxxchi_func = Spline1D(X[4:L-3], aux[4:L-3], k=4);
+        xchi_func = Spline1D(X[4:L-3], state_array[4:L-3,7],  k=4);
+        derrxchi_func = Spline1D(X[4:L-3], aux[4:L-3], k=4);
 
-        funcs=[derxxxchi_func derpsi_func xxxchi_func derrxxxchi_func];
+        funcs=[derxchi_func derpsi_func xchi_func derrxchi_func];
 
         #evolve m and beta together, new
         y0=[0.0 0.0 0.0 0.0]
