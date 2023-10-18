@@ -655,13 +655,23 @@ function Der_arrayLOP(y,k,X)#returns darray/dr or darray/dx if non compactified
 
 z=zeros(length(y[:,k]))
 
-for i in 4:L-3
+"""for i in 4:L-3
     if i==L-3 # right boundary TEM
         z[i] = (-27*y[i,k]+58*y[i-1,k]-56*y[i-2,k]+36*y[i-3,k]-13*y[i-4,k]+2*y[i-5,k])/(12*(X[i]-X[i-1])) #fixed this *-1
     elseif i==L-4 # right boundary TEM
         z[i] = (-2*y[i+1,k]-15*y[i,k]+28*y[i-1,k]-16*y[i-2,k]+6*y[i-3,k]-y[i-4,k])/(12*(X[i+1]-X[i]))
     else # central
         z[i] = (-y[i+2,k]+8*y[i+1,k]-8*y[i-1,k]+y[i-2,k])/(12*(X[i+1]-X[i]))
+    end
+end"""
+
+for i in 4:L-3
+    if i==4 # left boundary LOP1, TEM
+        z[i] = (y[i+3,k]-4*y[i+2,k]+7*y[i+1,k]-4*y[i,k])/(2*(X[i+1]-X[i]))
+    elseif i==L-3
+        z[i] = (-y[i-3,k]+4*y[i-2,k]-7*y[i-1,k]+4*y[i,k])/(2*(X[i]-X[i-1]))
+    else
+        z[i] = (y[i+1,k]-y[i-1,k])/(2*(X[i+1]-X[i]))
     end
 end
 
@@ -948,14 +958,14 @@ function SF_RHS(data,t,X)
     #data[:,7]=parity(data[:,7])
     data[4:L-3,5]=Der_arrayLOP(data,7,initX)[4:L-3]
     #data[L-3,5]=extrapolate_out(data[L-7,5], data[L-6,5], data[L-5,5], data[L-4,5])#aqui
-    data[L-3,5]=data[L-6,5]#aqui
-    data[L-4,5]=data[L-6,5]#aqui
-    data[L-5,5]=data[L-6,5]#aqui
+    #data[L-3,5]=data[L-6,5]#aqui
+    #data[L-4,5]=data[L-6,5]#aqui
+    #data[L-5,5]=data[L-6,5]#aqui
 
     #data[:,5]=secondparity(data[:,5])
     aux=Der_arrayLOP(data,5,initX)
     #aux[4]=0
-    aux[L-3]=aux[L-4]#aqui
+    #aux[L-3]=aux[L-4]#aqui
 
     # update interpolation of psi,x
     derxchi_func = Spline1D(X[4:L-3], data[4:L-3,5],  k=4);
@@ -989,23 +999,24 @@ function SF_RHS(data,t,X)
         end
 
         if X[i]<10^(-15) #left
-            dy[i,6]= +1.0/2.0 * (1/(1-X[i])^2 * Der(data,i,6,X) + 2/(1-X[i])^3*data[i,6])  #- dissipation(data,i,epsilon,6)[6]#+1.0/2.0 * (Der(data,i,6,X))  - dissipation(data,i,epsilon)[6]
+            dy[i,6]= +1.0/2.0 * (1/(1-X[i])^2 * Der(data,i,6,X) + 2/(1-X[i])^3*data[i,6])  - dissipation(data,i,epsilon,6)[6]#+1.0/2.0 * (Der(data,i,6,X))  - dissipation(data,i,epsilon)[6]
             #dy[i,6]= +1.0/2.0 * (1/(1-x)^2 * Der(data,i,6,X) + 2/(1-x)^3*data[i,6])  - dissipation(data,i,epsilon)[6]#- dissipation4(data,i,0.02)[6];
-            dy[i,7] = data[i,4] #- dissipation(data,i,epsilon,7)[7]
+            dy[i,7] = data[i,4] - dissipation(data,i,epsilon,7)[7]
             
 
         elseif abs.(X[i] .- 1.0)<10^(-15)
-            dy[i,6]= 0.0 #- dissipation(data,i,epsilon,6)[6]
-            dy[i,7] = data[i,4] #- dissipation(data,i,epsilon,7)[7] #xvar=1
+            dy[i,6]= 0.0 - dissipation(data,i,epsilon,6)[6]
+            dy[i,7] = data[i,4] - dissipation(data,i,epsilon,7)[7] #xvar=1
             
         else
-            dy[i,6]=derpsi_evol(data,i,X) #- dissipation(data,i,epsilon,6)[6]
-            dy[i,7] = data[i,4] #- dissipation(data,i,epsilon,7)[7] #solving for xchi in the next slice
+            dy[i,6]=derpsi_evol(data,i,X) - dissipation(data,i,epsilon,6)[6]
+            dy[i,7] = data[i,4] - dissipation(data,i,epsilon,7)[7] #solving for xchi in the next slice
             
         end
     
     end
-    dy[L-3,7] = extrapolate_out(dy[L-7,5], dy[L-6,5], dy[L-5,5], dy[L-4,5])#this
+    dy[L-3,7]=dy[L-4,7]
+    #dy[L-3,7] = extrapolate_out(dy[L-7,5], dy[L-6,5], dy[L-5,5], dy[L-4,5])#this
     
     #dy=ghost(dy)
     return dy
@@ -1105,16 +1116,16 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
 
         #state_array[:,7]=parity(state_array[:,7])
         state_array[4:L-3,5]=Der_arrayLOP(state_array,7,initX)[4:L-3]
-        state_array[L-3,5]=state_array[L-6,5]#extrapolate_out(state_array[L-7,5], state_array[L-6,5], state_array[L-5,5], state_array[L-4,5])#aqui
-        state_array[L-4,5]=state_array[L-6,5]
-        state_array[L-5,5]=state_array[L-6,5]
+        #state_array[L-3,5]=state_array[L-6,5]#extrapolate_out(state_array[L-7,5], state_array[L-6,5], state_array[L-5,5], state_array[L-4,5])#aqui
+        #state_array[L-4,5]=state_array[L-6,5]
+        #state_array[L-5,5]=state_array[L-6,5]
         
         #state_array[L-3,5]=state_array[L-4,5]
 
         #state_array[:,5]=secondparity(state_array[:,5])
         aux=Der_arrayLOP(state_array,5,initX)
         #aux[4]=0
-        aux[L-3]=aux[L-4]#aqui
+        #aux[L-3]=aux[L-4]#aqui
 
         # update interpolation of psi,x
         derxchi_func = Spline1D(X[4:L-3], state_array[4:L-3,5],  k=4);
