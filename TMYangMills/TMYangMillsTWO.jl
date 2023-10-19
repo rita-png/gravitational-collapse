@@ -776,7 +776,7 @@ function RHS(y0,x1,time,func,i,data)
             else
                 extraterms=0.0#???
             end
-            z[4] = extraterms + y0[4]/(r*(1+r))-xxchi(x1)/(r*(1+r))-(3*(1+r)*xxchi(x1)^2)/(2*r^3)-((1+r)^2*xxchi(x1)^3)/(2*r^4)+(-2*derxxchi(x1)+r*(1+r)*derrxxchi(x1))/(2*r*(1+r))
+            z[4] = extraterms + -(xxchi(x1)/r^2)-(3*xxchi(x1)^2)/(2*r^2)-xxchi(x1)^3/(2*r^2)+1/2*derrxxchi(x1)
             
         end
         
@@ -832,7 +832,7 @@ function SF_RHS(data,t,X)
     data=ghost(data)
 
     if twod==true
-        epsilon=0.02
+        epsilon=0.008
     else
         epsilon=0.0065
     end
