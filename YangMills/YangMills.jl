@@ -39,7 +39,7 @@ function init_derpsi(r,r0,sigma,A) #psi,r
     return z
 end
 
-function init_xchi(r,r0,sigma,A)
+"""function init_xchi(r,r0,sigma,A)
 
     n=length(r);
     if compactified==false
@@ -67,7 +67,31 @@ function init_xchi(r,r0,sigma,A)
         end
     end
     return z
+end"""
+
+function init_xchi(r,r0,sigma,A)
+
+    n=length(r);
+
+    # inputted argument r is actually an x
+    if n==1
+        x=r
+        #rr=x/(1-x)
+        z=A*x*exp(-(x-r0)^2/sigma^2)+A*x*exp(-((x+r0)^2/sigma^2))
+        
+    else
+        z=zeros(n);
+        for i in 1:n-1
+            x=r
+            #rr = x/(1-x)
+            z[i]=A*x[i]*exp(-(x[i]-r0)^2/sigma^2)+A*x[i]*exp(-((x[i]+r0)^2/sigma^2))
+        end
+        #z[n]=0.0#avoid nan at x=1
+    end
+    
+    return z
 end
+
     
 function init_derxchi(r,r0,sigma,A) #(xchi),r
     n=length(r);
@@ -281,31 +305,31 @@ function rk4wrapper(f,y0,x,u,spl_funcs,data) # u depicts T array, or M!!
     return y
 end
 
-function n_rk4wrapper(f,y0,x,u,spl_funcs,data) # u depicts T array, or M!!
+function n_rk4wrapper(f,y0,x,u,spl_funcs,data,params) # u depicts T array, or M!!
     L = length(x)
     n = length(y0)
     y = zeros(L,n)
     y[1,:] = y0;
     for i in 1:L-1
         h = x[i+1] .- x[i]
-        k1 = f(y[i,:], x[i],u,spl_funcs,i,data)
-        k2 = f(y[i,:] .+ k1 * h/2, x[i] .+ h/2,u,spl_funcs,i,data)
-        k3 = f(y[i,:] .+ k2 * h/2, x[i] .+ h/2,u,spl_funcs,i,data)
-        k4 = f(y[i,:] .+ k3 * h, x[i] .+ h,u,spl_funcs,i,data)
+        k1 = f(y[i,:], x[i],u,spl_funcs,i,data,params)
+        k2 = f(y[i,:] .+ k1 * h/2, x[i] .+ h/2,u,spl_funcs,i,data,params)
+        k3 = f(y[i,:] .+ k2 * h/2, x[i] .+ h/2,u,spl_funcs,i,data,params)
+        k4 = f(y[i,:] .+ k3 * h, x[i] .+ h,u,spl_funcs,i,data,params)
         y[i+1,:] = y[i,:] .+ (h/6) * (k1 .+ 2*k2 .+ 2*k3 .+ k4)
     end
     return y[:,:]
 end
 
-function twod_n_rk4wrapper(f,y0,x,u,spl_funcs,data) # u depicts T array, or M!!
+function twod_n_rk4wrapper(f,y0,x,u,spl_funcs,data,params) # u depicts T array, or M!!
     L = length(x)
     n = length(y0)
     y = zeros(L,n)
     y[1,:] = y0;
     for i in 1:L-1
         h = x[i+1] .- x[i]
-        k1 = f(y[i,:], x[i],u,spl_funcs,i,data)
-        k2 = f(y[i,:] .+ k1 * h, x[i] .+ h,u,spl_funcs,i,data)
+        k1 = f(y[i,:], x[i],u,spl_funcs,i,data,params)
+        k2 = f(y[i,:] .+ k1 * h, x[i] .+ h,u,spl_funcs,i,data,params)
         y[i+1,:] = y[i,:] .+ (h/2) * (k1 .+ k2)
     end
     return y[:,:]
@@ -811,7 +835,7 @@ function boundarySF(y,X)
     return y
 end
 
-function RHS(y0,x1,time,func,i,data)
+"""function RHS(y0,x1,time,func,i,data)
     
     #state array is [m beta psi xxchi,u xchi,r psi,r xchi r]
     z=zeros(length(y0))
@@ -857,9 +881,9 @@ function RHS(y0,x1,time,func,i,data)
             z[2]=2*pi*(-1+x)*(-((2*(-1+x)^2*(1-2*x^2)^2*xchi(x1)^2)/(x*(1-2*x+2*x^2)^4))+(4*(-1+x)^2*(-1+2*x^2)*xchi(x1)*derxchi(x1))/(1-2*x+2*x^2)^3-(2*(-1+x)^2*x*derxchi(x1)^2)/(1-2*x+2*x^2)^2-(y0[3]+(-1+x)*x*z[3])^2/x^3)
             
             #in princirple i dont need this
-            """if abs.(x1 .- 1.0)<10^(-15)
-                z[2]=0.0
-            end"""
+            #if abs.(x1 .- 1.0)<10^(-15)
+                #z[2]=0.0
+            #end
         end
     end
 
@@ -879,9 +903,9 @@ function RHS(y0,x1,time,func,i,data)
             z[4] = (1/(2*x*(1-2*x+2*x^2)^5))*(4*(-1+x)^9*y0[4]+4*(1-2*x+2*x^2)^5*y0[4]-exp(2*y0[2])*(xchi(x1)*(2*x^2*(1-2*x+2*x^2)^4+xchi(x1)*(3*x*(1-2*x+2*x^2)^4+xchi(x1)*((1-2*x+2*x^2)^2*(32*pi*(-1+x)^4+(-1+x)^2*x^2+x^4)+8*pi*(-1+x)^4*x*xchi(x1)*(4-8*x+8*x^2+x*xchi(x1)))))+(1-x)*(1-2*x+2*x^2)*((1-2*x+2*x^2)^4-4*pi*(-1+x)^2*xchi(x1)^2*(2-4*x+4*x^2+x*xchi(x1))^2)*(xchi(x1)-x*derxchi(x1)))-4*(1-x)*y0[4]*(x^2*(2-4*x+3*x^2)*(2-8*x+14*x^2-12*x^3+5*x^4)-2*pi*(-1+x)^2*(1-2*x+2*x^2)*((1-2*x^2)*xchi(x1)+x*(1-2*x+2*x^2)*derxchi(x1))^2))
 
             #inprinciple i dont need this
-            """if abs.(x1 .- 1.0)<10^(-15)
-                z[4]= 1/2  (4  y0[4]-exp.(2 y0[2]) (xchi(x1) (2 +xchi(x1) (3+xchi(x1)))))
-            end"""
+            #if abs.(x1 .- 1.0)<10^(-15)
+                #z[4]= 1/2  (4  y0[4]-exp.(2 y0[2]) (xchi(x1) (2 +xchi(x1) (3+xchi(x1)))))
+            #end
             
         end
     end 
@@ -915,11 +939,127 @@ function RHS(y0,x1,time,func,i,data)
     end 
     
     return z[:]
+end"""
+
+function RHS(y0,x1,time,func,i,data,params)
+    
+    #state array is [m beta psi xxchi,u xchi,r psi,r xchi r]
+    z=zeros(length(y0))
+    
+    derxchi = func[1] #this is (xchi),r in non compactified code but is (xchi),x in compactified
+    derpsi = func[2]
+    xchi = func[3]
+
+    #coords
+    r=0
+    if compactified==false
+        r=x1
+    else
+        x=x1
+        r=x/(1-x)
+    end
+
+    if i<=8
+        xchi=params[1]*x1+params[2]*x1^3+params[3]*x1^5
+        derxchi=params[1]+3*params[2]*x1^2+5*params[3]*x1^4
+        #xchi=xchi(x1)
+        #derxchi=derxchi(x1)
+    else
+        xchi=xchi(x1)
+        derxchi=derxchi(x1)
+    end
+
+    #psi
+    if compactified==false
+        r=x1
+        z[3]=derpsi(r)
+    else
+        #psi,x
+        if abs.(x1 .- 1.0)<10^(-15)
+            z[3]=0.0
+        else
+            z[3]=derpsi(x1)/(1-x1)^2 #df/dx = df/dr*dr/dx
+        end
+    end
+    
+    
+    #beta
+    if x1<10^(-15)
+        z[2] = 0.0
+    else
+        if compactified==false
+            r=x1
+            z[2] = (4*pi*(-1+(-2+r)*r)^2*xchi^2)/(r*(1+r^2)^4)-(8*pi*(1+r)*(-1+(-2+r)*r)*xchi*derxchi)/(1+r^2)^3+(4*pi*r*(1+r)^2*derxchi^2)/(1+r^2)^2+(2*pi*(y0[3]-r*derpsi(x1))^2)/r^3
+        else
+            x=x1
+            r=x/(1-x)
+            #z[2] = 1/(1-x1)^2*((4*pi*(-1+(-2+r)*r)^2*xchi^2)/(r*(1+r^2)^4)-(8*pi*(1+r)*(-1+(-2+r)*r)*xchi*derxchi)/(1+r^2)^3+(4*pi*r*(1+r)^2*derxchi^2)/(1+r^2)^2+(2*pi*(y0[3]-r*derpsi(x1))^2)/r^3)
+            z[2]=2*pi*(-1+x)*(-((2*(-1+x)^2*(1-2*x^2)^2*xchi^2)/(x*(1-2*x+2*x^2)^4))+(4*(-1+x)^2*(-1+2*x^2)*xchi*derxchi)/(1-2*x+2*x^2)^3-(2*(-1+x)^2*x*derxchi^2)/(1-2*x+2*x^2)^2-(y0[3]+(-1+x)*x*z[3])^2/x^3)
+            
+            #in princirple i dont need this
+            """if abs.(x1 .- 1.0)<10^(-15)
+                z[2]=0.0
+            end"""
+        end
+    end
+
+    #xxchi,u
+    
+    if x1<10^(-15)
+        z[4] = 0.0 #?
+    else
+        if compactified==false
+            r=x1
+            z[4] = (1/(2*r))*((4*y0[4])/(1+r)-(4*y0[4])/(1+r^2)^5+(1/((1+r)^2*(1+r^2)^5))*exp(2*y0[2])*(-((1+r)*xchi*(2*r^2*(1+r^2)^4+(1+r)*xchi*(3*r*(1+r^2)^4+(1+r)*xchi*((1+r^2)^2*(32*pi+r^2+r^4)+8*pi*r*(1+r)*xchi*(4+4*r^2+r*(1+r)*xchi)))))+(1+r^2)*((1+r^2)^4-4*pi*(1+r)^2*xchi^2*(2+2*r^2+r*(1+r)*xchi)^2)*(-xchi+r*(1+r)*derxchi))-(4*y0[4]*(r^2*(2+r^2)*(2+2*r^2+r^4)-2*pi*(1+r^2)*((1+2*r-r^2)*xchi+r*(1+r+r^2+r^3)*derxchi)^2))/(1+r^2)^5)
+
+        else
+            x=x1
+            r=x/(1-x)
+            #z[4] = 1/(1-x1)^2*((1/(2*r))*((4*y0[4])/(1+r)-(4*y0[4])/(1+r^2)^5+(1/((1+r)^2*(1+r^2)^5))*exp(2*y0[2])*(-((1+r)*xchi*(2*r^2*(1+r^2)^4+(1+r)*xchi*(3*r*(1+r^2)^4+(1+r)*xchi*((1+r^2)^2*(32*pi+r^2+r^4)+8*pi*r*(1+r)*xchi*(4+4*r^2+r*(1+r)*xchi)))))+(1+r^2)*((1+r^2)^4-4*pi*(1+r)^2*xchi^2*(2+2*r^2+r*(1+r)*xchi)^2)*(-xchi+r*(1+r)*derxchi))-(4*y0[4]*(r^2*(2+r^2)*(2+2*r^2+r^4)-2*pi*(1+r^2)*((1+2*r-r^2)*xchi+r*(1+r+r^2+r^3)*derxchi)^2))/(1+r^2)^5))
+            z[4] = (1/(2*x*(1-2*x+2*x^2)^5))*(4*(-1+x)^9*y0[4]+4*(1-2*x+2*x^2)^5*y0[4]-exp(2*y0[2])*(xchi*(2*x^2*(1-2*x+2*x^2)^4+xchi*(3*x*(1-2*x+2*x^2)^4+xchi*((1-2*x+2*x^2)^2*(32*pi*(-1+x)^4+(-1+x)^2*x^2+x^4)+8*pi*(-1+x)^4*x*xchi*(4-8*x+8*x^2+x*xchi))))+(1-x)*(1-2*x+2*x^2)*((1-2*x+2*x^2)^4-4*pi*(-1+x)^2*xchi^2*(2-4*x+4*x^2+x*xchi)^2)*(xchi-x*derxchi))-4*(1-x)*y0[4]*(x^2*(2-4*x+3*x^2)*(2-8*x+14*x^2-12*x^3+5*x^4)-2*pi*(-1+x)^2*(1-2*x+2*x^2)*((1-2*x^2)*xchi+x*(1-2*x+2*x^2)*derxchi)^2))
+
+            #inprinciple i dont need this
+            """if abs.(x1 .- 1.0)<10^(-15)
+                z[4]= 1/2  (4  y0[4]-exp.(2 y0[2]) (xchi (2 +xchi (3+xchi))))
+            end"""
+            
+        end
+    end 
+
+    #m
+    if x1<10^(-15)
+        z[1] = 0.0
+    else
+        if compactified==false
+            
+            #1st z[1] = (4*exp(-2*y0[2])*pi*(1+r)^2*(-1+(-2+r)*r)*y0[4]*xchi)/(1+r^2)^3+(4*pi*(r*(3+r*(2+r))*(1+r*(2+r+2*r^3))-2*(-1+(-2+r)*r)^2*y0[1])*xchi^2)/(r*(1+r^2)^4)+(8*pi*r*(1+r)^3*xchi^3)/(1+r^2)^3+(2*pi*r^2*(1+r)^4*xchi^4)/(1+r^2)^4+(-((4*exp(-2*y0[2])*pi*r*(1+r)^3*y0[4])/(1+r^2)^2)-(8*pi*(1+r)*(-1+(-2+r)*r)*(r-2*y0[1])*xchi)/(1+r^2)^3)*derxchi+(4*pi*r*(1+r)^2*(r-2*y0[1])*derxchi^2)/(1+r^2)^2+2*pi*r*(r-2*y0[1])*(-(y0[3]/r^2)+derpsi(x1)/r)^2
+            #10/10
+            z[1] = 1/(1+r^2)^3*2*pi*r*((4*(1+r)^2*(3*r+2*r^3+r^5-4*y0[1])*xchi^2)/(r^2+r^4)+4*(1+r)^3*xchi^3+(r*(1+r)^4*xchi^4)/(1+r^2)-(4*(1+r)*xchi*(exp(-2*y0[2])*r*(1+r)^2*y0[4]-2*(r-2*y0[1])*(-xchi+r*(1+r)*derxchi)))/r^2+(2*exp(-2*y0[2])*(1+r^2)*(-xchi+r*(1+r)*derxchi)*(-r*(1+r)^2*y0[4]+exp(2*y0[2])*(r-2*y0[1])*(-xchi+r*(1+r)*derxchi)))/r^2+(1+r^2)^3*(r-2*y0[1])*(-(y0[3]/r^2)+derpsi(x1)/r)^2)
+            
+        else
+            x=x1
+            r=x/(1-x)
+            #1st z[1] = 1/(1-x1)^2*((4*exp(-2*y0[2])*pi*(1+r)^2*(-1+(-2+r)*r)*y0[4]*xchi)/(1+r^2)^3+(4*pi*(r*(3+r*(2+r))*(1+r*(2+r+2*r^3))-2*(-1+(-2+r)*r)^2*y0[1])*xchi^2)/(r*(1+r^2)^4)+(8*pi*r*(1+r)^3*xchi^3)/(1+r^2)^3+(2*pi*r^2*(1+r)^4*xchi^4)/(1+r^2)^4+(-((4*exp(-2*y0[2])*pi*r*(1+r)^3*y0[4])/(1+r^2)^2)-(8*pi*(1+r)*(-1+(-2+r)*r)*(r-2*y0[1])*xchi)/(1+r^2)^3)*derxchi+(4*pi*r*(1+r)^2*(r-2*y0[1])*derxchi^2)/(1+r^2)^2+2*pi*r*(r-2*y0[1])*(-(y0[3]/r^2)+derpsi(x1)/r)^2)
+            #2nd z[1] = (1/((1-2*x+2*x^2)^4))*2*pi*((2*(x*(3-10*x+13*x^2-8*x^3+8*x^4-8*x^5+4*x^6)+2*(-1+x)^3*(1-2*x^2)^2*y0[1])*xchi^2)/x+4*x*(1-2*x+2*x^2)*xchi^3+x^2*xchi^4-4*(-1+x)^2*(-1+2*x-4*x^3+4*x^4)*(x+2*(-1+x)*y0[1])*xchi*derxchi-2*exp(-2*y0[2])*(1-2*x+2*x^2)*y0[4]*((1-2*x^2)*xchi+x*(1-2*x+2*x^2)*derxchi)+x*(1-2*x+2*x^2)^2*(x+2*(-1+x)*y0[1])*(2*(-1+x)^2*derxchi^2+(1-2*x+2*x^2)^2*(-(y0[3]/r^2)+derpsi(x1)/r)^2))
+            z[1] = 1/(1-x1)^2*(1/(1+r^2)^3*2*pi*r*((4*(1+r)^2*(3*r+2*r^3+r^5-4*y0[1])*xchi^2)/(r^2+r^4)+4*(1+r)^3*xchi^3+(r*(1+r)^4*xchi^4)/(1+r^2)-(4*(1+r)*xchi*(exp(-2*y0[2])*r*(1+r)^2*y0[4]-2*(r-2*y0[1])*(-xchi+r*(1+r)*derxchi*(1-x)^2)))/r^2+(2*exp(-2*y0[2])*(1+r^2)*(-xchi+r*(1+r)*derxchi*(1-x)^2)*(-r*(1+r)^2*y0[4]+exp(2*y0[2])*(r-2*y0[1])*(-xchi+r*(1+r)*derxchi*(1-x)^2)))/r^2+(1+r^2)^3*(r-2*y0[1])*(-(y0[3]/r^2)+derpsi(x1)/r)^2))
+            
+            #10/10
+            
+
+
+            #2nd in principle i dont need this
+            if abs.(x1 .- 1.0)<10^(-15)
+                z[1]= (-4*exp(-2*y0[2])*pi*y0[4])*derxchi+4*pi*derxchi^2
+            end
+        end
+    end 
+    
+    return z[:]
 end
 
 
 # Defining the function in the RHS of the ution equation system
-using Base.Threads
+using Base.Threads, LsqFit
 function SF_RHS(data,t,X)
     
     L=length(X)
@@ -939,12 +1079,18 @@ function SF_RHS(data,t,X)
     
     funcs=[derxchi_func derpsi_func xchi_func];
     
+    #fit
+    ff(x, p) = p[1] .* x .+ p[2] .* x .^ 3 .+ p[3] .* x .^ 5
+    p0 = [0.1, 0.001, 0.00001]
+    fit = curve_fit(ff, data[4:8,8], data[4:8,7], p0);
+    params=fit.param
+
     # update m, beta and psi data
     y0=[0.0 0.0 0.0 0.0]
     if twod==true
-        data[4:L-3,1:4] = twod_n_rk4wrapper(RHS,y0,X[4:L-3],t,funcs,data[:,:])
+        data[4:L-3,1:4] = twod_n_rk4wrapper(RHS,y0,X[4:L-3],t,funcs,data[:,:],params)
     else
-        data[4:L-3,1:4] = n_rk4wrapper(RHS,y0,X[4:L-3],t,funcs,data[:,:])
+        data[4:L-3,1:4] = n_rk4wrapper(RHS,y0,X[4:L-3],t,funcs,data[:,:],params)
     end
     data=ghost(data)
 
@@ -1117,14 +1263,19 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         
 
         funcs=[derxchi_func derpsi_func xchi_func];
+        #fit
+        ff(x, p) = p[1] .* x .+ p[2] .* x .^ 3 .+ p[3] .* x .^ 5
+        p0 = [0.1, 0.001, 0.00001]
+        fit = curve_fit(ff, state_array[4:8,8], state_array[4:8,7], p0);
+        params=fit.param
 
         #evolve m and beta together, new
         y0=[0.0 0.0 0.0 0.0]
         
         if twod==true
-            state_array[4:L-3,1:4] = twod_n_rk4wrapper(RHS,y0,X1,t,funcs,state_array[:,:])
+            state_array[4:L-3,1:4] = twod_n_rk4wrapper(RHS,y0,X1,t,funcs,state_array[:,:],params)
         else
-            state_array[4:L-3,1:4] = n_rk4wrapper(RHS,y0,X1,t,funcs,state_array[:,:])
+            state_array[4:L-3,1:4] = n_rk4wrapper(RHS,y0,X1,t,funcs,state_array[:,:],params)
         end
         
         #state_array[:,1:4]=ghostscri(state_array[:,1:4])
@@ -1135,7 +1286,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         massloss[4:L-3] = masslossfunc(state_array)[4:L-3]
         
         
-        if iter%50==0
+        if iter%5==0
         #if (iter%100==0&&t>0.5)||(t>1.5&&iter%5==0)||(t>=2.04&&t<=2.046)
             if zeroformat==true
                 zero_print_muninn(files, t, state_array[:,:],res,"a")
