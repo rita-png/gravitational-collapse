@@ -69,7 +69,7 @@ end
     return z
 end"""
 
-function init_xchi(r,r0,sigma,A)
+function init_xxchi(r,r0,sigma,A)
 
     n=length(r);
 
@@ -77,14 +77,14 @@ function init_xchi(r,r0,sigma,A)
     if n==1
         x=r
         #rr=x/(1-x)
-        z=A*x*exp(-(x-r0)^2/sigma^2)+A*x*exp(-((x+r0)^2/sigma^2))
+        z=A*x^2*exp(-(x-r0)^2/sigma^2)+A*x^2*exp(-((x+r0)^2/sigma^2))
         
     else
         z=zeros(n);
-        for i in 1:n-1
+        for i in 1:n
             x=r
             #rr = x/(1-x)
-            z[i]=A*x[i]*exp(-(x[i]-r0)^2/sigma^2)+A*x[i]*exp(-((x[i]+r0)^2/sigma^2))
+            z[i]=A*x[i]^2*exp(-(x[i]-r0)^2/sigma^2)+A*x[i]^2*exp(-((x[i]+r0)^2/sigma^2))
         end
         #z[n]=0.0#avoid nan at x=1
     end
@@ -321,6 +321,22 @@ function n_rk4wrapper(f,y0,x,u,spl_funcs,data,params) # u depicts T array, or M!
     return y[:,:]
 end
 
+function n_rk4wrapper(f,y0,x,u,spl_funcs,data) # u depicts T array, or M!!
+    L = length(x)
+    n = length(y0)
+    y = zeros(L,n)
+    y[1,:] = y0;
+    for i in 1:L-1
+        h = x[i+1] .- x[i]
+        k1 = f(y[i,:], x[i],u,spl_funcs,i,data)
+        k2 = f(y[i,:] .+ k1 * h/2, x[i] .+ h/2,u,spl_funcs,i,data)
+        k3 = f(y[i,:] .+ k2 * h/2, x[i] .+ h/2,u,spl_funcs,i,data)
+        k4 = f(y[i,:] .+ k3 * h, x[i] .+ h,u,spl_funcs,i,data)
+        y[i+1,:] = y[i,:] .+ (h/6) * (k1 .+ 2*k2 .+ 2*k3 .+ k4)
+    end
+    return y[:,:]
+end
+
 function twod_n_rk4wrapper(f,y0,x,u,spl_funcs,data,params) # u depicts T array, or M!!
     L = length(x)
     n = length(y0)
@@ -335,6 +351,19 @@ function twod_n_rk4wrapper(f,y0,x,u,spl_funcs,data,params) # u depicts T array, 
     return y[:,:]
 end
 
+function twod_n_rk4wrapper(f,y0,x,u,spl_funcs,data) # u depicts T array, or M!!
+    L = length(x)
+    n = length(y0)
+    y = zeros(L,n)
+    y[1,:] = y0;
+    for i in 1:L-1
+        h = x[i+1] .- x[i]
+        k1 = f(y[i,:], x[i],u,spl_funcs,i,data)
+        k2 = f(y[i,:] .+ k1 * h, x[i] .+ h,u,spl_funcs,i,data)
+        y[i+1,:] = y[i,:] .+ (h/2) * (k1 .+ k2)
+    end
+    return y[:,:]
+end
 
 function integrator(X,derpsi_func,data)
 
@@ -641,6 +670,33 @@ function Der_array(y,k,X)#returns darray/dr or darray/dx if non compactified
     return z
 end
 
+function Der_arrayLOP(y,k,X)#returns darray/dr or darray/dx if non compactified
+
+    z=zeros(length(y[:,k]))
+    
+    """for i in 4:L-3
+        if i==L-3 # right boundary TEM
+            z[i] = (-27*y[i,k]+58*y[i-1,k]-56*y[i-2,k]+36*y[i-3,k]-13*y[i-4,k]+2*y[i-5,k])/(12*(X[i]-X[i-1])) #fixed this *-1
+        elseif i==L-4 # right boundary TEM
+            z[i] = (-2*y[i+1,k]-15*y[i,k]+28*y[i-1,k]-16*y[i-2,k]+6*y[i-3,k]-y[i-4,k])/(12*(X[i+1]-X[i]))
+        else # central
+            z[i] = (-y[i+2,k]+8*y[i+1,k]-8*y[i-1,k]+y[i-2,k])/(12*(X[i+1]-X[i]))
+        end
+    end"""
+    
+    for i in 4:L-3
+        if i==4 # left boundary LOP1, TEM
+            z[i] = (y[i+3,k]-4*y[i+2,k]+7*y[i+1,k]-4*y[i,k])/(2*(X[i+1]-X[i]))
+        elseif i==L-3
+            z[i] = (-y[i-3,k]+4*y[i-2,k]-7*y[i-1,k]+4*y[i,k])/(2*(X[i]-X[i-1]))
+        else
+            z[i] = (y[i+1,k]-y[i-1,k])/(2*(X[i+1]-X[i]))
+        end
+    end
+    
+    return z
+end
+
 #matrix
 function unevenDer(y,i,k,X,spls)
 
@@ -835,7 +891,7 @@ function boundarySF(y,X)
     return y
 end
 
-"""function RHS(y0,x1,time,func,i,data)
+function RHS(y0,x1,time,func,i,data)
     
     #state array is [m beta psi xxchi,u xchi,r psi,r xchi r]
     z=zeros(length(y0))
@@ -939,7 +995,7 @@ end
     end 
     
     return z[:]
-end"""
+end
 
 function RHS(y0,x1,time,func,i,data,params)
     
@@ -1068,7 +1124,7 @@ function SF_RHS(data,t,X)
     
 
     data[:,7]=parity(data[:,7])
-    data[4:L-3,5]= Der_array(data,7,initX)[4:L-3]#derivative(xchi_func, initX1; nu=1)#
+    data[4:L-3,5]= Der_arrayLOP(data,7,initX)[4:L-3]#derivative(xchi_func, initX1; nu=1)#
     data[L-3,5]=data[L-4,5]
 
     # update interpolation of psi,x
@@ -1080,17 +1136,17 @@ function SF_RHS(data,t,X)
     funcs=[derxchi_func derpsi_func xchi_func];
     
     #fit
-    ff(x, p) = p[1] .* x .+ p[2] .* x .^ 3 .+ p[3] .* x .^ 5
+    """ff(x, p) = p[1] .* x .+ p[2] .* x .^ 3 .+ p[3] .* x .^ 5
     p0 = [0.1, 0.001, 0.00001]
     fit = curve_fit(ff, data[4:8,8], data[4:8,7], p0);
-    params=fit.param
+    params=fit.param"""
 
     # update m, beta and psi data
     y0=[0.0 0.0 0.0 0.0]
     if twod==true
-        data[4:L-3,1:4] = twod_n_rk4wrapper(RHS,y0,X[4:L-3],t,funcs,data[:,:],params)
+        data[4:L-3,1:4] = twod_n_rk4wrapper(RHS,y0,X[4:L-3],t,funcs,data[:,:])
     else
-        data[4:L-3,1:4] = n_rk4wrapper(RHS,y0,X[4:L-3],t,funcs,data[:,:],params)
+        data[4:L-3,1:4] = n_rk4wrapper(RHS,y0,X[4:L-3],t,funcs,data[:,:])
     end
     data=ghost(data)
 
@@ -1098,7 +1154,7 @@ function SF_RHS(data,t,X)
 
 
     if twod==true
-        epsilon=0.02
+        epsilon=0.004
     else
         epsilon=0.0065
     end
@@ -1106,12 +1162,8 @@ function SF_RHS(data,t,X)
     # update interpolation of xchi,u
     #deruxchi_func = Spline1D(X[4:L-3],data[4:L-3,5],k=4)
         
+
     Threads.@threads for i in 4:L-3 #ORI
-        if compactified==false
-            xvar=X[i]/(1+X[i])
-        else
-            xvar=X[i]
-        end
 
         if X[i]<10^(-15) #left
             dy[i,6]= +1.0/2.0 * (1/(1-X[i])^2 * Der(data,i,6,X) + 2/(1-X[i])^3*data[i,6])  - dissipation(data,i,epsilon,6)[6]#+1.0/2.0 * (Der(data,i,6,X))  - dissipation(data,i,epsilon)[6]
@@ -1120,11 +1172,11 @@ function SF_RHS(data,t,X)
 
         elseif abs.(X[i] .- 1.0)<10^(-15)
             dy[i,6]= 0.0 - dissipation(data,i,epsilon,6)[6]
-            dy[i,7] = data[i,4]/xvar - dissipation(data,i,epsilon,7)[7] #xvar=1
+            dy[i,7] = data[i,4]/X[i] - dissipation(data,i,epsilon,7)[7]
             
         else
             dy[i,6]=derpsi_evol(data,i,X) - dissipation(data,i,epsilon,6)[6]
-            dy[i,7] = data[i,4]/xvar - dissipation(data,i,epsilon,7)[7] #solving for xchi in the next slice. (xchi),u=(xxchi),u/x
+            dy[i,7] = data[i,4]/X[i] - dissipation(data,i,epsilon,7)[7] #solving for xxchi in the next slice
             
         end
         #dy[4,6]=extrapolate_in(dy[5,6], dy[6,6], dy[7,6], dy[8,6])
@@ -1218,7 +1270,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         end
         t = t + dt
         
-        if iter%100==0
+        if iter%10==0
             println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
         end
         #println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
@@ -1245,7 +1297,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
 
         state_array[:,7]=parity(state_array[:,7])
         
-        state_array[4:L-3,5]=Der_array(state_array,7,initX)[4:L-3]#derivative(xchi_func, initX[4:L-3]; nu=1)#
+        state_array[4:L-3,5]=Der_arrayLOP(state_array,7,initX)[4:L-3]#derivative(xchi_func, initX[4:L-3]; nu=1)#
 
         state_array[L-3,5]=state_array[L-4,5]
         #state_array[4,5]=extrapolate_in(state_array[5,5], state_array[6,5], state_array[7,5], state_array[8,5])#isto
@@ -1264,18 +1316,18 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
 
         funcs=[derxchi_func derpsi_func xchi_func];
         #fit
-        ff(x, p) = p[1] .* x .+ p[2] .* x .^ 3 .+ p[3] .* x .^ 5
+        """ff(x, p) = p[1] .* x .+ p[2] .* x .^ 3 .+ p[3] .* x .^ 5
         p0 = [0.1, 0.001, 0.00001]
         fit = curve_fit(ff, state_array[4:8,8], state_array[4:8,7], p0);
-        params=fit.param
+        params=fit.param"""
 
         #evolve m and beta together, new
         y0=[0.0 0.0 0.0 0.0]
         
         if twod==true
-            state_array[4:L-3,1:4] = twod_n_rk4wrapper(RHS,y0,X1,t,funcs,state_array[:,:],params)
+            state_array[4:L-3,1:4] = twod_n_rk4wrapper(RHS,y0,X1,t,funcs,state_array[:,:])
         else
-            state_array[4:L-3,1:4] = n_rk4wrapper(RHS,y0,X1,t,funcs,state_array[:,:],params)
+            state_array[4:L-3,1:4] = n_rk4wrapper(RHS,y0,X1,t,funcs,state_array[:,:])
         end
         
         #state_array[:,1:4]=ghostscri(state_array[:,1:4])
