@@ -768,20 +768,15 @@ function RHS(y0,x1,time,func,i,data)
 
     if compactified==false
         r=x1
-        if source==false
-            extraterms=0.0
-        else
-            extraterms=0.0#???
-        end
-        z[4] = extraterms + 1/2*derrxchi(x1)
-        #z[4] = (1/(2*(1+r)^2))*(-4*(1+r)*y0[4]+2xchi(x1)+2*derxchi(x1)+4*r*derxchi(x1)+r*derrxchi(x1)+r^2*derrxchi(x1))
+        
+        z[4] = 1/2*derrxchi(x1)
+        
     else
         x=x1
         r=x/(1-x)
         derxchii=derxchi(x1)*(1-x1)^2
         derrxchii=derxchi(x1)*2*(-1+x)^3+derrxchi(x1)*(1-x1)^4
-        #dx/dr=(1-x1)^2
-        #ddx/dr^2=2*(-1+x)^3
+        
         z[4] = 0 #?
     end
 
