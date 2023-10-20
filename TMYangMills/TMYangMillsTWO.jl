@@ -93,14 +93,14 @@ function init_xxchi(r,r0,sigma,A)
         if n==1
             x=r
             #rr=x/(1-x)
-            z=A*x*exp(-(x-r0)^2/sigma^2)+A*x*exp(-((x+r0)^2/sigma^2))
+            z=A*x^2*exp(-(x-r0)^2/sigma^2)+A*x^2*exp(-((x+r0)^2/sigma^2))
             
         else
             z=zeros(n);
             for i in 1:n-1
                 x=r
                 #rr = x/(1-x)
-                z[i]=A*x[i]*exp(-(x[i]-r0)^2/sigma^2)+A*x[i]*exp(-((x[i]+r0)^2/sigma^2))
+                z[i]=A*x[i]^2*exp(-(x[i]-r0)^2/sigma^2)+A*x[i]^2*exp(-((x[i]+r0)^2/sigma^2))
             end
             #z[n]=0.0#avoid nan at x=1
         end
@@ -771,23 +771,25 @@ function RHS(y0,x1,time,func,i,data)
             z[4]=0.0
         else
             r=x1
-            if source==false
-                extraterms=0.0
-            else
-                extraterms=0.0#???
-            end
-            z[4] = extraterms + -(xxchi(x1)/r^2)-(3*xxchi(x1)^2)/(2*r^2)-xxchi(x1)^3/(2*r^2)+1/2*derrxxchi(x1)
+            
+            z[4] = -(xxchi(x1)/r^2)-(3*xxchi(x1)^2)/(2*r^2)-xxchi(x1)^3/(2*r^2)+1/2*derrxxchi(x1)
             
         end
         
     else
-        x=x1
-        r=x/(1-x)
-        derxchii=derxchi(x1)*(1-x1)^2
-        derrxchii=derxchi(x1)*2*(-1+x)^3+derrxchi(x1)*(1-x1)^4
-        #dx/dr=(1-x1)^2
-        #ddx/dr^2=2*(-1+x)^3
-        z[4] = 0 #?
+        if abs.(x1-1)<10^(-15)
+            z[4]=0.0
+        elseif abs.(x1)<10^(-15)
+            z[4]=0.0
+        else
+            x=x1
+            r=x/(1-x)
+            derxxchii=derxxchi(x1)*(1-x1)^2
+            derrxxchii=derxxchi(x1)*2*(-1+x)^3+derrxxchi(x1)*(1-x1)^4
+            #dx/dr=(1-x1)^2
+            #ddx/dr^2=2*(-1+x)^3
+            z[4] = 1/(2*(x-1)^2)  * (-(xxchi(x1)/r^2)-(3*xxchi(x1)^2)/(2*r^2)-xxchi(x1)^3/(2*r^2)+1/2*derrxxchii)
+        end
     end
 
 
@@ -832,7 +834,7 @@ function SF_RHS(data,t,X)
     data=ghost(data)
 
     if twod==true
-        epsilon=0.008
+        epsilon=0.004
     else
         epsilon=0.0065
     end
@@ -862,7 +864,7 @@ function SF_RHS(data,t,X)
         end
     
     end
-    dy[L-3,7]=dy[L-4,7]
+    #dy[L-3,7]=dy[L-4,7]
     #dy[L-3,7] = extrapolate_out(dy[L-7,5], dy[L-6,5], dy[L-5,5], dy[L-4,5])#this
     
     #dy=ghost(dy)

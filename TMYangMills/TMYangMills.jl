@@ -774,10 +774,13 @@ function RHS(y0,x1,time,func,i,data)
     else
         x=x1
         r=x/(1-x)
-        derxchii=derxchi(x1)*(1-x1)^2
-        derrxchii=derxchi(x1)*2*(-1+x)^3+derrxchi(x1)*(1-x1)^4
-        
-        z[4] = 0 #?
+        derxchii=derxchi(x1)*(1-x1)^2 #(xchi),r=(xchi),x*dx/dr
+        derrxchii=derxchi(x1)*2*(-1+x)^3+derrxchi(x1)*(1-x1)^4 #(xchi),rr
+
+        z[4] = 1/(2*(x-1)^2)  * derrxchii
+        if abs.(x1 .- 1.0)<10^(-15)
+            z[4] = 0.0
+        end
     end
 
 
@@ -852,7 +855,7 @@ function SF_RHS(data,t,X)
         end
     
     end
-    dy[L-3,7]=dy[L-4,7]
+    #dy[L-3,7]=dy[L-4,7]
     #dy[L-3,7] = extrapolate_out(dy[L-7,5], dy[L-6,5], dy[L-5,5], dy[L-4,5])#this
     
     #dy=ghost(dy)
