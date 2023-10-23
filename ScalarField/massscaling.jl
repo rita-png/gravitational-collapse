@@ -25,10 +25,12 @@ global twod = false
 #### CONFIG ####
 
 
-A_critic = 0.12465049029170887
+#A_critic = 0.12465049029170887 #oolon
+A_critic = 0.14985093340204908 #baltasar
+sigma=0.4
 
-exponents = [-16.25, -15.75, -15.25, -14.75, -14.25, -13.75, -13.25, -12.75, -12.25, -11.75, -11.25, -10.75, -10.25, -9.75, -9.25, -8.75, -8.25, -7.75, -7.25]#collect(-30:0.5:-7)
-
+#exponents = collect(-30:0.5:-7)
+exponents = [-16.75, -16.25, -15.75, -15.25, -14.75, -14.25, -13.75, -13.25, -12.75, -12.25, -11.75, -11.25, -10.75, -10.25]
 global run = 1
 global runmax = length(exponents)
 
@@ -39,8 +41,8 @@ while(run <= runmax)
     println("\n########")
     println("\nBisection search run ##", run, "; A = ", A," N = ", N,", exponent = ", exponents[run],"\n")
 
-    global ARGS = [A,run,N]
-    include("./Evolution_ScalarField.jl");
+    global ARGS = [A,run,N,sigma]
+    include("./Evolution_ScalarField_Diff_Families.jl");
     if loggrid==true
         df = CSV.read(dir*"/bisectionsearch/muninnDATA/uneven/parameters.csv", DataFrame)
     else

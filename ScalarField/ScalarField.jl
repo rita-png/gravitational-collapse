@@ -666,7 +666,7 @@ function RHS(y0,x1,time,func,i,data)
         else
             if loggrid==false
                 x=x1
-                z[1] = - 2.0 .* pi .* (-1.0 .+ x) .* (y0[3] .+ (-1 + x) .* x .* z[3]) .^ 2.0 ./ x .^ 3.0 .* ( x ./ (1.0 .-x ) .- 2 .* y0[1])
+                z[1] = - 2.0 .* pi .* (-1.0 .+ x) .* (y0[3] .+ (-1 + x) .* x .* z[3]) .^ 2.0 ./ x .^ 3.0 .* ( x ./ (1.0 .-x ) .- 2 .* y0[1])#in the limit this is 2 pi (y0[3])^2
                 z[2] = - 2.0 .* pi .* (-1.0 .+ x) .* (y0[3] .+ (-1 + x) .* x .* z[3]) .^ 2.0 ./ x .^ 3.0
                 if abs.(x1 .- 1.0)<10^(-15)
                     z[1] = 0.0
@@ -774,6 +774,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
     T_array = [0.0]
     iter = 0
     k=0
+    global mass=0
     while t<finaltime#@TRACK
 
         iter = iter + 1
@@ -812,7 +813,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         run=int(run)
 
         #if iter%500==0
-        if (iter%100==0&&t>0.5)||(t>1.5&&iter%5==0)||(t>=2.04&&t<=2.046)
+        if (iter%500==0&&t>0.5)||(t>1.5&&iter%50==0)
             if zeroformat==true
                 zero_print_muninn(files, t, state_array[:,1:5],res,"a")
             else
@@ -835,6 +836,11 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
             println("Supercritical evolution! At time ", t, ", iteration = ", iter)
             println("t = ", t, "iteration ", iter, " monitor ratio = ", maximum(monitor_ratio))
             global time = t
+
+            iii=argmax(monitor_ratio)
+            global mass=state_array[iii,1]
+
+            break
         end
 
         """if criticality == true
@@ -866,7 +872,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         global criticality = false
     end
     
-    global evol_stats = [criticality A sigma r0 time explode run]
+    global evol_stats = [criticality A sigma r0 time explode run mass]
 
     return evol_stats, T_array
 
