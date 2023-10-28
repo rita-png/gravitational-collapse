@@ -19,7 +19,6 @@ global source=false
 
 global N=400.0
 global dir = "/home/ritapsantos/data/ritapsantos/YangMillsbisec1"
-
 ####bisec2
 
 #global N=800.0
