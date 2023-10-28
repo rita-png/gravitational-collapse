@@ -79,6 +79,7 @@ global files=["m", "beta", "xi", "derxi", "derderxi"]
 
 derderxi=Der_arrayLOP(state_array,4,initX) .* (initX .- 1) .^ 2
 
+global res=1
 if zeroformat==true
     zero_print_muninn(files, 0, [state_array[:,1:4] derderxi],res,"w", initX)
 else
