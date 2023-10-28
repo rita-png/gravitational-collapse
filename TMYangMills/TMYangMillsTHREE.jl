@@ -632,7 +632,7 @@ function RHS(y0,x1,time,func,i,data)
     #xi
     if compactified==true
         
-        z[3]=derxi(x1)/(1-x1)^2
+        z[3]=derxi(x1)/(1-x1)^2 #xi,x=xi,r*dr/dx
         if abs.(x1-1)<10^(-15)
             z[3]=0
         end
@@ -646,7 +646,7 @@ function RHS(y0,x1,time,func,i,data)
         if abs.(x1)<10^(-15)
             z[2]=0
         else
-            z[2]=-((4*pi*(-1+x1)^3*(derxi(x1))^2)/x1)
+            z[2]=-((4*pi*(-1+x1)^3*(z[3])^2)/x1)
         end
     else
         z[2]=0#?
@@ -785,7 +785,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         end
         t = t + dt
         
-        if iter%50==0
+        if iter%500==0
             println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
         end
         #println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
@@ -820,7 +820,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         run=int(run)
 
        
-        derderchi=Der_arrayLOP(state_array,4,X)
+        derderchi=Der_arrayLOP(state_array,4,X) .* (initX .- 1) .^ 2
         if iter%10==0
         #if (iter%100==0&&t>0.5)||(t>1.5&&iter%5==0)||(t>=2.04&&t<=2.046)
             if zeroformat==true
@@ -839,7 +839,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         end
 
         
-        if maximum(monitor_ratio)>0.995&&k==0
+        if maximum(monitor_ratio)>0.7&&k==0
             global criticality = true
             k=k+1
             println("Supercritical evolution! At time ", t, ", iteration = ", iter)
@@ -848,13 +848,14 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
             #break
         end
 
-        if criticality == true
+        
+        """if criticality == true
             break
-        end
+        end"""
         
         if isnan(state_array[L-3,4])
             if criticality==false
-                global time = iter
+                global time = t
                 global explode = true
             end
 
@@ -874,8 +875,8 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         global time = t
     end
 
-    if t>2.9
-        global time = 3.0
+    if t>1.4
+        global time = 1.5
         global criticality = false
     end
     

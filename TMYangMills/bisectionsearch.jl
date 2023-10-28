@@ -8,26 +8,38 @@ include("./TMYangMills.jl");
 
 #### CONFIG ####
 
-
-
-global N=2000.0
-global dir = "/home/ritapsantos/data/ritapsantos/YangMillsbisec"
-
-
-####
-
 global bisection = true
 global loggrid = false
 global compactified = true
 global zeroformat = false
+global twod=true
+global source=false
+
+####bisec1
+
+global N=400.0
+global dir = "/home/ritapsantos/data/ritapsantos/YangMillsbisec1"
+
+####bisec2
+
+#global N=800.0
+#global dir = "/home/ritapsantos/data/ritapsantos/YangMillsbisec2"
+
+####bisec3
+
+#global N=1000.0
+#global dir = "/home/ritapsantos/data/ritapsantos/YangMillsbisec3"
+
 
 
 #### CONFIG ####
 
 
+global low_bound = 0.08
+global high_bound = 0.11
 
 global run = 1
-global runmax = 3
+global runmax = 60
 
 plt_A_crit = Vector{Float64}()
 plt_A_non_crit = Vector{Float64}()
@@ -42,7 +54,7 @@ while(run <= runmax)
 
     global ARGS = [A,run,N]
 
-    include("./Evolution_YangMills.jl");
+    include("./Evolution_TMTHREEYangMills.jl");
     if loggrid==true
         df = CSV.read(dir*"/bisectionsearch/muninnDATA/uneven/parameters.csv", DataFrame)
     else
