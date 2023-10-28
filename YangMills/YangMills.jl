@@ -643,28 +643,9 @@ end
 function Der_array(y,k,X)#returns darray/dr or darray/dx if non compactified
 
     z=zeros(length(y[:,k]))
-    """if compactified==false 
-        for i in 4:L-3
-            z[i]=Der(y,i,k,X)
-        end
-    else
-        #returns darray/dx
-        for i in 4:L-3
-            xx=X[i]
-            rr=xx/(1-xx)
-            z[i]=Der(y,i,k,X)#*(1+rr)^2
-        end
-    end"""
 
     for i in 4:L-3
         z[i] = (-y[i+2,k]+8*y[i+1,k]-8*y[i-1,k]+y[i-2,k])/(12*(X[i+1]-X[i]))
-        """if i==L-3 # right boundary TEM
-            z[i] = (-27*y[i,k]+58*y[i-1,k]-56*y[i-2,k]+36*y[i-3,k]-13*y[i-4,k]+2*y[i-5,k])/(12*(X[i]-X[i-1])) #fixed this *-1
-        elseif i==L-4 # right boundary TEM
-            z[i] = (-2*y[i+1,k]-15*y[i,k]+28*y[i-1,k]-16*y[i-2,k]+6*y[i-3,k]-y[i-4,k])/(12*(X[i+1]-X[i]))
-        else # central
-            z[i] = (-y[i+2,k]+8*y[i+1,k]-8*y[i-1,k]+y[i-2,k])/(12*(X[i+1]-X[i]))
-        end"""
     end
     
     return z
@@ -896,9 +877,9 @@ function RHS(y0,x1,time,func,i,data)
     #state array is [m beta psi xxchi,u xchi,r psi,r xchi r]
     z=zeros(length(y0))
     
-    derxchi = func[1] #this is (xchi),r in non compactified code but is (xchi),x in compactified
+    derxxchi = func[1] #this is (xchi),r in non compactified code but is (xchi),x in compactified
     derpsi = func[2]
-    xchi = func[3]
+    xxchi = func[3]
 
     #coords
     r=0
@@ -929,42 +910,36 @@ function RHS(y0,x1,time,func,i,data)
     else
         if compactified==false
             r=x1
-            z[2] = (4*pi*(-1+(-2+r)*r)^2*xchi(x1)^2)/(r*(1+r^2)^4)-(8*pi*(1+r)*(-1+(-2+r)*r)*xchi(x1)*derxchi(x1))/(1+r^2)^3+(4*pi*r*(1+r)^2*derxchi(x1)^2)/(1+r^2)^2+(2*pi*(y0[3]-r*derpsi(x1))^2)/r^3
+            z[2] = 0#derive
         else
             x=x1
             r=x/(1-x)
-            #z[2] = 1/(1-x1)^2*((4*pi*(-1+(-2+r)*r)^2*xchi(x1)^2)/(r*(1+r^2)^4)-(8*pi*(1+r)*(-1+(-2+r)*r)*xchi(x1)*derxchi(x1))/(1+r^2)^3+(4*pi*r*(1+r)^2*derxchi(x1)^2)/(1+r^2)^2+(2*pi*(y0[3]-r*derpsi(x1))^2)/r^3)
-            z[2]=2*pi*(-1+x)*(-((2*(-1+x)^2*(1-2*x^2)^2*xchi(x1)^2)/(x*(1-2*x+2*x^2)^4))+(4*(-1+x)^2*(-1+2*x^2)*xchi(x1)*derxchi(x1))/(1-2*x+2*x^2)^3-(2*(-1+x)^2*x*derxchi(x1)^2)/(1-2*x+2*x^2)^2-(y0[3]+(-1+x)*x*z[3])^2/x^3)
             
-            #in princirple i dont need this
-            #if abs.(x1 .- 1.0)<10^(-15)
-                #z[2]=0.0
-            #end
+            z[2]= (2*pi*r*(2*(1+r)^2*(-2*(-1+r)*r*xxchi(x1)+r*(1+r+r^2+r^3)*derxxchi(x1))^2+(1+r^2)^4*(y0[3]-r*z[3])^2))/(r+r^3)^4
+
+            
+            if abs.(x1 .- 1.0)<10^(-15)
+                z[2]=0.0
+            end
         end
     end
 
     #xxchi,u
-    
-    if x1<10^(-15)
-        z[4] = 0.0 #?
+  
+    if compactified==false
+        r=x1
+        z[4] = 0# derive
     else
-        if compactified==false
-            r=x1
-            z[4] = (1/(2*r))*((4*y0[4])/(1+r)-(4*y0[4])/(1+r^2)^5+(1/((1+r)^2*(1+r^2)^5))*exp(2*y0[2])*(-((1+r)*xchi(x1)*(2*r^2*(1+r^2)^4+(1+r)*xchi(x1)*(3*r*(1+r^2)^4+(1+r)*xchi(x1)*((1+r^2)^2*(32*pi+r^2+r^4)+8*pi*r*(1+r)*xchi(x1)*(4+4*r^2+r*(1+r)*xchi(x1))))))+(1+r^2)*((1+r^2)^4-4*pi*(1+r)^2*xchi(x1)^2*(2+2*r^2+r*(1+r)*xchi(x1))^2)*(-xchi(x1)+r*(1+r)*derxchi(x1)))-(4*y0[4]*(r^2*(2+r^2)*(2+2*r^2+r^4)-2*pi*(1+r^2)*((1+2*r-r^2)*xchi(x1)+r*(1+r+r^2+r^3)*derxchi(x1))^2))/(1+r^2)^5)
-
+        x=x1
+        r=x/(1-x)
+        if abs.(x1)<10^(-15)
+            z[4]=0.0
+        elseif abs.(x1 .- 1.0)<10^(-15)
+            z[4]=0.0
         else
-            x=x1
-            r=x/(1-x)
-            #z[4] = 1/(1-x1)^2*((1/(2*r))*((4*y0[4])/(1+r)-(4*y0[4])/(1+r^2)^5+(1/((1+r)^2*(1+r^2)^5))*exp(2*y0[2])*(-((1+r)*xchi(x1)*(2*r^2*(1+r^2)^4+(1+r)*xchi(x1)*(3*r*(1+r^2)^4+(1+r)*xchi(x1)*((1+r^2)^2*(32*pi+r^2+r^4)+8*pi*r*(1+r)*xchi(x1)*(4+4*r^2+r*(1+r)*xchi(x1))))))+(1+r^2)*((1+r^2)^4-4*pi*(1+r)^2*xchi(x1)^2*(2+2*r^2+r*(1+r)*xchi(x1))^2)*(-xchi(x1)+r*(1+r)*derxchi(x1)))-(4*y0[4]*(r^2*(2+r^2)*(2+2*r^2+r^4)-2*pi*(1+r^2)*((1+2*r-r^2)*xchi(x1)+r*(1+r+r^2+r^3)*derxchi(x1))^2))/(1+r^2)^5))
-            z[4] = (1/(2*x*(1-2*x+2*x^2)^5))*(4*(-1+x)^9*y0[4]+4*(1-2*x+2*x^2)^5*y0[4]-exp(2*y0[2])*(xchi(x1)*(2*x^2*(1-2*x+2*x^2)^4+xchi(x1)*(3*x*(1-2*x+2*x^2)^4+xchi(x1)*((1-2*x+2*x^2)^2*(32*pi*(-1+x)^4+(-1+x)^2*x^2+x^4)+8*pi*(-1+x)^4*x*xchi(x1)*(4-8*x+8*x^2+x*xchi(x1)))))+(1-x)*(1-2*x+2*x^2)*((1-2*x+2*x^2)^4-4*pi*(-1+x)^2*xchi(x1)^2*(2-4*x+4*x^2+x*xchi(x1))^2)*(xchi(x1)-x*derxchi(x1)))-4*(1-x)*y0[4]*(x^2*(2-4*x+3*x^2)*(2-8*x+14*x^2-12*x^3+5*x^4)-2*pi*(-1+x)^2*(1-2*x+2*x^2)*((1-2*x^2)*xchi(x1)+x*(1-2*x+2*x^2)*derxchi(x1))^2))
-
-            #inprinciple i dont need this
-            #if abs.(x1 .- 1.0)<10^(-15)
-                #z[4]= 1/2  (4  y0[4]-exp.(2 y0[2]) (xchi(x1) (2 +xchi(x1) (3+xchi(x1)))))
-            #end
-            
-        end
-    end 
+            z[4]=(1/(2*(-1+x)*x^2*(1+2*(-1+x)*x)^4))*(-(1/(x*(1+2*(-1+x)*x)))*exp(2*y0[2])*(-1+x)*(-2*x*(1+2*(-1+x)*x)^4*(-1+(-1+x)*x*(-3+2*x))*xxchi(x1)+8*pi*(-1+x)^3*(-1+2*x)*xxchi(x1)^5+4*pi*(-1+x)^3*(1+2*(-1+x)*x)*xxchi(x1)^4*(-8+16*x-derxxchi(x1))+(-1+x)*x^2*(1+2*(-1+x)*x)^5*derxxchi(x1)+(1+2*(-1+x)*x)^2*xxchi(x1)^3*(x+2*(-1+x)*x^2+32*pi*(-1+x)^3*(-1+2*x)-16*pi*(-1+x)^3*derxxchi(x1))+(1+2*(-1+x)*x)^3*xxchi(x1)^2*(3*x*(1+2*(-1+x)*x)-16*pi*(-1+x)^3*derxxchi(x1)))+4*(-1+x)*x*y0[4]*(x*(-1+2*x)*(1+2*(-1+x)*x)^3-2*pi*(-1+x)^3*((2-4*x)*xxchi(x1)+(1+2*(-1+x)*x)*derxxchi(x1))^2))
+        end    
+    end
 
     #m
     if x1<10^(-15)
@@ -972,24 +947,19 @@ function RHS(y0,x1,time,func,i,data)
     else
         if compactified==false
             
-            #1st z[1] = (4*exp(-2*y0[2])*pi*(1+r)^2*(-1+(-2+r)*r)*y0[4]*xchi(x1))/(1+r^2)^3+(4*pi*(r*(3+r*(2+r))*(1+r*(2+r+2*r^3))-2*(-1+(-2+r)*r)^2*y0[1])*xchi(x1)^2)/(r*(1+r^2)^4)+(8*pi*r*(1+r)^3*xchi(x1)^3)/(1+r^2)^3+(2*pi*r^2*(1+r)^4*xchi(x1)^4)/(1+r^2)^4+(-((4*exp(-2*y0[2])*pi*r*(1+r)^3*y0[4])/(1+r^2)^2)-(8*pi*(1+r)*(-1+(-2+r)*r)*(r-2*y0[1])*xchi(x1))/(1+r^2)^3)*derxchi(x1)+(4*pi*r*(1+r)^2*(r-2*y0[1])*derxchi(x1)^2)/(1+r^2)^2+2*pi*r*(r-2*y0[1])*(-(y0[3]/r^2)+derpsi(x1)/r)^2
-            #10/10
-            z[1] = 1/(1+r^2)^3*2*pi*r*((4*(1+r)^2*(3*r+2*r^3+r^5-4*y0[1])*xchi(x1)^2)/(r^2+r^4)+4*(1+r)^3*xchi(x1)^3+(r*(1+r)^4*xchi(x1)^4)/(1+r^2)-(4*(1+r)*xchi(x1)*(exp(-2*y0[2])*r*(1+r)^2*y0[4]-2*(r-2*y0[1])*(-xchi(x1)+r*(1+r)*derxchi(x1))))/r^2+(2*exp(-2*y0[2])*(1+r^2)*(-xchi(x1)+r*(1+r)*derxchi(x1))*(-r*(1+r)^2*y0[4]+exp(2*y0[2])*(r-2*y0[1])*(-xchi(x1)+r*(1+r)*derxchi(x1))))/r^2+(1+r^2)^3*(r-2*y0[1])*(-(y0[3]/r^2)+derpsi(x1)/r)^2)
+            
+            z[1] = 0#derive
             
         else
             x=x1
             r=x/(1-x)
-            #1st z[1] = 1/(1-x1)^2*((4*exp(-2*y0[2])*pi*(1+r)^2*(-1+(-2+r)*r)*y0[4]*xchi(x1))/(1+r^2)^3+(4*pi*(r*(3+r*(2+r))*(1+r*(2+r+2*r^3))-2*(-1+(-2+r)*r)^2*y0[1])*xchi(x1)^2)/(r*(1+r^2)^4)+(8*pi*r*(1+r)^3*xchi(x1)^3)/(1+r^2)^3+(2*pi*r^2*(1+r)^4*xchi(x1)^4)/(1+r^2)^4+(-((4*exp(-2*y0[2])*pi*r*(1+r)^3*y0[4])/(1+r^2)^2)-(8*pi*(1+r)*(-1+(-2+r)*r)*(r-2*y0[1])*xchi(x1))/(1+r^2)^3)*derxchi(x1)+(4*pi*r*(1+r)^2*(r-2*y0[1])*derxchi(x1)^2)/(1+r^2)^2+2*pi*r*(r-2*y0[1])*(-(y0[3]/r^2)+derpsi(x1)/r)^2)
-            #2nd z[1] = (1/((1-2*x+2*x^2)^4))*2*pi*((2*(x*(3-10*x+13*x^2-8*x^3+8*x^4-8*x^5+4*x^6)+2*(-1+x)^3*(1-2*x^2)^2*y0[1])*xchi(x1)^2)/x+4*x*(1-2*x+2*x^2)*xchi(x1)^3+x^2*xchi(x1)^4-4*(-1+x)^2*(-1+2*x-4*x^3+4*x^4)*(x+2*(-1+x)*y0[1])*xchi(x1)*derxchi(x1)-2*exp(-2*y0[2])*(1-2*x+2*x^2)*y0[4]*((1-2*x^2)*xchi(x1)+x*(1-2*x+2*x^2)*derxchi(x1))+x*(1-2*x+2*x^2)^2*(x+2*(-1+x)*y0[1])*(2*(-1+x)^2*derxchi(x1)^2+(1-2*x+2*x^2)^2*(-(y0[3]/r^2)+derpsi(x1)/r)^2))
-            z[1] = 1/(1-x1)^2*(1/(1+r^2)^3*2*pi*r*((4*(1+r)^2*(3*r+2*r^3+r^5-4*y0[1])*xchi(x1)^2)/(r^2+r^4)+4*(1+r)^3*xchi(x1)^3+(r*(1+r)^4*xchi(x1)^4)/(1+r^2)-(4*(1+r)*xchi(x1)*(exp(-2*y0[2])*r*(1+r)^2*y0[4]-2*(r-2*y0[1])*(-xchi(x1)+r*(1+r)*derxchi(x1)*(1-x)^2)))/r^2+(2*exp(-2*y0[2])*(1+r^2)*(-xchi(x1)+r*(1+r)*derxchi(x1)*(1-x)^2)*(-r*(1+r)^2*y0[4]+exp(2*y0[2])*(r-2*y0[1])*(-xchi(x1)+r*(1+r)*derxchi(x1)*(1-x)^2)))/r^2+(1+r^2)^3*(r-2*y0[1])*(-(y0[3]/r^2)+derpsi(x1)/r)^2))
             
-            #10/10
-            
+            z[1] = (-1+x)^(-2)*((1/(x^3*(1-2*x+2*x^2)^4))*2*pi*(4*(-1+x)^2*(3*(-1+x)^4*x+2*(-1+x)^2*x^3+x^5+4*(-1+x)^5*y0[1])*xxchi(x1)^2+4*(-1+x)^2*x*(1-2*x+2*x^2)*xxchi(x1)^3+(-1+x)^2*x*xxchi(x1)^4-4*(1-x)^3*(1-2*x+2*x^2)*xxchi(x1)*(exp(-2*y0[2])*x^2*y0[4]-2*(-1+x)^2*(x+2*(-1+x)*y0[1])*(-2*xxchi(x1)+x*derxxchi(x1)))-2*exp(-2*y0[2])*(-1+x)^2*(1-2*x+2*x^2)^2*(-2*xxchi(x1)+x*derxxchi(x1))*(x^2*y0[4]-exp(2*y0[2])*(-1+x)^2*(x+2*(-1+x)*y0[1])*(-2*xxchi(x1)+x*derxxchi(x1)))+(-1+x)^2*(1-2*x+2*x^2)^4*(x+2*(-1+x)*y0[1])*(y0[3]+(-1+x)*x*z[3])^2))
 
-
+          
             #2nd in principle i dont need this
             if abs.(x1 .- 1.0)<10^(-15)
-                z[1]= (-4*exp(-2*y0[2])*pi*y0[4])*derxchi(x1)+4*pi*derxchi(x1)^2
+                z[1]= 0#(-4*exp(-2*y0[2])*pi*y0[4])*derxchi(x1)+4*pi*derxchi(x1)^2
             end
         end
     end 
@@ -1124,16 +1094,16 @@ function SF_RHS(data,t,X)
     
 
     data[:,7]=parity(data[:,7])
-    data[4:L-3,5]= Der_arrayLOP(data,7,initX)[4:L-3]#derivative(xchi_func, initX1; nu=1)#
-    data[L-3,5]=data[L-4,5]
+    data[4:L-3,5]= Der_array(data,7,initX)[4:L-3]#derivative(xchi_func, initX1; nu=1)#
+    #data[L-3,5]=data[L-4,5]
 
     # update interpolation of psi,x
-    xchi_func = Spline1D(X[4:L-3], data[4:L-3,7],  k=4);
-    derxchi_func = Spline1D(X[1:L], data[1:L,5],  k=4);
+    xxchi_func = Spline1D(X[4:L-3], data[4:L-3,7],  k=4);
+    derxxchi_func = Spline1D(X[1:L], data[1:L,5],  k=4);
     derpsi_func = Spline1D(X[4:L-3], data[4:L-3,6],  k=4);
     
     
-    funcs=[derxchi_func derpsi_func xchi_func];
+    funcs=[derxxchi_func derpsi_func xxchi_func];
     
     #fit
     """ff(x, p) = p[1] .* x .+ p[2] .* x .^ 3 .+ p[3] .* x .^ 5
@@ -1168,25 +1138,19 @@ function SF_RHS(data,t,X)
         if X[i]<10^(-15) #left
             dy[i,6]= +1.0/2.0 * (1/(1-X[i])^2 * Der(data,i,6,X) + 2/(1-X[i])^3*data[i,6])  - dissipation(data,i,epsilon,6)[6]#+1.0/2.0 * (Der(data,i,6,X))  - dissipation(data,i,epsilon)[6]
             #dy[i,6]= +1.0/2.0 * (1/(1-x)^2 * Der(data,i,6,X) + 2/(1-x)^3*data[i,6])  - dissipation(data,i,epsilon)[6]#- dissipation4(data,i,0.02)[6];
-            dy[i,7] = 0.0 - dissipation(data,i,epsilon,7)[7]
+            dy[i,7] = data[i,4] - dissipation(data,i,epsilon,7)[7]
 
         elseif abs.(X[i] .- 1.0)<10^(-15)
             dy[i,6]= 0.0 - dissipation(data,i,epsilon,6)[6]
-            dy[i,7] = data[i,4]/X[i] - dissipation(data,i,epsilon,7)[7]
+            dy[i,7] = data[i,4] - dissipation(data,i,epsilon,7)[7]
             
         else
             dy[i,6]=derpsi_evol(data,i,X) - dissipation(data,i,epsilon,6)[6]
-            dy[i,7] = data[i,4]/X[i] - dissipation(data,i,epsilon,7)[7] #solving for xxchi in the next slice
+            dy[i,7] = data[i,4] - dissipation(data,i,epsilon,7)[7] #solving for xxchi in the next slice
             
         end
         #dy[4,6]=extrapolate_in(dy[5,6], dy[6,6], dy[7,6], dy[8,6])
-
-        #dy[8,7] = extrapolate_in(dy[9,7], dy[10,7], dy[11,7], dy[12,7]) - dissipation(data,8,epsilon,7)[7]
-        #dy[7,7] = extrapolate_in(dy[8,7], dy[9,7], dy[10,7], dy[11,7]) - dissipation(data,7,epsilon,7)[7]
-        #dy[6,7] = extrapolate_in(dy[7,7], dy[8,7], dy[9,7], dy[10,7]) - dissipation(data,6,epsilon,7)[7]
-        #dy[5,7] = extrapolate_in(dy[6,7], dy[7,7], dy[8,7], dy[9,7]) - dissipation(data,5,epsilon,7)[7]
-        #dy[4,7] = extrapolate_in(dy[5,7], dy[6,7], dy[7,7], dy[8,7]) - dissipation(data,5,epsilon,7)[7]
-
+        dy[L-3,7]=dy[L-4,7]
         
     end
     
@@ -1225,11 +1189,11 @@ function masslossfunc(y)
     for i in 4:L-3
 
         if compactified==true
-            r=y[i,8]
-            der=y[i,5] #(x\[Chi]^(0,1))[u,r]=y[i,5]
-        else
             x=y[i,8]
             r=x/(1-x)
+            der=y[i,5] #(x\[Chi]^(0,1))[u,r]=y[i,5]
+        else
+            r=y[i,8]
             der=y[i,5]*(x-1)^2 #(x\[Chi]^(0,1))[u,r]=y[i,5]*(x-1)^2
         end
         
@@ -1239,16 +1203,14 @@ function masslossfunc(y)
     
         T11w[i]=(2*((1+2*r-r^2)*y[i,7]+r*(1+r+r^2+r^3)*der)^2)/(r^2*(1+r^2)^4)
 
-        #T00s[i]=(\[Psi]^(1,0))[u,r]^2/r^2+(E^(4 y[i,2]) (r-2 y[i,1]) (y[i,3]-r y[i,6]) ((r-2 y[i,1]) (y[i,3]-r y[i,6])+2 E^(-2 y[i,2]) r^2 (\[Psi]^(1,0))[u,r]))/(2 r^6)
-
-        #T01s[i]=(E^(2 y[i,2]) (r-2 y[i,1]) (y[i,3]-r y[i,6])^2)/(2 r^5)
-
-        #T11s[i]=(y[i,3]-r y[i,6])^2/r^4
-
-        z[i]=-4*exp(-2*y[i,2])*pi*r^2*T00w[i]+8*pi*r*T01w[i]*(r-2*y[i,1])-2*exp(2*y[i,2])*pi*T11w[i]*(r-2*y[i,1])^2
+        #z[i]=-4*exp(-2*y[i,2])*pi*r^2*T00w[i]+8*pi*r*T01w[i]*(r-2*y[i,1])-2*exp(2*y[i,2])*pi*T11w[i]*(r-2*y[i,1])^2
     
+
+        ## simplified expression
+        z[i]=2*pi*(-4*exp(-2*y[i,2])*y[i,4]^2+(exp(2*y[i,2])*(r-2*y[i,1])*y[i,7]^2*(2+y[i,7])^2)/r^3-(2*(r-2*y[i,1])*y[i,4]*y[i,5]*(x-1)^2)/r)
+
     end
-    
+    y[i,5]=
     
     return z
 end
@@ -1297,9 +1259,9 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
 
         state_array[:,7]=parity(state_array[:,7])
         
-        state_array[4:L-3,5]=Der_arrayLOP(state_array,7,initX)[4:L-3]#derivative(xchi_func, initX[4:L-3]; nu=1)#
+        state_array[4:L-3,5]=Der_array(state_array,7,initX)[4:L-3]#derivative(xchi_func, initX[4:L-3]; nu=1)#
 
-        state_array[L-3,5]=state_array[L-4,5]
+        #state_array[L-3,5]=state_array[L-4,5]
         #state_array[4,5]=extrapolate_in(state_array[5,5], state_array[6,5], state_array[7,5], state_array[8,5])#isto
         #aqui
         #state_array[8,5] = extrapolate_in(state_array[9,5], state_array[10,5],state_array[11,5],state_array[12,5])
@@ -1309,12 +1271,12 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         #state_array[4,5] = extrapolate_in(state_array[5,5], state_array[6,5], state_array[7,5], state_array[8,5])
 
         # update interpolation of psi,x
-        xchi_func = Spline1D(X[4:L-3], state_array[4:L-3,7],  k=4);
-        derxchi_func = Spline1D(X[1:L], state_array[1:L,5],  k=4);
+        xxchi_func = Spline1D(X[4:L-3], state_array[4:L-3,7],  k=4);
+        derxxchi_func = Spline1D(X[1:L], state_array[1:L,5],  k=4);
         derpsi_func = Spline1D(X[4:L-3], state_array[4:L-3,6],  k=4);
         
 
-        funcs=[derxchi_func derpsi_func xchi_func];
+        funcs=[derxxchi_func derpsi_func xxchi_func];
         #fit
         """ff(x, p) = p[1] .* x .+ p[2] .* x .^ 3 .+ p[3] .* x .^ 5
         p0 = [0.1, 0.001, 0.00001]
@@ -1338,7 +1300,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         massloss[4:L-3] = masslossfunc(state_array)[4:L-3]
         
         
-        if iter%5==0
+        if iter%1==0
         #if (iter%100==0&&t>0.5)||(t>1.5&&iter%5==0)||(t>=2.04&&t<=2.046)
             if zeroformat==true
                 zero_print_muninn(files, t, state_array[:,:],res,"a")
