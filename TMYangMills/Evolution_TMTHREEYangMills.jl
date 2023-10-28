@@ -96,12 +96,19 @@ evol_stats = [criticality A sigma r0 time explode run]
 global monitor_ratio = zeros(L);
 #CSV.write(dir*"/parameters.csv", Tables.table(evol_stats), writeheader=true, header=["criticality", "A", "sigma", "r0", "time", "explode", "run"])
 
-
+run=int(run)
+if run == 1 && bisection==true
+    if loggrid==true
+        CSV.write(dir*"/bisectionsearch/muninnDATA/uneven/parameters.csv", Tables.table(evol_stats))#, writeheader=true, header=["criticality", "A", "sigma", "r0", "time", "explode", "run"])
+    else
+        CSV.write(dir*"/bisectionsearch/muninnDATA/even/parameters.csv", Tables.table(evol_stats))#, writeheader=true, header=["criticality", "A", "sigma", "r0", "time", "explode", "run"])
+    end
+end
 
 ginit=speed(initX,state_array[:,1],state_array[:,2])
 
 finaltime=1.5
-stats, T_interp = timeevolution(state_array,finaltime,run);
+evol_stats, T_interp = timeevolution(state_array,finaltime,run);
 #CSV.write(dir*"/timearray$res.csv", Tables.table(T_interp), writeheader=false);
 #CSV.write(dir*"/parameters.csv", Tables.table(evol_stats), writeheader=false);
 
@@ -109,10 +116,10 @@ stats, T_interp = timeevolution(state_array,finaltime,run);
 
 if bisection==true
     if loggrid==true
-        CSV.write(dir*"/bisectionsearch/muninnDATA/uneven/parameters.csv", Tables.table(stats),append=true);#, writeheader=true,header=["criticality", "A", "sigma", "r0", "time", "explode", "run"],
+        CSV.write(dir*"/bisectionsearch/muninnDATA/uneven/parameters.csv", Tables.table(evol_stats),append=true);#, writeheader=true,header=["criticality", "A", "sigma", "r0", "time", "explode", "run"],
         CSV.write(dir*"/bisectionsearch/muninnDATA/uneven/timearray.csv", Tables.table(T_interp))#, writeheader=false);
     else
-        CSV.write(dir*"/bisectionsearch/muninnDATA/even/parameters.csv", Tables.table(stats),append=true)#, writeheader=true,header=["criticality", "A", "sigma", "r0", "time", "explode", "run"]);
+        CSV.write(dir*"/bisectionsearch/muninnDATA/even/parameters.csv", Tables.table(evol_stats),append=true)#, writeheader=true,header=["criticality", "A", "sigma", "r0", "time", "explode", "run"]);
         CSV.write(dir*"/bisectionsearch/muninnDATA/even/timearray.csv", Tables.table(T_interp))#, writeheader=false);
     end
 
