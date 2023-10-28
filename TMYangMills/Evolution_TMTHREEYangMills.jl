@@ -101,7 +101,7 @@ global monitor_ratio = zeros(L);
 ginit=speed(initX,state_array[:,1],state_array[:,2])
 
 finaltime=1.5
-evol_stats, T_interp = timeevolution(state_array,finaltime,run);
+stats, T_interp = timeevolution(state_array,finaltime,run);
 #CSV.write(dir*"/timearray$res.csv", Tables.table(T_interp), writeheader=false);
 #CSV.write(dir*"/parameters.csv", Tables.table(evol_stats), writeheader=false);
 
