@@ -39,110 +39,36 @@ function init_derpsi(r,r0,sigma,A) #psi,r
     return z
 end
 
-"""function init_xchi(r,r0,sigma,A)
-
+function init_derxi(r,r0,sigma,A)
     n=length(r);
     if compactified==false
         if n==1
-            z=(A*exp(-((r - r0)^2/sigma^2))*r)/(1 + r)
-        else
-            z=zeros(n);
-            for i in 1:n
-                z[i]=(A*exp(-((r[i] - r0)^2/sigma^2))*r[i])/(1 + r[i])
-            end
-        end
-    else # inputted argument r is actually an x
-        if n==1
-            x=r
-            rr=x/(1-x)
-            z=(A*exp(-((rr - r0)^2/sigma^2))*rr)/(1 + rr)
-        else
-            z=zeros(n);
-            for i in 1:n-1
-                x=r[i]
-                rr = x/(1-x)
-                z[i]=(A*exp(-((rr - r0)^2/sigma^2))*rr)/(1 + rr)
-            end
-            z[n]=0.0#avoid nan at x=1
-        end
-    end
-    return z
-end"""
-
-function init_xxchi(r,r0,sigma,A)
-
-    n=length(r);
-
-    if compactified==false
-        if n==1
-
-            x=r/(1+r)
-            z=A*x^2*exp(-(x-r0)^2/sigma^2)+A*x^2*exp(-((x+r0)^2/sigma^2))
-            
-        else
-            z=zeros(n);
-            for i in 1:n
-                x=r[i]/(1+r[i])
-                z[i]=A*x^2*exp(-(x-r0)^2/sigma^2)+A*x^2*exp(-((x+r0)^2/sigma^2))
-                
-            end
-            #z[n]=0.0#avoid nan at x=1
-        end
-    else
-        # inputted argument r is actually an x
-        if n==1
-            x=r
-            #rr=x/(1-x)
-            z=A*x^2*exp(-(x-r0)^2/sigma^2)+A*x^2*exp(-((x+r0)^2/sigma^2))
-            
-        else
-            z=zeros(n);
-            for i in 1:n-1
-                x=r
-                #rr = x/(1-x)
-                z[i]=A*x[i]^2*exp(-(x[i]-r0)^2/sigma^2)+A*x[i]^2*exp(-((x[i]+r0)^2/sigma^2))
-            end
-            #z[n]=0.0#avoid nan at x=1
-        end
-    end
-    
-    return z
-end
-
-    
-function init_derxchi(r,r0,sigma,A) #(xchi),r
-    n=length(r);
-    if compactified==false
-        if n==1
-            z= (A*exp(-((r - r0)^2/sigma^2))*(-2*r^3 + 2*r^2*(-1 + r0) + 2*r*r0 + sigma^2))/((1 + r)^2*sigma^2)
+            z= 0#?
         else
             z=zeros(n);
             for i in 1:n
                 rr = r[i]
-                z[i] = (A*exp(-((rr - r0)^2/sigma^2))*(-2*rr^3 + 2*rr^2*(-1 + r0) + 2*rr*r0 + sigma^2))/((1 + rr)^2*sigma^2) # A * (3 * exp(-(rr-r0)^2/sigma^2) * rr^2 - 2 * exp(-(rr-r0)^2/sigma^2) * (rr-r0)*rr^3/sigma^2)
+                z[i] = 0#?
             end
         end
     else # inputted argument r is actually an x
-        if loggrid==false
-            if n==1
-                x=r
-                rr=x/(1-x)
-                z= (A*exp(-((rr - r0)^2/sigma^2))*(-2*rr^3 + 2*rr^2*(-1 + r0) + 2*rr*r0 + sigma^2))/((1 + rr)^2*sigma^2)
-            else
-                z=zeros(n);
-                for i in 1:n
-
-                    
-                    x=r[i]
-                    rr = x/(1-x)
-                    z[i] = (A*exp(-((rr - r0)^2/sigma^2))*(-2*rr^3 + 2*rr^2*(-1 + r0) + 2*rr*r0 + sigma^2))/((1 + rr)^2*sigma^2)
-
-                    
-                end
-                z[n] = 0
-            end
+        
+        if n==1
+            x=r
+            rr=x/(1-x)
+            z= -((2*A*exp(-((rr+r0)^2/sigma^2))*rr*((1+exp((4*rr*r0)/sigma^2))*rr^2-(-1+exp((4*rr*r0)/sigma^2))*rr*r0-(1+exp((4*rr*r0)/sigma^2))*sigma^2))/sigma^2)
         else
-            z=0
+            z=zeros(n);
+            for i in 1:n
+
+                ## psi,r
+                x=r[i]
+                rr = x/(1-x)
+                z[i] = -((2*A*exp(-((rr+r0)^2/sigma^2))*rr*((1+exp((4*rr*r0)/sigma^2))*rr^2-(-1+exp((4*rr*r0)/sigma^2))*rr*r0-(1+exp((4*rr*r0)/sigma^2))*sigma^2))/sigma^2)
+
+                    
+            end
+       
         end
     end
 
@@ -596,18 +522,24 @@ function DDer_array(y,k,X)#4th order accurate 2nd der
     return z
 end
 
-"""function Der_array(y,k,X)#returns darray/dr or darray/dx if non compactified
+function Der_arrayLOP(y,k,X)#returns darray/dr or darray/dx if non compactified
 
     z=zeros(length(y[:,k]))
  
 
     for i in 4:L-3
-        z[i] = (-y[i+2,k]+8*y[i+1,k]-8*y[i-1,k]+y[i-2,k])/(12*(X[i+1]-X[i]))
+        if i==4 # left boundary LOP1, TEM
+            z[i] = (y[i+3,k]-4*y[i+2,k]+7*y[i+1,k]-4*y[i,k])/(2*(X[i+1]-X[i]))
+        elseif i==L-3
+            z[i] = (-y[i-3,k]+4*y[i-2,k]-7*y[i-1,k]+4*y[i,k])/(2*(X[i]-X[i-1]))
+        else
+            z[i] = (y[i+1,k]-y[i-1,k])/(2*(X[i+1]-X[i]))
+        end
         
     end
     
     return z
-end"""
+end
 
 
 
@@ -888,13 +820,13 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         run=int(run)
 
        
-        
+        derderchi=Der_arrayLOP(state_array,4,X)
         if iter%10==0
         #if (iter%100==0&&t>0.5)||(t>1.5&&iter%5==0)||(t>=2.04&&t<=2.046)
             if zeroformat==true
-                zero_print_muninn(files, t, state_array[:,:],res,"a")
+                zero_print_muninn(files, t, [state_array[:,:] derderchi],res,"a")
             else
-                print_muninn(files, t, state_array[:,1:4],res,"a",initX)
+                print_muninn(files, t, [state_array[:,1:4] derderchi],res,"a",initX)
             end
 
         end
