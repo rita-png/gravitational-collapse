@@ -4,7 +4,7 @@
 
 using CSV, Tables, DataFrames, Plots, Printf
 
-include("./TMYangMills.jl");
+include("./TMYangMillsTHREE.jl");
 
 #### CONFIG ####
 

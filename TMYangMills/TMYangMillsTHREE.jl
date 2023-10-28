@@ -670,7 +670,6 @@ end
 
 
 # Defining the function in the RHS of the ution equation system
-using Base.Threads, LsqFit
 function SF_RHS(data,t,X)
     
     L=length(X)
