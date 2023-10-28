@@ -792,7 +792,6 @@ end
 
 
 # Defining the function in the RHS of the ution equation system
-using Base.Threads, LsqFit
 function SF_RHS(data,t,X)
     
     L=length(X)
@@ -831,7 +830,7 @@ function SF_RHS(data,t,X)
     end
 
         
-    Threads.@threads for i in 4:L-3 #ORI
+    for i in 4:L-3 #ORI
         if compactified==false
             xvar=X[i]/(1+X[i])
         else
