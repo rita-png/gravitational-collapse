@@ -310,7 +310,7 @@ function print_muninn(files, t, data, res, mode, grid)
             #open("./DATA/bisectionsearch/muninnDATA/run$run/$fl.txt", mode) do file
                 @printf file "\"Time = %.10e\n" t
                 for i in 1:length(data[:,1])
-                    @printf file "% .10e % .10e\n" data[i,LL] data[i,j]
+                    @printf file "% .10e % .10e\n" grid[i] data[i,j]
                 end
                 println(file) # insert empty line to indicate end of data set
                 end
