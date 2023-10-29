@@ -21,13 +21,13 @@ global source=false
 #global dir = "/home/ritapsantos/data/ritapsantos/YangMillsbisec1"
 ####bisec2
 
-global N=800.0
-global dir = "/home/ritapsantos/data/ritapsantos/YangMillsbisec2"
+#global N=800.0
+#global dir = "/home/ritapsantos/data/ritapsantos/YangMillsbisec2"
 
 ####bisec3
 
-#global N=1000.0
-#global dir = "/home/ritapsantos/data/ritapsantos/YangMillsbisec3"
+global N=1000.0
+global dir = "/home/ritapsantos/data/ritapsantos/YangMillsbisec3"
 
 
 
