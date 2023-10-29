@@ -17,12 +17,12 @@ global source=false
 
 ####bisec1
 
-global N=400.0
-global dir = "/home/ritapsantos/data/ritapsantos/YangMillsbisec1"
+#global N=400.0
+#global dir = "/home/ritapsantos/data/ritapsantos/YangMillsbisec1"
 ####bisec2
 
-#global N=800.0
-#global dir = "/home/ritapsantos/data/ritapsantos/YangMillsbisec2"
+global N=800.0
+global dir = "/home/ritapsantos/data/ritapsantos/YangMillsbisec2"
 
 ####bisec3
 
