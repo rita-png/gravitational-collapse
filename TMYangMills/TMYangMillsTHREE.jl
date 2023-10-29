@@ -582,6 +582,31 @@ function derxi_evol(y,i,X)
     return dy
 end
 
+function hessian_control(data, t)
+
+    y=data[:,4]
+    x=initX
+
+    dx=x[6]-x[5]
+
+    control=100000
+    result=false
+
+    hess=zeros(length(data[:,4]))
+    for i in 5:L-4 #excluding x=0 and x=1
+        hess[i]=abs((y[i+1]-2*y[i]+y[i-1])/dx^2)
+    end
+    if maximum(hess)>control
+        result=true
+        println("\n\nHessian is really big!\n\n", maximum(hess), " time is ", t)
+    end   
+    
+
+
+    return result
+
+end
+
 
 function boundarySF(y,X)
 
@@ -830,6 +855,12 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
 
         end
 
+        if hessian_control(state_array,t)==true
+            global criticality = true
+            global time = t
+            break
+        end
+
         #threshold for apparent black hole formation
         if compactified==false
             global monitor_ratio[5:L-4] = 2 .* state_array[5:L-4,1] ./ initX[5:L-4]
@@ -844,13 +875,13 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
             println("Supercritical evolution! At time ", t, ", iteration = ", iter)
             println("t = ", t, "iteration ", iter, " monitor ratio = ", maximum(monitor_ratio))
             global time = t
-            #break
+            break
         end
 
         
-        """if criticality == true
+        if criticality == true
             break
-        end"""
+        end
         
         if isnan(state_array[L-3,4])
             if criticality==false
