@@ -855,11 +855,11 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
 
         end
 
-        if hessian_control(state_array,t)==true
+        """if hessian_control(state_array,t)==true
             global criticality = true
             global time = t
             break
-        end
+        end"""
 
         #threshold for apparent black hole formation
         if compactified==false
