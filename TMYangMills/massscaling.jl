@@ -18,7 +18,7 @@ global dir = "/home/ritapsantos/data/ritapsantos/massscaling"
 global bisection = true
 global loggrid = false
 global compactified = true
-global zeroformat = true
+global zeroformat = false
 global twod = true
 
 #### CONFIG ####

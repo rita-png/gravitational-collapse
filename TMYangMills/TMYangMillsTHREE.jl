@@ -798,6 +798,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
     iter = 0
     k=0
     massloss=zeros(L)
+    global mass=0
     while t<finaltime#@TRACK
 
         iter = iter + 1
@@ -875,11 +876,19 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
             println("Supercritical evolution! At time ", t, ", iteration = ", iter)
             println("t = ", t, "iteration ", iter, " monitor ratio = ", maximum(monitor_ratio))
             global time = t
+
+            iii=argmax(monitor_ratio)
+            global mass=state_array[iii,1]
+
             break
         end
 
         
         if criticality == true
+
+            iii=argmax(monitor_ratio)
+            global mass=state_array[iii,1]
+
             break
         end
         
@@ -888,6 +897,9 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
                 global time = t
                 global explode = true
             end
+
+            iii=argmax(monitor_ratio)
+            global mass=state_array[iii,1]
 
             println("boom at time=", t)
             criticality=true
@@ -910,7 +922,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         global criticality = false
     end
     
-    global evol_stats = [criticality A sigma r0 time explode run]
+    global evol_stats = [criticality A sigma r0 time explode run mass]
 
     return evol_stats, T_array
 
