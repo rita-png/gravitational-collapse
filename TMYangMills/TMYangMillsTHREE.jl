@@ -589,7 +589,7 @@ function hessian_control(data, t)
 
     dx=x[6]-x[5]
 
-    control=1000
+    control=100000
     result=false
 
     hess=zeros(length(data[:,4]))
