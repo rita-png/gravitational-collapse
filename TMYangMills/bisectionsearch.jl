@@ -34,7 +34,7 @@ global dir = "/home/ritapsantos/data/ritapsantos/YangMillsbisec1"
 #### CONFIG ####
 
 
-global low_bound = 0.09
+global low_bound = 0.07
 global high_bound = 0.11
 
 global run = 1
