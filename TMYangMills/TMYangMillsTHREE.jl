@@ -870,7 +870,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         end
 
         
-        if maximum(monitor_ratio)>0.7&&k==0
+        if maximum(monitor_ratio)>0.6&&k==0
             global criticality = true
             k=k+1
             println("Supercritical evolution! At time ", t, ", iteration = ", iter)
