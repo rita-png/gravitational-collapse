@@ -1,36 +1,21 @@
-Step 1: USE LINUX && USE TERMINAL
-
-Step 2: Install Julia
+Step 1: Install Julia
 https://ferrolho.github.io/blog/2019-01-26/how-to-install-julia-on-ubuntu
 
-Step 3: Install anaconda  & jupyter and all that
+Step 2: Install anaconda  & jupyter
 https://docs.jupyter.org/en/latest/install/notebook-classic.html
 
-Step 4:
+Step 3:
 after installing anaconda DO:
 
 conda activate
 
 in order to activate the base environment
 
-Final Step 5:
+Step 4:
 Add Julia Kernel into jupyter
 https://datatofish.com/add-julia-to-jupyter/
 
-All set:
-To run a jupyter notebook, simply type inside the directory you wish:
 
-jupyter notebook
-
-Git:
-git add
-git status: list files not commited to local repo
-git diff
-git commit -m ""
-git push origin {branch}
-git log: check commits list
-
-Branch is main
-
-git reset: undo add
-git checkout -- .: local equal to remote repo
+Versions:
+Julia 1.8.0
+Python 3.9.12
