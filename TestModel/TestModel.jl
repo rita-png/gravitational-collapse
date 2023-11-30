@@ -119,6 +119,47 @@ end
 
 
 
+using Printf
+function print_muninn(files, t, data, res, mode, grid)
+    #mode is "a" for append or "w" for write
+    j=1
+    #LL=length(state_array[1,:])
+    if bisection==false
+        for fl in files #normal run
+            
+            open(dir*"/$fl.txt", mode) do file
+            #open("./DATA/muninnDATA/res$res/$fl.txt", mode) do file
+                @printf file "\"Time = %.10e\n" t
+                for i in 1:length(data[:,1])
+                    @printf file "% .10e % .10e\n" grid[i] data[i,j]
+                end
+                println(file) # insert empty line to indicate end of data set
+                end
+            j=j+1
+        end
+    else
+        if loggrid==true
+            auxdir= dir*"/bisectionsearch/muninnDATA/uneven"
+        else
+            auxdir= dir*"/bisectionsearch/muninnDATA/even"
+        end
+        
+        for fl in files #bisection search
+            
+            open(auxdir*"/run$run/$fl.txt", mode) do file
+            #open("./DATA/bisectionsearch/muninnDATA/run$run/$fl.txt", mode) do file
+                @printf file "\"Time = %.10e\n" t
+                for i in 1:length(data[:,1])
+                    @printf file "% .10e % .10e\n" grid[i] data[i,j]
+                end
+                println(file) # insert empty line to indicate end of data set
+                end
+            j=j+1
+        end
+    end
+end
+
+
 
 #ghosts
 
