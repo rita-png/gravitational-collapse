@@ -94,7 +94,7 @@ else
     print_muninn(files, 0, [state_array[:,1:4] derderxi],res,"w", initX)
 end
 
-print_muninn(["monitorratio"], 0, [monitor_ratio],res,"w", initX)
+print_muninn("monitorratio", 0, [monitor_ratio[5:L-4]],res,"w", initX)
 
 
 
