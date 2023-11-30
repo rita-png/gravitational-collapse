@@ -320,6 +320,30 @@ function print_muninn(files, t, data, res, mode, grid)
 end
 
 
+function print_monitorratio(filename, t, data, mode, grid)
+    #mode is "a" for append or "w" for write
+    j=1
+    #LL=length(state_array[1,:])
+    
+    if loggrid==true
+        auxdir= dir*"/bisectionsearch/muninnDATA/uneven"
+    else
+        auxdir= dir*"/bisectionsearch/muninnDATA/even"
+    end
+    
+    
+        
+    open(auxdir*"/run$run/$filename.txt", mode) do file
+        @printf file "\"Time = %.10e\n" t
+        for i in 1:length(data)
+            @printf file "% .10e % .10e\n" grid[i] data[i]
+        end
+        println(file) # insert empty line to indicate end of data set
+        end
+        
+end
+
+
 
 # 0 dimension output, save every variable at the ori and scri+
 function zero_print_muninn(files, t, data, res, mode)
@@ -861,7 +885,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
 
         end
 
-        print_muninn("monitorratio", t, [monitor_ratio[5:L-4]],res,"a", initX)
+        print_monitorratio("monitorratio", t, [monitor_ratio[5:L-4]],res,"a", initX[5:L-4])
 
         """if hessian_control(state_array,t)==true
             global criticality = true
