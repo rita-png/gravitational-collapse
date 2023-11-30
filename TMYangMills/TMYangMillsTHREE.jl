@@ -885,7 +885,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
 
         end
 
-        print_monitorratio("monitorratio", t, [monitor_ratio[5:L-4]],res,"a", initX[5:L-4])
+        print_monitorratio("monitorratio", t, monitor_ratio[5:L-4],"a", initX[5:L-4])
 
         """if hessian_control(state_array,t)==true
             global criticality = true
