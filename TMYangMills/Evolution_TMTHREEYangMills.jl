@@ -75,6 +75,14 @@ if twod==true
 end
 run=int(run)
 
+global monitor_ratio = zeros(L);
+
+if compactified==false
+    global monitor_ratio[5:L-4] = 2 .* state_array[5:L-4,1] ./ initX[5:L-4]
+else
+    global monitor_ratio[5:L-4] = 2 .* state_array[5:L-4,1] ./ initX[5:L-4] .* (1 .- initX[5:L-4])
+end
+
 global files=["m", "beta", "xi", "derxi", "derderxi"]
 
 derderxi=Der_arrayLOP(state_array,4,initX) .* (initX .- 1) .^ 2
@@ -86,15 +94,15 @@ else
     print_muninn(files, 0, [state_array[:,1:4] derderxi],res,"w", initX)
 end
 
+print_muninn(["monitorratio"], 0, [monitor_ratio],res,"w", initX)
+
 
 
 time=0.0
 criticality=0.0
 explode=0.0
 critical_stop=0
-bondimass=0.0
-evol_stats = [criticality A sigma r0 time explode run bondimass]
-global monitor_ratio = zeros(L);
+evol_stats = [criticality A sigma r0 time explode run]
 #CSV.write(dir*"/parameters.csv", Tables.table(evol_stats), writeheader=true, header=["criticality", "A", "sigma", "r0", "time", "explode", "run"])
 
 run=int(run)

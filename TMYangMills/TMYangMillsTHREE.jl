@@ -798,7 +798,6 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
     iter = 0
     k=0
     massloss=zeros(L)
-    global mass=0
     while t<finaltime#@TRACK
 
         iter = iter + 1
@@ -842,11 +841,17 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
             state_array[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X1,t,funcs,state_array[:,:])
         end
 
-        run=int(run)
-
-       
         derderchi=Der_arrayLOP(state_array,4,X) .* (initX .- 1) .^ 2
-        if iter%200==0
+        
+        #threshold for apparent black hole formation
+        if compactified==false
+            global monitor_ratio[5:L-4] = 2 .* state_array[5:L-4,1] ./ initX[5:L-4]
+        else
+            global monitor_ratio[5:L-4] = 2 .* state_array[5:L-4,1] ./ initX[5:L-4] .* (1 .- initX[5:L-4])
+        end
+
+        run=int(run)
+        if iter%10==0
         #if (iter%100==0&&t>0.5)||(t>1.5&&iter%5==0)||(t>=2.04&&t<=2.046)
             if zeroformat==true
                 zero_print_muninn(files, t, [state_array[:,:] derderchi],res,"a")
@@ -856,39 +861,28 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
 
         end
 
+        print_muninn(["monitorratio"], t, [monitor_ratio],res,"a", initX)
+
         """if hessian_control(state_array,t)==true
             global criticality = true
             global time = t
             break
         end"""
 
-        #threshold for apparent black hole formation
-        if compactified==false
-            global monitor_ratio[5:L-4] = 2 .* state_array[5:L-4,1] ./ initX[5:L-4]
-        else
-            global monitor_ratio[5:L-4] = 2 .* state_array[5:L-4,1] ./ initX[5:L-4] .* (1 .- initX[5:L-4])
-        end
+        
 
         
-        if maximum(monitor_ratio)>0.6&&k==0
+        if maximum(monitor_ratio)>0.7&&k==0
             global criticality = true
             k=k+1
             println("Supercritical evolution! At time ", t, ", iteration = ", iter)
             println("t = ", t, "iteration ", iter, " monitor ratio = ", maximum(monitor_ratio))
             global time = t
-
-            iii=argmax(monitor_ratio)
-            global mass=state_array[iii,1]
-
             break
         end
 
         
         if criticality == true
-
-            iii=argmax(monitor_ratio)
-            global mass=state_array[iii,1]
-
             break
         end
         
@@ -897,9 +891,6 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
                 global time = t
                 global explode = true
             end
-
-            iii=argmax(monitor_ratio)
-            global mass=state_array[iii,1]
 
             println("boom at time=", t)
             criticality=true
@@ -922,7 +913,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         global criticality = false
     end
     
-    global evol_stats = [criticality A sigma r0 time explode run mass]
+    global evol_stats = [criticality A sigma r0 time explode run]
 
     return evol_stats, T_array
 
