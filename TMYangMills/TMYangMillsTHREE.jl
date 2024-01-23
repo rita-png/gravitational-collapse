@@ -889,8 +889,8 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         end
 
         run=int(run)
-        if iter%10==0
-        #if (iter%100==0&&t>0.5)||(t>1.5&&iter%5==0)||(t>=2.04&&t<=2.046)
+        #if iter%10==0
+        if (iter%10==0)||(t>1&&iter%5==0)
             if zeroformat==true
                 zero_print_muninn(files, t, [state_array[:,:] derderchi],res,"a")
             else
@@ -912,18 +912,18 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
 
         
         if maximum(monitor_ratio)>0.775&&k==0
-            global criticality = true
+            #global criticality = true
             k=k+1
             println("Supercritical evolution! At time ", t, ", iteration = ", iter)
             println("t = ", t, "iteration ", iter, " monitor ratio = ", maximum(monitor_ratio))
-            global time = t
+            #global time = t
             #break
         end
 
         
-        if criticality == true
+        """if criticality == true
             break
-        end
+        end"""
         
         if isnan(state_array[L-3,4])
             if criticality==false
