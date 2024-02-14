@@ -17,10 +17,10 @@ global source=false
 
 ####bisec1
 
-global N=2000.0
-global dir = "/home/ritapsantos/data/ritapsantos/YangMillsbisec1"
-global high_bound=0.0885
-global low_bound=0.08
+#global N=2000.0
+#global dir = "/home/ritapsantos/data/ritapsantos/YangMillsbisec1"
+#global high_bound=0.0885
+#global low_bound=0.08
 
 
 ####bisec2
@@ -45,7 +45,12 @@ global low_bound=0.08
 #global high_bound = 0.08
 #
 
+####bisec6
 
+global N=2000.0
+global dir = "/home/ritapsantos/data/ritapsantos/YangMillsbisec6"
+global high_bound=0.0885
+global low_bound=0.08
 #### CONFIG ####
 
 
