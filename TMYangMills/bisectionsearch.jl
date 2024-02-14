@@ -45,12 +45,20 @@ global source=false
 #global high_bound = 0.08
 #
 
-####bisec6
+####bisec5
 
 global N=2000.0
-global dir = "/home/ritapsantos/data/ritapsantos/YangMillsbisec6"
-global high_bound=0.0885
+global dir = "/home/ritapsantos/data/ritapsantos/YangMillsbisec5"
+global high_bound=0.185
 global low_bound=0.08
+
+
+####bisec6
+
+#global N=2000.0
+#global dir = "/home/ritapsantos/data/ritapsantos/YangMillsbisec6"
+#global high_bound=0.0885
+#global low_bound=0.08
 #### CONFIG ####
 
 
