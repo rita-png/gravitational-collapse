@@ -17,18 +17,18 @@ global source=false
 
 ####bisec1
 
-#global N=2000.0
-#global dir = "/home/ritapsantos/data/ritapsantos/YangMillsbisec1"
-#global high_bound=0.0885
-#global low_bound=0.08
+global N=2000.0
+global dir = "/home/ritapsantos/data/ritapsantos/YangMillsbisec1"
+global high_bound=0.0885
+global low_bound=0.08
 
 
 ####bisec2
 
-global N=4000.0
-global dir = "/home/ritapsantos/data/ritapsantos/YangMillsbisec2"
-global high_bound=0.0885
-global low_bound=0.08
+#global N=4000.0
+#global dir = "/home/ritapsantos/data/ritapsantos/YangMillsbisec2"
+#global high_bound=0.0885
+#global low_bound=0.08
 
 ####bisec3
 
