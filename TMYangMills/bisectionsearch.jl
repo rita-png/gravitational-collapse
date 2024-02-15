@@ -11,7 +11,7 @@ include("./TMYangMillsTHREE.jl");
 global bisection = true
 global loggrid = false
 global compactified = true
-global zeroformat = false
+global zeroformat = true
 global twod=true
 global source=false
 
