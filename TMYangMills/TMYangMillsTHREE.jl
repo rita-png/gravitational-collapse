@@ -613,17 +613,29 @@ function hessian_control(data, t)
 
     dx=x[6]-x[5]
 
-    control=100000
+    control=10000
     result=false
 
     hess=zeros(length(data[:,4]))
     for i in 5:L-4 #excluding x=0 and x=1
         hess[i]=abs((y[i+1]-2*y[i]+y[i-1])/dx^2)
     end
-    if maximum(hess)>control
+
+    times=0
+    for hh in hess
+        if hh>control
+            times=times+1
+        end
+    end
+    if times > 50
         result=true
         println("\n\nHessian is really big!\n\n", maximum(hess), " time is ", t)
-    end   
+    end
+    
+    """if maximum(hess)>control
+        result=true
+        println("\n\nHessian is really big!\n\n", maximum(hess), " time is ", t)
+    end"""   
     
 
 
@@ -682,8 +694,8 @@ function RHS(y0,x1,time,func,i,data)
     if compactified==true
         
         z[3]=derxi(x1)/(1-x1)^2 #xi,x=xi,r*dr/dx
-        if abs.(x1-1)<10^(-15)
-            z[3]=0
+        if abs.(x1 .- 1)<10^(-15)
+            z[3]=0.0
         end
     else
         z[3]=0#?
@@ -738,6 +750,7 @@ function SF_RHS(data,t,X)
     else
         data[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X[4:L-3],t,funcs,data[:,:])
     end
+    data[L-3,3] = extrapolate_out(data[L-7,4], data[L-6,4], data[L-5,4], data[L-4,4]) #novoo
     data=ghost(data)
 
     if twod==true
@@ -828,9 +841,9 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         
         #update time increment
 
-        if criticality!=true
+        """if criticality!=true
             global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)      
-        end
+        end"""
         t = t + dt
         
         if iter%500==0
@@ -864,6 +877,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         else
             state_array[4:L-3,1:3] = n_rk4wrapper(RHS,y0,X1,t,funcs,state_array[:,:])
         end
+        state_array[L-3,3] = extrapolate_out(state_array[L-7,4], state_array[L-6,4], state_array[L-5,4], state_array[L-4,4]) #novoo
 
         derderchi=Der_arrayLOP(state_array,4,X) .* (initX .- 1) .^ 2
         
@@ -875,8 +889,8 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         end
 
         run=int(run)
-        if iter%10==0
-        #if (iter%100==0&&t>0.5)||(t>1.5&&iter%5==0)||(t>=2.04&&t<=2.046)
+        #if iter%10==0
+        if (iter%10==0)||(t>1&&iter%5==0)
             if zeroformat==true
                 zero_print_muninn(files, t, [state_array[:,:] derderchi],res,"a")
             else
@@ -885,31 +899,31 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
 
         end
 
-        if iter%50==0
+        """if iter%50==0
             print_monitorratio("monitorratio", t, monitor_ratio[5:L-4],"a", initX[5:L-4])
-        end
-        """if hessian_control(state_array,t)==true
+        end"""
+        if hessian_control(state_array,t)==true
             global criticality = true
             global time = t
             break
-        end"""
+        end
 
         
 
         
         if maximum(monitor_ratio)>0.775&&k==0
-            global criticality = true
+            #global criticality = true
             k=k+1
             println("Supercritical evolution! At time ", t, ", iteration = ", iter)
             println("t = ", t, "iteration ", iter, " monitor ratio = ", maximum(monitor_ratio))
-            global time = t
-            break
+            #global time = t
+            #break
         end
 
         
-        if criticality == true
+        """if criticality == true
             break
-        end
+        end"""
         
         if isnan(state_array[L-3,4])
             if criticality==false
