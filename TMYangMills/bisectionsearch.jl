@@ -19,7 +19,7 @@ global source=false
 
 global N=2000.0
 global dir = "/home/ritapsantos/data/ritapsantos/YangMillsbisec1"
-global low_bound=0.0885
+global low_bound=0.088
 global high_bound=0.09
 
 
