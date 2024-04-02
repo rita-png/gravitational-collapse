@@ -875,7 +875,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         end
 
         run=int(run)
-        if iter%10==0
+        if iter%50==0
         #if (iter%100==0&&t>0.5)||(t>1.5&&iter%5==0)||(t>=2.04&&t<=2.046)
             if zeroformat==true
                 zero_print_muninn(files, t, [state_array[:,:] derderchi],res,"a")
