@@ -11,7 +11,7 @@ include("./TMYangMillsTHREE.jl");
 global bisection = true
 global loggrid = false
 global compactified = true
-global zeroformat = false
+global zeroformat = true
 global twod=false
 global source=false
 
@@ -27,8 +27,8 @@ global source=false
 
 global N=4000.0
 global dir = "/home/ritapsantos/data/ritapsantos/YangMillsbisec2"
-global high_bound=0.10
-global low_bound=0.088
+global high_bound=0.08864100074768066
+global low_bound=0.08864099502563476
 
 ####bisec3
 
