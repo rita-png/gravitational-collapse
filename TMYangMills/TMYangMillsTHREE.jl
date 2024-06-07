@@ -935,8 +935,8 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         global time = t
     end
 
-    if t>1.4
-        global time = 1.5
+    if t>1.8
+        global time = 3.0
         global criticality = false
     end
     
