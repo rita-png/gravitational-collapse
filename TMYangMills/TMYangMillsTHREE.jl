@@ -821,6 +821,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
     T_array = [0.0]
     iter = 0
     k=0
+    lastprint_time=0.0
     massloss=zeros(L)
     while t<finaltime#@TRACK
 
@@ -885,8 +886,9 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
 
         end
 
-        if iter%50==0
+        if (iter%50==0)||((t>1.0)&&(t-lastprint_time)>0.01*(1.06-t))
             print_monitorratio("monitorratio", t, monitor_ratio[5:L-4],"a", initX[5:L-4])
+            global lastprint_time=t
         end
         """if hessian_control(state_array,t)==true
             global criticality = true

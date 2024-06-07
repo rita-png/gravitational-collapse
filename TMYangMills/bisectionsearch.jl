@@ -12,7 +12,7 @@ global bisection = true
 global loggrid = false
 global compactified = true
 global zeroformat = true
-global twod=true
+global twod=false
 global source=false
 
 ####bisec1
@@ -25,10 +25,10 @@ global source=false
 
 ####bisec2
 
-#global N=4000.0
-#global dir = "/home/ritapsantos/data/ritapsantos/YangMillsbisec2"
-#global high_bound=0.08864100074768066
-#global low_bound=0.08864099502563476
+global N=4000.0
+global dir = "/home/ritapsantos/data/ritapsantos/YangMillsbisec2"
+global high_bound=0.08864100074768066
+global low_bound=0.08864099502563476
 
 
 ####bisec7
@@ -52,12 +52,19 @@ global source=false
 #global low_bound = 0.0885
 #global high_bound = 0.0889
 
+####bisec5
+
+#global N=4000.0
+#global dir = "/home/ritapsantos/data/ritapsantos/YangMillsbisec5"
+#global low_bound = 0.0885
+#global high_bound = 0.0889
+
 ####bisec6
 
-global N=6000.0
-global dir = "/home/ritapsantos/data/ritapsantos/YangMillsbisec6"
-global low_bound = 0.0885
-global high_bound = 0.0889
+#global N=6000.0
+#global dir = "/home/ritapsantos/data/ritapsantos/YangMillsbisec6"
+#global low_bound = 0.0885
+#global high_bound = 0.0889
 
 ##bisec4
 
