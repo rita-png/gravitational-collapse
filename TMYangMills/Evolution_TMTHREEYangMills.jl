@@ -51,8 +51,8 @@ initderxi=zeros(L)
 state_array=[initm initbeta initxi initderxi];
 
 #WBAR,R
-r0=0.6
-sigma=0.2
+r0=0.3
+sigma=0.1
 
 initderxi[4:L-3] = init_derpsi(initX1,r0,sigma,A)
 

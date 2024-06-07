@@ -8,7 +8,7 @@ include("./TMYangMillsTHREE.jl");
 
 #### CONFIG ####
 
-global N=1000.0
+global N=4000.0
 global dir = "/home/ritapsantos/data/ritapsantos/massscaling"
 
 

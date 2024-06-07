@@ -821,7 +821,6 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
     T_array = [0.0]
     iter = 0
     k=0
-    lastprint_time=0.0
     massloss=zeros(L)
     while t<finaltime#@TRACK
 
@@ -876,8 +875,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         end
 
         run=int(run)
-        if iter%50==0
-        #if (iter%100==0&&t>0.5)||(t>1.5&&iter%5==0)||(t>=2.04&&t<=2.046)
+        if (iter%50==0)||((t>1.0)&&(t-lastprint_time)>0.01*(1.06-t))
             if zeroformat==true
                 zero_print_muninn(files, t, [state_array[:,:] derderchi],res,"a")
             else
@@ -886,9 +884,8 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
 
         end
 
-        if (iter%50==0)||((t>1.0)&&(t-lastprint_time)>0.01*(1.06-t))
+        if iter%50==0
             print_monitorratio("monitorratio", t, monitor_ratio[5:L-4],"a", initX[5:L-4])
-            global lastprint_time=t
         end
         """if hessian_control(state_array,t)==true
             global criticality = true
@@ -899,7 +896,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         
 
         
-        if maximum(monitor_ratio)>0.8&&k==0
+        if maximum(monitor_ratio)>0.71&&k==0
             global criticality = true
             k=k+1
             println("Supercritical evolution! At time ", t, ", iteration = ", iter)
@@ -935,8 +932,8 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         global time = t
     end
 
-    if t>3.0
-        global time = 3.0
+    if t>1.4
+        global time = 1.5
         global criticality = false
     end
     
