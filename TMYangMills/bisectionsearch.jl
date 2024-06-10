@@ -25,17 +25,34 @@ global source=false
 
 ####bisec2
 
-global N=4000.0
-global dir = "/home/ritapsantos/data/ritapsantos/YangMillsbisec2"
-global high_bound=0.08864099693298341#0.0887
-global low_bound=0.08864097080230714#0.08185
+#global N=4000.0
+#global dir = "/home/ritapsantos/data/ritapsantos/YangMillsbisec2"
+#global high_bound=0.08864100074768066
+#global low_bound=0.08864099502563476
+
+
+####bisec7
+
+#global N=8000.0
+#global dir = "/home/ritapsantos/data/ritapsantos/YangMillsbisec7"
+#global high_bound=0.08866343283653258
+#global low_bound=0.088
+
+####bisec8
+
+#global N=6000.0
+#global dir = "/home/ritapsantos/data/ritapsantos/YangMillsbisec8"
+#global high_bound=0.08866343283653258
+#global low_bound=0.088
 
 ####bisec3
 
-#global N=1000.0
-#global dir = "/home/ritapsantos/data/ritapsantos/YangMillsbisec3"
-#global low_bound = 0.07
-#global high_bound = 0.11
+global N=5000.0
+global dir = "/home/ritapsantos/data/ritapsantos/YangMillsbisec3"
+global low_bound = 0.08864082031250001#0.0885
+global high_bound = 0.088641015625#0.0889
+
+
 
 ##bisec4
 
