@@ -25,10 +25,10 @@ global source=false
 
 ####bisec2
 
-#global N=4000.0
-#global dir = "/home/ritapsantos/data/ritapsantos/YangMillsbisec2"
-#global high_bound=0.08864099693298341#0.0887
-#global low_bound=0.08864097080230714#0.08185
+global N=4000.0
+global dir = "/home/ritapsantos/data/ritapsantos/YangMillsbisec2"
+global high_bound=0.08864099693298341#0.0887
+global low_bound=0.08864097080230714#0.08185
 
 ####bisec3
 
@@ -45,12 +45,6 @@ global source=false
 #global high_bound = 0.08
 #
 
-####bisec5
-
-global N=2000.0
-global dir = "/home/ritapsantos/data/ritapsantos/YangMillsbisec5"
-global high_bound=0.06
-global low_bound=0.11
 
 #### CONFIG ####
 
