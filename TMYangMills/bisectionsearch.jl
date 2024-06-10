@@ -14,6 +14,8 @@ global compactified = true
 global zeroformat = true
 global twod=false
 global source=false
+global r0=0.3
+global sigma=0.1
 
 ####bisec1
 
