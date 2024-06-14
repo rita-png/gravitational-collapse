@@ -821,8 +821,8 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
     T_array = [0.0]
     iter = 0
     k=0
-    lastprint_time=0.0
     massloss=zeros(L)
+    lastprint_time=0.0
     while t<finaltime#@TRACK
 
         iter = iter + 1
@@ -877,9 +877,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
 
         run=int(run)
         if (iter%50==0)||((t>1.0)&&(t-lastprint_time)>0.01*(1.06-t))
-        #if iter%50==0
             lastprint_time=t
-        #if (iter%100==0&&t>0.5)||(t>1.5&&iter%5==0)||(t>=2.04&&t<=2.046)
             if zeroformat==true
                 zero_print_muninn(files, t, [state_array[:,:] derderchi],res,"a")
             else
@@ -888,7 +886,9 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
 
         end
 
-        
+        if iter%50==0
+            print_monitorratio("monitorratio", t, monitor_ratio[5:L-4],"a", initX[5:L-4])
+        end
         """if hessian_control(state_array,t)==true
             global criticality = true
             global time = t

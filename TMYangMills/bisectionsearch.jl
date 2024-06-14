@@ -15,7 +15,7 @@ global zeroformat = true
 global twod=false
 global source=false
 global r0=0.3
-global sigma=0.1
+global sigma=0.08
 
 ####bisec1
 
@@ -29,16 +29,9 @@ global sigma=0.1
 
 #global N=4000.0
 #global dir = "/home/ritapsantos/data/ritapsantos/YangMillsbisec2"
-#global high_bound=0.08864100074768066
-#global low_bound=0.08864099502563476
+#global high_bound=0.08864099693298341#0.0887
+#global low_bound=0.08864097080230714#0.08185
 
-
-####bisec7
-
-global N=8000.0
-global dir = "/home/ritapsantos/data/ritapsantos/YangMillsbisec7"
-global high_bound=0.089#0.08866343283653258
-global low_bound=0.088580503731966
 ####bisec3
 
 #global N=1000.0
@@ -54,6 +47,12 @@ global low_bound=0.088580503731966
 #global high_bound = 0.08
 #
 
+####bisec5
+
+global N=2000.0
+global dir = "/home/ritapsantos/data/ritapsantos/YangMillsbisec5"
+global high_bound=0.085
+global low_bound=0.06
 
 #### CONFIG ####
 
