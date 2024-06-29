@@ -823,7 +823,8 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
     k=0
     massloss=zeros(L)
     lastprint_time=0.0
-    while t<finaltime#@TRACK
+    finaltime=3.1
+    while t<3.1#@TRACK
 
         iter = iter + 1
         
@@ -876,10 +877,8 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         end
 
         run=int(run)
-        #if iter%50==0
         if (iter%50==0)||((t>1.0)&&(t-lastprint_time)>0.01*(1.06-t))
             lastprint_time=t
-        #if (iter%100==0&&t>0.5)||(t>1.5&&iter%5==0)||(t>=2.04&&t<=2.046)
             if zeroformat==true
                 zero_print_muninn(files, t, [state_array[:,:] derderchi],res,"a")
             else
@@ -936,10 +935,10 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         global time = t
     end
 
-    if t>1.4
+    """if t>1.4
         global time = 1.5
         global criticality = false
-    end
+    end"""
     
     global evol_stats = [criticality A sigma r0 time explode run]
 
