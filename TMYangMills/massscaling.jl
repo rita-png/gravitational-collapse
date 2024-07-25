@@ -9,7 +9,7 @@ include("./TMYangMillsTHREE.jl");
 #### CONFIG ####
 
 global N=4000.0
-global dir = "/home/ritapsantos/data/ritapsantos/massscaling"
+global dir = "/home/ritapsantos/data/ritapsantos/YMmassscaling"
 
 
 
@@ -18,16 +18,18 @@ global dir = "/home/ritapsantos/data/ritapsantos/massscaling"
 global bisection = true
 global loggrid = false
 global compactified = true
-global zeroformat = false
-global twod = true
+global zeroformat = true
+global twod = false
+global source=false
+global r0=0.3
+global sigma=0.1
 
 #### CONFIG ####
 
 
-A_critic = 0.08865104436874391
+A_critic = 0.0886409955039620
 
-exponents = collect(-30:0.25:-7)
-
+exponents = collect(-17:0.5:-10)#collect(-30:0.25:-7)
 global run = 1
 global runmax = length(exponents)
 
@@ -38,8 +40,8 @@ while(run <= runmax)
     println("\n########")
     println("\nBisection search run ##", run, "; A = ", A," N = ", N,", exponent = ", exponents[run],"\n")
 
-    global ARGS = [A,run,N]
-    include("./Evolution_TMTHREEYangMills.jl");
+    global ARGS = [A,run,N,sigma,r0]
+    include("./Evolution_YangMills_Diff_Families.jl");
     if loggrid==true
         df = CSV.read(dir*"/bisectionsearch/muninnDATA/uneven/parameters.csv", DataFrame)
     else

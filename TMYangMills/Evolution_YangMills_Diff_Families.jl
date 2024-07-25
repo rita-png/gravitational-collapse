@@ -7,6 +7,11 @@ using Dierckx
 A = ARGS[1]
 run = ARGS[2]
 N = ARGS[3]
+sigma = ARGS[4]
+r0 = ARGS[5]
+
+m = 1
+res=m;
 
 if compactified==true
     Xf=1.0
@@ -102,7 +107,8 @@ time=0.0
 criticality=0.0
 explode=0.0
 critical_stop=0
-evol_stats = [criticality A sigma r0 time explode run]
+bondimass=0
+evol_stats = [criticality A sigma r0 time explode run bondimass]
 #CSV.write(dir*"/parameters.csv", Tables.table(evol_stats), writeheader=true, header=["criticality", "A", "sigma", "r0", "time", "explode", "run"])
 
 run=int(run)
@@ -116,7 +122,7 @@ end
 
 ginit=speed(initX,state_array[:,1],state_array[:,2])
 
-finaltime=1.1
+finaltime=2
 evol_stats, T_interp = timeevolution(state_array,finaltime,run);
 #CSV.write(dir*"/timearray$res.csv", Tables.table(T_interp), writeheader=false);
 #CSV.write(dir*"/parameters.csv", Tables.table(evol_stats), writeheader=false);
