@@ -823,8 +823,8 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
     k=0
     massloss=zeros(L)
     lastprint_time=0.0
-    finaltime=3.1
-    while t<3.1#@TRACK
+    global mass=0
+    while t<finaltime#@TRACK
 
         iter = iter + 1
         
@@ -887,9 +887,9 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
 
         end
 
-        if iter%50==0
+        """if iter%50==0
             print_monitorratio("monitorratio", t, monitor_ratio[5:L-4],"a", initX[5:L-4])
-        end
+        end"""
         """if hessian_control(state_array,t)==true
             global criticality = true
             global time = t
@@ -899,19 +899,24 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         
 
         
-        if maximum(monitor_ratio)>0.71&&k==0
+        if maximum(monitor_ratio)>0.725&&k==0
             global criticality = true
             k=k+1
             println("Supercritical evolution! At time ", t, ", iteration = ", iter)
             println("t = ", t, "iteration ", iter, " monitor ratio = ", maximum(monitor_ratio))
             global time = t
+
+            iii=argmax(monitor_ratio)
+            global mass=state_array[iii,1]
+
+
             break
         end
 
         
-        if criticality == true
+        """if criticality == true
             break
-        end
+        end"""
         
         if isnan(state_array[L-3,4])
             if criticality==false
@@ -935,12 +940,12 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         global time = t
     end
 
-    """if t>1.4
+    if t>1.4
         global time = 1.5
         global criticality = false
-    end"""
+    end
     
-    global evol_stats = [criticality A sigma r0 time explode run]
+    global evol_stats = [criticality A sigma r0 time explode run mass]
 
     return evol_stats, T_array
 
