@@ -103,7 +103,8 @@ criticality=0.0
 explode=0.0
 critical_stop=0
 global curvature=0
-evol_stats = [criticality A sigma r0 time explode run curvature]
+global curvature_index=-1
+evol_stats = [criticality A sigma r0 time explode run curvature curvature_index]
 #CSV.write(dir*"/parameters.csv", Tables.table(evol_stats), writeheader=true, header=["criticality", "A", "sigma", "r0", "time", "explode", "run"])
 
 run=int(run)

@@ -824,6 +824,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
     massloss=zeros(L)
     lastprint_time=0.0
     global curvature=0
+    global curvature_index=-1
     while t<finaltime#@TRACK
 
         iter = iter + 1
@@ -901,7 +902,9 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         end"""
 
         
-
+        maximum(monitor_ratio)
+        global curvature=maximum(monitor_ratio)
+        global curvature_index=argmax(monitor_ratio)
         
         if maximum(monitor_ratio)>0.71&&k==0
             global criticality = true
@@ -911,8 +914,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
             global time = t
 
 
-            maximum(monitor_ratio)
-            global curvature=maximum(monitor_ratio)
+            
 
 
             
@@ -951,7 +953,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         global criticality = false
     end
     
-    global evol_stats = [criticality A sigma r0 time explode run curvature]
+    global evol_stats = [criticality A sigma r0 time explode run curvature curvature_index]
 
     return evol_stats, T_array
 
