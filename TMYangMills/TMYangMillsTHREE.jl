@@ -906,6 +906,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
             global curvature=maximum(monitor_ratio)
             global curvature_index=argmax(monitor_ratio)
             global time_curvature=time
+        end
 
         
         if maximum(monitor_ratio)>0.71&&k==0
