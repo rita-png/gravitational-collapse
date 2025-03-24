@@ -815,6 +815,25 @@ function masslossfunc(y)
     
     return z
 end
+
+function ricci_scalar(X, y) #y is [m beta xi derxi]
+
+    L = length(X)
+
+    ricci=zeros(L)
+
+    for i in 4:L-3
+        x=X[i]
+        ricci[i]=(1/(x^2))*4*(-1+x)^2*(Der(y,i,1,X)+x*Der(y,i,1,X)*(-2+x-3*(-1+x)^3*Der(y,i,2,X))+(-1+x)*Der(y,i,2,X)*(2*x+(-1+x)*(-2*x^2*Der(y,i,2,X)+y[i,1]*(1-4*(-1+x)*x*Der(y,i,2,X))))-(1/(x^3))*exp(2*y[i,1])*pi*(-1+x)^3*(y[i,3]*(1+y[i,3])*(2+y[i,3])-2*(-1+x)^2*Der(y,i,3,X)*(x*((-1+x)*Der(y,i,1,X)+x*Der(y,i,2,X))+y[i,1]*(1+2*(-1+x)*x*Der(y,i,2,X))))^2)
+    
+    end
+    
+    
+    return ricci
+end
+
+
+
 function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run)
 
     t=0.0
@@ -848,11 +867,11 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         X=initX #state_array[:,5]
         X1=X[4:L-3]
 
-        #evolve psi,r and xchi
+        #evolve xchi
         if twod==true
-            state_array[:,:] = twod_rungekutta4molstep(SF_RHS,state_array[:,:],T_array,iter,X) #evolve psi,x
+            state_array[:,:] = twod_rungekutta4molstep(SF_RHS,state_array[:,:],T_array,iter,X) #evolve chi,x
         else
-            state_array[:,:] = rungekutta4molstep(SF_RHS,state_array[:,:],T_array,iter,X) #evolve psi,x
+            state_array[:,:] = rungekutta4molstep(SF_RHS,state_array[:,:],T_array,iter,X) #evolve chi,x
         end
         
         
@@ -902,9 +921,12 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
             break
         end"""
 
+        
+
         if maximum(monitor_ratio)>curvature
-            global curvature=maximum(monitor_ratio)
-            global curvature_index=argmax(monitor_ratio)
+            ricci=ricci_scalar(initX, state_array[:,1:4])
+            global curvature=maximum(ricci)
+            global curvature_index=argmax(ricci)
             global time_curvature=time
         end
 
