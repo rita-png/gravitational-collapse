@@ -822,7 +822,7 @@ function ricci_scalar(X, y) #y is [m beta xi derxi]
 
     ricci=zeros(L)
 
-    for i in 4:L-3
+    for i in 5:L-4
         x=X[i]
         ricci[i]=(1/(x^2))*4*(-1+x)^2*(Der(y,i,1,X)+x*Der(y,i,1,X)*(-2+x-3*(-1+x)^3*Der(y,i,2,X))+(-1+x)*Der(y,i,2,X)*(2*x+(-1+x)*(-2*x^2*Der(y,i,2,X)+y[i,1]*(1-4*(-1+x)*x*Der(y,i,2,X))))-(1/(x^3))*exp(2*y[i,1])*pi*(-1+x)^3*(y[i,3]*(1+y[i,3])*(2+y[i,3])-2*(-1+x)^2*Der(y,i,3,X)*(x*((-1+x)*Der(y,i,1,X)+x*Der(y,i,2,X))+y[i,1]*(1+2*(-1+x)*x*Der(y,i,2,X))))^2)
     
