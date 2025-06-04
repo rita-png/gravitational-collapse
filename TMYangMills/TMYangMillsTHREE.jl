@@ -816,7 +816,7 @@ function masslossfunc(y)
     return z
 end
 
-function ricci_scalar(X, y) #y is [m beta xi derxi]
+"""function ricci_scalar(X, y) #y is [m beta xi derxi]
 
     L = length(X)
 
@@ -830,7 +830,7 @@ function ricci_scalar(X, y) #y is [m beta xi derxi]
     
     
     return ricci
-end
+end"""
 
 
 
@@ -921,14 +921,22 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
             break
         end"""
 
+        # computing T_ab T^ab at the origin
+        
+        TabTab = DDer(y,4,3,initX)
+
+        if TabTab>curvature
+            global curvature=TabTab
+            global time_curvature=time
         
 
-        if maximum(monitor_ratio)>curvature
+
+        """if maximum(monitor_ratio)>curvature
             ricci=ricci_scalar(initX, state_array[:,1:4])
             global curvature=maximum(ricci)
             global curvature_index=argmax(ricci)
             global time_curvature=time
-        end
+        end"""
 
         
         if maximum(monitor_ratio)>0.71&&k==0
@@ -978,7 +986,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         global criticality = false
     end
     
-    global evol_stats = [criticality A sigma r0 time explode run curvature curvature_index time_curvature]
+    global evol_stats = [criticality A sigma r0 time explode run curvature time_curvature]
 
     return evol_stats, T_array
 
