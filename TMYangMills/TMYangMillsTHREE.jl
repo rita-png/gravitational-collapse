@@ -923,7 +923,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
 
         # computing T_ab T^ab at the origin
         
-        TabTab = DDer(y,4,3,initX)
+        TabTab = DDer(state_array,4,3,initX)
 
         if TabTab>curvature
             global curvature=TabTab
