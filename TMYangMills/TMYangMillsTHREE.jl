@@ -928,10 +928,10 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         if TabTab>curvature
             global curvature=TabTab
             global time_curvature=time
-        
+        end
 
-        if iter%10==0
-            println("TabTab is ", TabTab)
+        """if iter%10==0
+            println("TabTab is ", TabTab)"""
         """if maximum(monitor_ratio)>curvature
             ricci=ricci_scalar(initX, state_array[:,1:4])
             global curvature=maximum(ricci)
