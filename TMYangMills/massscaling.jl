@@ -28,7 +28,7 @@ global sigma=0.1
 
 A_critic = 0.0886409955039620
 
-exponents = collect(-25.25:0.5:-15.25)#collect(-25:0.5:-20.5)#collect(-20:0.5:-15.5)#collect(-15:0.5:-1)
+exponents = collect(-20.25:0.5:-10.25)#collect(-25.25:0.5:-15.25)#collect(-25:0.5:-20.5)#collect(-20:0.5:-15.5)#collect(-15:0.5:-1)
 global run = 1
 global runmax = length(exponents)
 
