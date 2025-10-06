@@ -51,8 +51,8 @@ initderxi=zeros(L)
 state_array=[initm initbeta initxi initderxi];
 
 #WBAR,R
-"""r0=0.3
-sigma=0.1"""#defined in bisectionsearch.jl
+r0=0.3
+sigma=0.1
 
 initderxi[4:L-3] = init_derpsi(initX1,r0,sigma,A)
 
@@ -89,7 +89,7 @@ derderxi=Der_arrayLOP(state_array,4,initX) .* (initX .- 1) .^ 2
 
 global res=1
 if zeroformat==true
-    zero_print_muninn(files, 0, [state_array[:,1:4] derderxi],res,"w")
+    zero_print_muninn(files, 0, [state_array[:,1:4] derderxi],res,"w", initX)
 else
     print_muninn(files, 0, [state_array[:,1:4] derderxi],res,"w", initX)
 end
@@ -102,9 +102,7 @@ time=0.0
 criticality=0.0
 explode=0.0
 critical_stop=0
-global curvature=0
-global time_curvature=-1
-evol_stats = [criticality A sigma r0 time explode run curvature time_curvature]
+evol_stats = [criticality A sigma r0 time explode run]
 #CSV.write(dir*"/parameters.csv", Tables.table(evol_stats), writeheader=true, header=["criticality", "A", "sigma", "r0", "time", "explode", "run"])
 
 run=int(run)

@@ -815,25 +815,6 @@ function masslossfunc(y)
     
     return z
 end
-
-"""function ricci_scalar(X, y) #y is [m beta xi derxi]
-
-    L = length(X)
-
-    ricci=zeros(L)
-
-    for i in 5:L-4
-        x=X[i]
-        ricci[i]=(1/(x^2))*4*(-1+x)^2*(Der(y,i,1,X)+x*Der(y,i,1,X)*(-2+x-3*(-1+x)^3*Der(y,i,2,X))+(-1+x)*Der(y,i,2,X)*(2*x+(-1+x)*(-2*x^2*Der(y,i,2,X)+y[i,1]*(1-4*(-1+x)*x*Der(y,i,2,X))))-(1/(x^3))*exp(2*y[i,1])*pi*(-1+x)^3*(y[i,3]*(1+y[i,3])*(2+y[i,3])-2*(-1+x)^2*Der(y,i,3,X)*(x*((-1+x)*Der(y,i,1,X)+x*Der(y,i,2,X))+y[i,1]*(1+2*(-1+x)*x*Der(y,i,2,X))))^2)
-    
-    end
-    
-    
-    return ricci
-end"""
-
-
-
 function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run)
 
     t=0.0
@@ -841,22 +822,16 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
     iter = 0
     k=0
     massloss=zeros(L)
-    lastprint_time=0.0
-    global curvature=0
-    global curvature_index=-1
-    global time_curvature=-1
     while t<finaltime#@TRACK
 
         iter = iter + 1
         
         #update time increment
 
-        """if criticality!=true
-            global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)      
-        end"""
+        
         t = t + dt
         
-        if iter%100==0
+        if iter%10==0
             println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
         end
         #println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
@@ -867,11 +842,11 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         X=initX #state_array[:,5]
         X1=X[4:L-3]
 
-        #evolve xchi
+        #evolve psi,r and xchi
         if twod==true
-            state_array[:,:] = twod_rungekutta4molstep(SF_RHS,state_array[:,:],T_array,iter,X) #evolve chi,x
+            state_array[:,:] = twod_rungekutta4molstep(SF_RHS,state_array[:,:],T_array,iter,X) #evolve psi,x
         else
-            state_array[:,:] = rungekutta4molstep(SF_RHS,state_array[:,:],T_array,iter,X) #evolve chi,x
+            state_array[:,:] = rungekutta4molstep(SF_RHS,state_array[:,:],T_array,iter,X) #evolve psi,x
         end
         
         
@@ -899,59 +874,31 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
 
         run=int(run)
         if iter%10==0
-        #if (iter%50==0)||((t>1.0)&&(t-lastprint_time)>0.01*(1.06-t))
-            lastprint_time=t
         #if (iter%100==0&&t>0.5)||(t>1.5&&iter%5==0)||(t>=2.04&&t<=2.046)
             if zeroformat==true
                 zero_print_muninn(files, t, [state_array[:,:] derderchi],res,"a")
-                
-                
             else
                 print_muninn(files, t, [state_array[:,1:4] derderchi],res,"a",initX)
             end
 
         end
 
-        """if iter%50==0
-            print_monitorratio("monitorratio", t, monitor_ratio[5:L-4],"a", initX[5:L-4])
-        end"""
+        
         """if hessian_control(state_array,t)==true
             global criticality = true
             global time = t
             break
         end"""
 
-        # computing T_ab T^ab at the origin
         
-        TabTab = DDer(state_array,4,3,initX)
-
-        if TabTab>curvature
-            global curvature=TabTab
-            global time_curvature=time
-        end
-
-        """if iter%10==0
-            println("TabTab is ", TabTab)"""
-        """if maximum(monitor_ratio)>curvature
-            ricci=ricci_scalar(initX, state_array[:,1:4])
-            global curvature=maximum(ricci)
-            global curvature_index=argmax(ricci)
-            global time_curvature=time
-        end"""
 
         
-        if maximum(monitor_ratio)>0.71&&k==0
+        if maximum(monitor_ratio)>0.775&&k==0
             global criticality = true
             k=k+1
             println("Supercritical evolution! At time ", t, ", iteration = ", iter)
             println("t = ", t, "iteration ", iter, " monitor ratio = ", maximum(monitor_ratio))
             global time = t
-
-
-            
-
-
-            
             break
         end
 
@@ -987,7 +934,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         global criticality = false
     end
     
-    global evol_stats = [criticality A sigma r0 time explode run curvature time_curvature]
+    global evol_stats = [criticality A sigma r0 time explode run]
 
     return evol_stats, T_array
 
