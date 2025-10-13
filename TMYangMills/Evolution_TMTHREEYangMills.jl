@@ -51,8 +51,8 @@ initderxi=zeros(L)
 state_array=[initm initbeta initxi initderxi];
 
 #WBAR,R
-r0=0.3
-sigma=0.1
+"""r0=0.3
+sigma=0.1"""#defined in bisectionsearch.jl
 
 initderxi[4:L-3] = init_derpsi(initX1,r0,sigma,A)
 
@@ -89,7 +89,7 @@ derderxi=Der_arrayLOP(state_array,4,initX) .* (initX .- 1) .^ 2
 
 global res=1
 if zeroformat==true
-    zero_print_muninn(files, 0, [state_array[:,1:4] derderxi],res,"w", initX)
+    zero_print_muninn(files, 0, [state_array[:,1:4] derderxi],res,"w")
 else
     print_muninn(files, 0, [state_array[:,1:4] derderxi],res,"w", initX)
 end
