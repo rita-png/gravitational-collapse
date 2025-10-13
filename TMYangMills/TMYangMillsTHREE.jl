@@ -829,12 +829,12 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         
         #update time increment
 
-        if criticality!=true
+        """if criticality!=true
             global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)      
-        end
+        end"""
         t = t + dt
         
-        if iter%500==0
+        if iter%50==0
             println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
         end
         #println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
@@ -876,8 +876,8 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         end
 
         run=int(run)
-        #if iter%50==0
-        if (iter%50==0)||((t>1.0)&&(t-lastprint_time)>0.01*(1.06-t))
+        if iter%10==0
+        #if (iter%50==0)||((t>1.0)&&(t-lastprint_time)>0.01*(1.06-t))
             lastprint_time=t
         #if (iter%100==0&&t>0.5)||(t>1.5&&iter%5==0)||(t>=2.04&&t<=2.046)
             if zeroformat==true
@@ -888,9 +888,9 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
 
         end
 
-        if iter%50==0
+        """if iter%50==0
             print_monitorratio("monitorratio", t, monitor_ratio[5:L-4],"a", initX[5:L-4])
-        end
+        end"""
         """if hessian_control(state_array,t)==true
             global criticality = true
             global time = t
