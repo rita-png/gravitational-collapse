@@ -28,13 +28,13 @@ global sigma=0.1
 
 A_critic = 0.0886409955039620
 
-exponents = [-9.75,-9.25,-8.75,-8.5,-8.25,-8,-7.75,-7.5,-7.25,-7,-6.75,-6.5,-6.25,-6,-5.75,-5.5,-5.25,-5]#collect(-9.75:0.5:-5)#collect(-20.25:0.5:-10.25)#collect(-25.25:0.5:-15.25)#collect(-25:0.5:-20.5)#collect(-20:0.5:-15.5)#collect(-15:0.5:-1)
+exponents = [-20.5]#[-9.5, -9.0, -8.5, -8.0, -7.5, -7.0, -6.5, -6.0, -5.5, -5.0, -4.5, -4.0, -3.5, -3.0, -2.5, -2.0, -1.5, -1.0, -0.5,  0.0]#[-26,-25.5,-25,-24.5,-24,-23.5,-23,-22.5,-22,21.5,-21,-20.5,-20,-19.5,-19,-18.5,-18,-17.5,17,-16.5]#collect(-17:0.5:-10)#collect(-30:0.25:-7)
 global run = 1
 global runmax = length(exponents)
 
 while(run <= runmax)
 
-    A = -exp(exponents[run]) + A_critic
+    A = exp(exponents[run]) + A_critic
 
     println("\n########")
     println("\nBisection search run ##", run, "; A = ", A," N = ", N,", exponent = ", exponents[run],"\n")

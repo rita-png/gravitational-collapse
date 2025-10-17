@@ -823,18 +823,20 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
     k=0
     massloss=zeros(L)
     lastprint_time=0.0
+    global mass=0
+    global bondi_mass=0
     while t<finaltime#@TRACK
 
         iter = iter + 1
         
         #update time increment
 
-        """if criticality!=true
+        if criticality!=true
             global dt = update_dt(initX,state_array[:,1],state_array[:,2],dt,ginit)      
-        end"""
+        end
         t = t + dt
         
-        if iter%50==0
+        if iter%500==0
             println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
         end
         #println("\n\niteration ", iter, " dt is ", dt, ", t=", t, " speed is ", speed(initX, state_array[:,1], state_array[:,2]), ", dx/dt=", dx/dt)
@@ -876,10 +878,8 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         end
 
         run=int(run)
-        if iter%10==0
-        #if (iter%50==0)||((t>1.0)&&(t-lastprint_time)>0.01*(1.06-t))
+        if (iter%50==0)||((t>1.0)&&(t-lastprint_time)>0.01*(1.06-t))
             lastprint_time=t
-        #if (iter%100==0&&t>0.5)||(t>1.5&&iter%5==0)||(t>=2.04&&t<=2.046)
             if zeroformat==true
                 zero_print_muninn(files, t, [state_array[:,:] derderchi],res,"a")
             else
@@ -900,19 +900,25 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         
 
         
-        if maximum(monitor_ratio)>0.71&&k==0
+        if maximum(monitor_ratio)>0.725&&k==0
             global criticality = true
             k=k+1
             println("Supercritical evolution! At time ", t, ", iteration = ", iter)
             println("t = ", t, "iteration ", iter, " monitor ratio = ", maximum(monitor_ratio))
             global time = t
+
+            iii=argmax(monitor_ratio)
+            global mass=state_array[iii,1]
+            global bondi_mass=state_array[L-3,1]
+
+
             break
         end
 
         
-        if criticality == true
+        """if criticality == true
             break
-        end
+        end"""
         
         if isnan(state_array[L-3,4])
             if criticality==false
@@ -941,7 +947,7 @@ function timeevolution(state_array,finaltime,run)#(state_array,finaltime,dir,run
         global criticality = false
     end
     
-    global evol_stats = [criticality A sigma r0 time explode run]
+    global evol_stats = [criticality A sigma r0 time explode run mass bondi_mass]
 
     return evol_stats, T_array
 
